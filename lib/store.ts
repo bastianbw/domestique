@@ -104,7 +104,9 @@ const FRESH = () => ({
   risk: 'balanced' as RiskPreset,
   differential: false,
   horizonDepth: 3,
-  autoFetchUrl: '',
+  // Pre-wired to the GitHub Action's published feed; harmlessly 404s until the
+  // collector runs (during the Tour). Editable on Stages & Data → ①½.
+  autoFetchUrl: 'https://raw.githubusercontent.com/bastianbw/domestique/main/data/latest.json',
   config: defaultConfig(),
   calibrationLog: [] as CalibrationReport[],
   configHistory: [] as EngineConfig[],

@@ -73,6 +73,42 @@ chat so Claude has your exact team/bank/prices as context when generating the ne
 
 ---
 
+## Automatic results during the Tour (optional auto-collector)
+
+Instead of (or alongside) the chat-paste loop, a **GitHub Action** can fetch each
+stage from ProCyclingStats and publish it for the app to pull automatically.
+
+- Script: [`scripts/collect_stage.py`](scripts/collect_stage.py) — uses the
+  `procyclingstats` package (with a browser User-Agent, since PCS blocks the
+  default one) to build a `stageResult` block: finishing order, DNF/DNS, time
+  gaps, GC positions, jerseys, and the stage-podium teams. It writes
+  `data/stage-N.json` and `data/latest.json`.
+- Workflow: [`.github/workflows/collect-results.yml`](.github/workflows/collect-results.yml)
+  runs every evening in July (21:00 CEST), works out which stage was raced from
+  the date, runs the script, and commits the JSON to the repo.
+- The app pulls it on **Stages & Data → ①½ Auto-fetch** from
+  `https://raw.githubusercontent.com/bastianbw/domestique/main/data/latest.json`
+  (pre-filled). Press **Fetch** and it imports exactly like a pasted block.
+
+**Honest caveats:**
+- ProCyclingStats rate-limits/blocks datacenter IPs, so the cloud Action is
+  *best-effort* — some evenings it may be blocked. The **manual paste flow always
+  works** as the fallback.
+- Per-rider **intermediate-sprint** and **KOM** points aren't cleanly exposed by
+  PCS. The collector estimates *finish* green points from position + profile;
+  intermediate sprints aren't auto-filled. For a sprint stage you care about,
+  add them via chat or the manual form. The app's xG model already accounts for
+  intermediate sprints in its predictions.
+- PCS has no Holdet prices — the app computes new values itself by applying the
+  growth rules to the results. Re-anchor with real Holdet prices when convenient.
+
+Run it by hand anytime (validates against past Tours too):
+```bash
+pip install -r scripts/requirements.txt
+python scripts/collect_stage.py --year 2025 --stage 7 --print   # preview
+python scripts/collect_stage.py --year 2026 --stage 7 --out data
+```
+
 ## Import schemas (what chat-Claude must produce)
 
 The app accepts **one block per paste**. Rider-name matching is accent- and typo-tolerant.

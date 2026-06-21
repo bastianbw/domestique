@@ -1,0 +1,2 @@
+requests>=2.31
+procyclingstats>=0.1.13

@@ -1,0 +1,184 @@
+#!/usr/bin/env python3
+"""Domestique auto-collector.
+
+Fetches one Tour de France stage result from ProCyclingStats and writes a
+Domestique `stageResult` import block (the exact schema the PWA reads). Run by
+the GitHub Action each evening during the Tour, or by hand on any machine.
+
+Honest notes:
+- ProCyclingStats blocks the procyclingstats package's default User-Agent (HTTP
+  403). We fetch the HTML ourselves with a browser UA and hand it to the parser.
+- Datacenter IPs are sometimes rate-limited/blocked by PCS; the GitHub Action is
+  best-effort. The app's manual paste flow is always the reliable fallback.
+- Per-rider *stage* green/KOM points aren't cleanly exposed by PCS, so finish
+  green points are ESTIMATED from finishing position + stage profile (clearly an
+  approximation; the app's model also estimates, and you can correct any value).
+
+Usage:
+  python collect_stage.py --year 2026 --stage 7 --out public/data
+  python collect_stage.py --year 2025 --stage 7 --print   # validate / preview
+"""
+from __future__ import annotations
+import argparse, json, os, sys, unicodedata
+
+import requests
+from procyclingstats import Stage
+
+UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+      "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
+
+# Estimated green-jersey points by finishing position for the FINISH only
+# (intermediate sprints not included). Keyed by a coarse profile bucket.
+GREEN_FLAT = [70, 50, 40, 35, 30, 25, 20, 19, 18, 17, 16, 15, 14, 13, 12]
+GREEN_MED  = [50, 35, 28, 24, 20, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3]
+GREEN_MTN  = [20, 17, 15, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+
+
+def fetch(rel_url: str) -> Stage:
+    """Fetch a PCS page with a browser UA and return a parser bound to it."""
+    html = requests.get("https://www.procyclingstats.com/" + rel_url,
+                        headers={"User-Agent": UA}, timeout=30).text
+    return Stage(rel_url, html=html, update_html=False)
+
+
+def norm(name: str) -> str:
+    n = unicodedata.normalize("NFD", name)
+    return "".join(c for c in n if unicodedata.category(c) != "Mn")
+
+
+def profile_bucket(stage: Stage) -> str:
+    """flat / med / mtn from the PCS profile icon (p1..p5)."""
+    try:
+        p = (stage.profile_icon() or "").lower()
+    except Exception:
+        p = ""
+    if "p5" in p or "p4" in p:
+        return "mtn"
+    if "p3" in p or "p2" in p:
+        return "med"
+    return "flat"
+
+
+def green_points(rank: int, bucket: str) -> int:
+    table = {"flat": GREEN_FLAT, "med": GREEN_MED, "mtn": GREEN_MTN}[bucket]
+    return table[rank - 1] if 1 <= rank <= len(table) else 0
+
+
+def leader(stage: Stage, method: str):
+    try:
+        rows = getattr(stage, method)()
+        return norm(rows[0]["rider_name"]) if rows else None
+    except Exception:
+        return None
+
+
+def collect(year: int, stage_no: int) -> dict:
+    rel = f"race/tour-de-france/{year}/stage-{stage_no}"
+    s = fetch(rel)
+
+    is_ttt = False
+    try:
+        is_ttt = s.stage_type() == "TTT"
+    except Exception:
+        pass
+
+    bucket = profile_bucket(s)
+    results = s.results() or []
+
+    # GC positions after the stage (for the Sammenlagt bonus), top 15.
+    gc_pos = {}
+    try:
+        for row in (s.gc() or [])[:15]:
+            gc_pos[norm(row["rider_name"])] = row["rank"]
+    except Exception:
+        pass
+
+    rows, dnf, dns = [], [], []
+    for r in results:
+        name = norm(r.get("rider_name", ""))
+        status = (r.get("status") or "DF").upper()
+        rank = r.get("rank")
+        if status == "DNF":
+            dnf.append(name)
+        elif status in ("DNS", "DSQ", "OTL", "DF") and rank is None:
+            if status == "DNS":
+                dns.append(name)
+        if rank is None:
+            continue
+        row = {"rider": name, "pos": int(rank)}
+        if not is_ttt:
+            sp = green_points(int(rank), bucket)
+            if sp:
+                row["sprintPts"] = sp
+        gap = r.get("time")
+        if isinstance(gap, int) and gap > 0:
+            row["gap"] = gap
+        if name in gc_pos:
+            row["gcPos"] = gc_pos[name]
+        rows.append(row)
+
+    block = {
+        "type": "stageResult",
+        "stage": stage_no,
+        "results": rows,
+        "jerseys": {
+            "yellow": leader(s, "gc"),
+            "green": leader(s, "points"),
+            "polka": leader(s, "kom"),
+            "white": leader(s, "youth"),
+        },
+        "dnf": dnf,
+        "dns": dns,
+        "_source": f"procyclingstats:{rel}",
+        "_note": "finish green points estimated from position+profile; intermediate sprints/KOM not auto-filled",
+    }
+
+    if is_ttt:
+        block["isTTT"] = True
+        # team finishing order from the results (teams in result order)
+        order, seen = [], set()
+        for r in results:
+            t = r.get("team_name")
+            if t and t not in seen:
+                seen.add(t); order.append(t)
+        block["tttTeamOrder"] = order[:8]
+    else:
+        # stage podium teams for Holdbonus
+        top3, seen = [], set()
+        for r in results:
+            t = r.get("team_name")
+            if t and t not in seen and r.get("rank"):
+                seen.add(t); top3.append(t)
+            if len(top3) >= 3:
+                break
+        block["teamResultTop3"] = top3
+
+    # strip null jerseys
+    block["jerseys"] = {k: v for k, v in block["jerseys"].items() if v}
+    return block
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--year", type=int, default=2026)
+    ap.add_argument("--stage", type=int, required=True)
+    ap.add_argument("--out", default=None, help="directory to write stage-N.json + latest.json")
+    ap.add_argument("--print", action="store_true", dest="do_print")
+    args = ap.parse_args()
+
+    block = collect(args.year, args.stage)
+    text = json.dumps(block, ensure_ascii=False, indent=2)
+
+    if args.do_print or not args.out:
+        print(text)
+    if args.out:
+        os.makedirs(args.out, exist_ok=True)
+        with open(os.path.join(args.out, f"stage-{args.stage}.json"), "w", encoding="utf-8") as f:
+            f.write(text)
+        with open(os.path.join(args.out, "latest.json"), "w", encoding="utf-8") as f:
+            f.write(text)
+        print(f"wrote stage-{args.stage}.json and latest.json to {args.out}", file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()

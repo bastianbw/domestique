@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: system-ui, -apple-system, sans-serif;
+}
+
+html, body {
+  background: #0a0c0f;
+  color: #f4f6f8;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  /* faint timing-sheet ruling */
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.025) 39px, rgba(255,255,255,0.025) 40px);
+}
+
+/* race-roadbook data type */
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* jersey accents — meaning only */
+.j-yellow { color: #f5d406; }
+.j-green { color: #19b35a; }
+.j-polka { color: #e23b3b; }
+.j-white { color: #ffffff; }
+
+.chip {
+  @apply inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] mono uppercase tracking-wide;
+}
+
+.card {
+  @apply rounded-lg border border-ink-500 bg-ink-800/80 backdrop-blur;
+}
+
+.btn {
+  @apply rounded border border-ink-400 bg-ink-700 px-3 py-1.5 text-sm hover:bg-ink-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
+}
+.btn-accent {
+  @apply rounded border border-yellow/40 bg-yellow/10 px-3 py-1.5 text-sm text-yellow hover:bg-yellow/20 transition-colors;
+}
+
+.input {
+  @apply rounded border border-ink-500 bg-ink-900 px-2 py-1 text-sm mono focus:border-yellow/50 focus:outline-none;
+}
+
+table.sheet { @apply w-full text-sm; }
+table.sheet th {
+  @apply text-left text-[11px] uppercase tracking-wider text-chalk-500 font-medium px-2 py-1.5 border-b border-ink-500 sticky top-0 bg-ink-800 cursor-pointer select-none;
+}
+table.sheet td { @apply px-2 py-1.5 border-b border-ink-700/60 mono tnum; }
+table.sheet tr:hover td { @apply bg-ink-700/40; }
+
+/* elevation profile motif */
+.elev path { vector-effect: non-scaling-stroke; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
+
+::-webkit-scrollbar { height: 8px; width: 8px; }
+::-webkit-scrollbar-thumb { background: #2e3742; border-radius: 4px; }

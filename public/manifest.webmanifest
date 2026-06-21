@@ -1,0 +1,15 @@
+{
+  "name": "Domestique — Tourspillet 2026",
+  "short_name": "Domestique",
+  "description": "Maximise your Holdet.dk team value growth across all 21 Tour de France 2026 stages. Offline-first.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0c0f",
+  "theme_color": "#0a0c0f",
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icons/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

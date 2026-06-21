@@ -1,0 +1,67 @@
+name: Collect stage results
+
+# Best-effort automatic collection during the Tour (4–26 July 2026).
+# Each evening it works out which stage was raced today, scrapes the result from
+# ProCyclingStats, and commits a Domestique import block to data/. The PWA pulls
+# it via the raw GitHub URL (Stages & Data → ①½ Auto-fetch). Manual paste in the
+# app is always the reliable fallback if PCS blocks the runner on a given day.
+
+on:
+  schedule:
+    - cron: '0 19 * 7 *'   # 19:00 UTC every day in July (21:00 CEST)
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: 'Stage number to collect (manual run / backfill)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests procyclingstats
+
+      - name: Determine stage from today's date
+        id: stage
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import datetime, os
+          # Tour de France 2026 date → stage (rest days 13 & 20 July omitted)
+          SCHED = {4:1,5:2,6:3,7:4,8:5,9:6,10:7,11:8,12:9,
+                   14:10,15:11,16:12,17:13,18:14,19:15,
+                   21:16,22:17,23:18,24:19,25:20,26:21}
+          manual = os.environ.get("MANUAL_STAGE", "").strip()
+          if manual:
+              print(f"stage={manual}")
+          else:
+              today = datetime.datetime.utcnow()
+              s = SCHED.get(today.day) if today.month == 7 else None
+              print(f"stage={s if s else ''}")
+          PY
+        env:
+          MANUAL_STAGE: ${{ github.event.inputs.stage }}
+
+      - name: Collect result block
+        if: steps.stage.outputs.stage != ''
+        run: |
+          python scripts/collect_stage.py --year 2026 --stage "${{ steps.stage.outputs.stage }}" --out data
+
+      - name: Commit data
+        if: steps.stage.outputs.stage != ''
+        run: |
+          git config user.name  "domestique-bot"
+          git config user.email "actions@github.com"
+          git add data/
+          git commit -m "results: stage ${{ steps.stage.outputs.stage }}" || echo "no changes"
+          git push

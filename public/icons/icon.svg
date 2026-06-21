@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="96" fill="#0a0c0f"/>
+  <!-- timing-sheet ruling -->
+  <g stroke="#ffffff" stroke-opacity="0.05" stroke-width="2">
+    <line x1="0" y1="170" x2="512" y2="170"/>
+    <line x1="0" y1="256" x2="512" y2="256"/>
+    <line x1="0" y1="342" x2="512" y2="342"/>
+  </g>
+  <!-- elevation profile in jersey colours -->
+  <path d="M48,360 L130,348 L190,300 L250,250 L320,150 L380,300 L430,150 L470,180"
+        fill="none" stroke="#e23b3b" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M48,400 L160,396 L300,400 L470,396" fill="none" stroke="#19b35a" stroke-width="10" stroke-linecap="round"/>
+  <!-- D -->
+  <text x="50%" y="58%" text-anchor="middle" font-family="ui-monospace,Menlo,monospace"
+        font-size="200" font-weight="800" fill="#f5d406">D</text>
+</svg>

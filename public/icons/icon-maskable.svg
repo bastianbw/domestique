@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- maskable: keep important content within the inner 80% safe zone -->
+  <rect width="512" height="512" fill="#0a0c0f"/>
+  <path d="M96,330 L170,320 L220,285 L270,245 L320,180 L370,285 L410,180 L440,205"
+        fill="none" stroke="#e23b3b" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="50%" y="60%" text-anchor="middle" font-family="ui-monospace,Menlo,monospace"
+        font-size="150" font-weight="800" fill="#f5d406">D</text>
+</svg>

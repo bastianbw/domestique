@@ -1,0 +1,133 @@
+// ── Tunable model configuration (single CONFIG, §4) ──────────────────────────
+// Every knob the prediction model uses lives here so it can be inspected on the
+// "How it works" page and nudged by the calibration loop. No magic numbers
+// scattered through the model.
+
+import type { Archetype, StageType, RiskPreset } from './types';
+
+/**
+ * Stage-profile × archetype suitability matrix.
+ * Higher = better suited to contend for the stage win on that profile.
+ * Values are relative strengths (0..1-ish) that shape the head of the
+ * finishing distribution. The calibration loop nudges these toward reality.
+ */
+export type SuitabilityMatrix = Record<StageType, Record<Archetype, number>>;
+
+export const DEFAULT_SUITABILITY: SuitabilityMatrix = {
+  flat: {
+    sprinter: 1.0, puncheur: 0.45, climber: 0.15, gc: 0.35,
+    rouleur: 0.55, breakaway: 0.4, domestique: 0.15,
+  },
+  hilly: {
+    sprinter: 0.4, puncheur: 1.0, climber: 0.6, gc: 0.7,
+    rouleur: 0.55, breakaway: 0.75, domestique: 0.2,
+  },
+  summit: {
+    sprinter: 0.05, puncheur: 0.45, climber: 1.0, gc: 0.95,
+    rouleur: 0.2, breakaway: 0.55, domestique: 0.15,
+  },
+  high_mtn: {
+    sprinter: 0.05, puncheur: 0.4, climber: 1.0, gc: 0.9,
+    rouleur: 0.25, breakaway: 0.7, domestique: 0.15,
+  },
+  ttt: {
+    // On a TTT individual archetype matters little; team strength dominates.
+    sprinter: 0.5, puncheur: 0.5, climber: 0.5, gc: 0.5,
+    rouleur: 0.5, breakaway: 0.5, domestique: 0.5,
+  },
+  hilly_itt: {
+    sprinter: 0.3, puncheur: 0.65, climber: 0.55, gc: 0.85,
+    rouleur: 1.0, breakaway: 0.2, domestique: 0.25,
+  },
+};
+
+/**
+ * Sprint/mountain point earning weights by archetype. Multiplies the share of
+ * the stage's points-on-offer the rider is expected to take.
+ */
+export const SPRINT_POINT_WEIGHT: Record<Archetype, number> = {
+  sprinter: 1.0, puncheur: 0.5, climber: 0.1, gc: 0.25,
+  rouleur: 0.3, breakaway: 0.55, domestique: 0.1,
+};
+
+export const MTN_POINT_WEIGHT: Record<Archetype, number> = {
+  sprinter: 0.05, puncheur: 0.35, climber: 1.0, gc: 0.6,
+  rouleur: 0.15, breakaway: 0.8, domestique: 0.1,
+};
+
+/** How much betting odds (when present) anchor the head of the distribution. */
+export const ODDS_ANCHOR_WEIGHT = 0.7;
+
+/** Form / PCS rank / team-strength blend for shaping the non-odds curve. */
+export const SIGNAL_WEIGHTS = {
+  suitability: 0.45,
+  form: 0.2,
+  pcsRank: 0.2,
+  teamStrength: 0.15,
+};
+
+/** Injury "doubt" dampening factor applied to a rider's contention strength. */
+export const DOUBT_DAMPEN = 0.5;
+
+/** Per-stage DNF base risk by archetype (used for expected −50k penalty). */
+export const BASE_DNF_RISK: Record<Archetype, number> = {
+  sprinter: 0.02, puncheur: 0.02, climber: 0.02, gc: 0.015,
+  rouleur: 0.02, breakaway: 0.03, domestique: 0.025,
+};
+
+/** Field size assumed for the finishing distribution. */
+export const FIELD_SIZE = 176; // ~22 teams × 8
+
+/**
+ * Risk presets reshape the objective. Weights are in DKK per expected unit, so
+ * they sit on the SAME scale as rider xG and actually move the selected team:
+ *  - safe: reward Σ P(top15) (consistency → chase Etapebonus tiers, esp. 8-in-top15=400k)
+ *  - aggressive: reward Σ P(win) (ceiling/variance → stage-win & breakaway upside)
+ *  - balanced/full-EV: neutral, pure expected net growth
+ */
+export const RISK_TUNING: Record<RiskPreset, {
+  top15Weight: number; // DKK added per expected rider in the top-15
+  winWeight: number; // DKK added per expected stage win
+}> = {
+  safe: { top15Weight: 130_000, winWeight: 0 },
+  balanced: { top15Weight: 0, winWeight: 0 },
+  aggressive: { top15Weight: 0, winWeight: 1_300_000 },
+};
+
+/** Horizon planning: discount factor per stage into the future. */
+export const HORIZON_DISCOUNT = 0.75;
+export const DEFAULT_HORIZON_DEPTH = 3;
+
+/** Differential mode: how strongly to lean away from heavily-owned riders. */
+export const OWNERSHIP_LEVERAGE = 0.15;
+
+export interface EngineConfig {
+  suitability: SuitabilityMatrix;
+  sprintPointWeight: Record<Archetype, number>;
+  mtnPointWeight: Record<Archetype, number>;
+  oddsAnchorWeight: number;
+  signalWeights: typeof SIGNAL_WEIGHTS;
+  doubtDampen: number;
+  baseDnfRisk: Record<Archetype, number>;
+  fieldSize: number;
+  riskTuning: typeof RISK_TUNING;
+  horizonDiscount: number;
+  ownershipLeverage: number;
+}
+
+export function defaultConfig(): EngineConfig {
+  // deep-ish clone so calibration mutates a copy, not the module constants
+  return {
+    suitability: JSON.parse(JSON.stringify(DEFAULT_SUITABILITY)),
+    sprintPointWeight: { ...SPRINT_POINT_WEIGHT },
+    mtnPointWeight: { ...MTN_POINT_WEIGHT },
+    oddsAnchorWeight: ODDS_ANCHOR_WEIGHT,
+    signalWeights: { ...SIGNAL_WEIGHTS },
+    doubtDampen: DOUBT_DAMPEN,
+    baseDnfRisk: { ...BASE_DNF_RISK },
+    fieldSize: FIELD_SIZE,
+    riskTuning: JSON.parse(JSON.stringify(RISK_TUNING)),
+    horizonDiscount: HORIZON_DISCOUNT,
+    ownershipLeverage: OWNERSHIP_LEVERAGE,
+  };
+}

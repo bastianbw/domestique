@@ -168,10 +168,12 @@ page inside the app.
 
 - **A · Optimal** — the best legal 8-rider team for the selected stage maximising expected net
   growth (Σ xG + captain bonus + expected Etapebonus − transfer fees), with the risk dial
-  (Safe / Balanced / Aggressive), the Max-EV vs Differential objective toggle, a smart
-  multi-stage horizon, and a concrete sell/buy panel vs your current team.
-- **B · Riders** — sortable/filterable board: xG, xG/M, xG−fee, P(win/top5/top15), captain-EV,
-  with value heatmaps.
+  (Safe / Balanced / Aggressive). Selection is forward-looking: riders are valued over the rest
+  of the current block (auto-horizon to the next rest day, no knob), so it prefers a rider who is
+  better across the upcoming stages. Includes an odds-coverage meter, a concrete sell/buy panel
+  vs your current team, and real transfer accounting (adopting a team debits the bank for net
+  spend + 1% fee; the initial squad and stage-1 build are free).
+- **B · Riders** — sortable/filterable board: xG, xG/M, xG−fee, captain-EV, with value heatmaps.
 - **C · Stages & Data** — the operational hub: import blocks, manual result fallback, start-list
   import, rider/stage editing, calibration log (with undo), team snapshots, export/import/reset.
 - **D · How it works** — the model, the exact rule tables, the schemas, and the independence
@@ -189,10 +191,10 @@ tested and reused independently.
 | `rules.ts` | The exact §1 growth tables (placement, GC, Etapebonus, TTT, Holdbonus, jerseys, late-arrival cap, DNF/DNS, interest, fees, captain). |
 | `stages.ts` | All 21 official 2026 stages preloaded. |
 | `config.ts` | Every tunable model weight in one place. |
-| `probability.ts` | De-vig odds + archetype×profile matrix → finishing distribution. |
-| `growth.ts` | Expectation over the rules → xG, P(win/top5/top15), captain-EV. |
-| `optimizer.ts` | Budget / ≤2-per-team / contract-constrained subset + captain + exact (Poisson-binomial) Etapebonus, risk + differential reshaping. |
-| `horizon.ts` | Smart multi-stage keep-vs-swap. |
+| `probability.ts` | Odds-ladder finishing distribution: de-vig win/top3/top5/top10 markets and pin P(top-k) to them; archetype×profile matrix as the fallback when a rider has no odds. |
+| `growth.ts` | Expectation over the rules → xG, captain-EV. |
+| `optimizer.ts` | Budget / ≤2-per-team / contract-constrained subset + captain + exact (Poisson-binomial) Etapebonus, risk reshaping, forward-looking (block) selection value, fee-gating. |
+| `horizon.ts` | Forward block value to the next rest day (auto-horizon) + keep-vs-swap. |
 | `calibration.ts` | Conservative EMA nudge of stage-type weights from logged results. |
 | `resultLogger.ts` | Apply a `stageResult` block → realised growth, roll prices/bank. |
 | `importSchema.ts` | Parse/validate blocks + tolerant rider-name matching. |

@@ -5,9 +5,9 @@ import { useHydrated } from '@/lib/useHydrated';
 import { StageBar } from '../components/StageBar';
 import { projectField } from '@/engine/growth';
 import type { Archetype } from '@/engine/types';
-import { growth, priceM, pct, kr, ARCHE_LABEL } from '@/lib/format';
+import { growth, priceM, ARCHE_LABEL } from '@/lib/format';
 
-type SortKey = 'xG' | 'perM' | 'xGfee' | 'pTop5' | 'pTop15' | 'pWin' | 'price' | 'captainEV';
+type SortKey = 'xG' | 'perM' | 'xGfee' | 'price' | 'captainEV';
 
 export default function RidersPage() {
   const hydrated = useHydrated();
@@ -61,9 +61,6 @@ export default function RidersPage() {
         case 'xG': return x.p.xG;
         case 'perM': return x.perM;
         case 'xGfee': return x.xGfee;
-        case 'pTop5': return x.p.pTop5;
-        case 'pTop15': return x.p.pTop15;
-        case 'pWin': return x.p.pWin;
         case 'price': return x.r.price;
         case 'captainEV': return x.p.captainEV;
       }
@@ -121,9 +118,6 @@ export default function RidersPage() {
               {th('xG', 'xG')}
               {th('perM', 'xG/M')}
               {th('xGfee', 'xG−fee')}
-              {th('pWin', 'P(win)')}
-              {th('pTop5', 'P(t5)')}
-              {th('pTop15', 'P(t15)')}
               {th('captainEV', 'Capt EV')}
               <th></th>
             </tr>
@@ -144,9 +138,6 @@ export default function RidersPage() {
                 <td style={{ background: `rgba(25,179,90,${(Math.max(0, p.xG) / maxXg * 0.5).toFixed(3)})` }}>{growth(p.xG)}</td>
                 <td style={{ background: `rgba(245,212,6,${(Math.max(0, perM) / maxPerM * 0.4).toFixed(3)})` }}>{growth(perM)}</td>
                 <td className={xGfee < 0 ? 'j-polka' : ''}>{growth(xGfee)}</td>
-                <td>{pct(p.pWin)}</td>
-                <td>{pct(p.pTop5)}</td>
-                <td>{pct(p.pTop15)}</td>
                 <td className="text-chalk-300">{growth(p.captainEV)}</td>
                 <td>
                   <button

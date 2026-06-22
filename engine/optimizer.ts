@@ -9,7 +9,7 @@ import type {
   OptimizerInput,
   OptimizedTeam,
 } from './types';
-import { etapebonus, transferFee, ETAPEBONUS_TABLE } from './rules';
+import { etapebonus, transferFee } from './rules';
 import { defaultConfig } from './config';
 
 const TEAM_SIZE = 8;
@@ -62,6 +62,12 @@ export function scoreTeam(ctx: ScoreContext, riderIds: string[]): OptimizedTeam 
 
   const expectedGrowth = projs.reduce((a, p) => a + p.xG, 0);
 
+  // Selection value: forward-looking (to the next rest day) when supplied, else
+  // the single-stage xG. Drives WHICH riders to own; captain/Etapebonus below
+  // still use the immediate stage.
+  const fwd = input.forwardValueById;
+  const selectionValue = projs.reduce((a, p) => a + (fwd?.[p.riderId] ?? p.xG), 0);
+
   // Best captain = the selected rider with the highest positive xG. Their
   // positive growth is paid again.
   let captainId = riderIds[0];
@@ -74,23 +80,26 @@ export function scoreTeam(ctx: ScoreContext, riderIds: string[]): OptimizedTeam 
   const expectedEtape = expectedEtapebonus(projs.map((p) => p.pTop15));
   const expectedHold = projs.reduce((a, p) => a + p.breakdown.holdbonus, 0);
 
-  // Transfer fees: 1% of price for any rider NOT already owned.
+  // Transfer fees: 1% of price for any rider NOT already owned — but only once
+  // the race has started (the initial squad and stage-1 build are free).
   const buys = riderIds.filter((id) => !owned.has(id));
   const sells = [...owned].filter((id) => !riderIds.includes(id));
-  const transferFees = buys.reduce(
-    (a, id) => a + transferFee(riderById.get(id)!.price),
-    0,
-  );
+  const feesApply = input.chargeFees !== false;
+  const transferFees = feesApply
+    ? buys.reduce((a, id) => a + transferFee(riderById.get(id)!.price), 0)
+    : 0;
 
   const spend = riders.reduce((a, r) => a + r.price, 0);
 
   const expectedGrowthAfterFees =
     expectedGrowth + captainBonus + expectedEtape - transferFees;
 
-  // ── Objective with risk + differential reshaping ──
-  // Risk weights are DKK-scaled (see config) so they genuinely shift the team:
-  // 'safe' tilts toward consistent top-15 riders, 'aggressive' toward winners.
-  let score = expectedGrowthAfterFees;
+  // ── Objective with risk reshaping ──
+  // Score on forward-looking selection value (+ immediate captain/Etapebonus,
+  // − fees). Risk weights are DKK-scaled (see config) so they genuinely shift
+  // the team: 'safe' tilts toward consistent top-15 riders, 'aggressive' toward
+  // winners. Objective is pure expected growth (Max EV) — no differential mode.
+  let score = selectionValue + captainBonus + expectedEtape - transferFees;
 
   if (risk.top15Weight) {
     const sumTop15 = projs.reduce((a, p) => a + p.pTop15, 0);
@@ -104,15 +113,6 @@ export function scoreTeam(ctx: ScoreContext, riderIds: string[]): OptimizedTeam 
     // lottery upside: pull toward breakaway specialists (low floor, high ceiling)
     const sumBreak = riders.reduce((a, r) => a + (r.breakawayTendency ?? 0) / 100, 0);
     score += risk.breakawayWeight * sumBreak;
-  }
-  if (input.differential) {
-    // Lean away from heavily-owned "template" riders: penalise ownership,
-    // reward leverage from contrarian picks.
-    const ownPenalty = riders.reduce(
-      (a, r) => a + (r.ownershipPct ?? 0) / 100,
-      0,
-    );
-    score -= cfg.ownershipLeverage * ownPenalty * ETAPEBONUS_TABLE[3];
   }
 
   return {

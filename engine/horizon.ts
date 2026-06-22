@@ -7,6 +7,7 @@ import type { Rider, Stage } from './types';
 import { EngineConfig, defaultConfig, DEFAULT_HORIZON_DEPTH } from './config';
 import { projectField } from './growth';
 import { transferFee } from './rules';
+import { autoHorizonDepth } from './stages';
 
 export interface HorizonValue {
   riderId: string;
@@ -53,6 +54,26 @@ export function horizonValues(
     out[r.id] = { riderId: r.id, value, perStage, keyStages };
   }
   return out;
+}
+
+/**
+ * Forward-looking selection value per rider for the optimizer: the discounted
+ * sum of projected xG from `fromStage` to the next rest day (auto depth — no
+ * user knob). Feed the result into OptimizerInput.forwardValueById so the squad
+ * is chosen for the rest of the current block, not just today.
+ */
+export function forwardValues(
+  riders: Rider[],
+  allStages: Stage[],
+  fromStage: number,
+  cfg: EngineConfig = defaultConfig(),
+): { values: Record<string, number>; hv: Record<string, HorizonValue>; depth: number; stages: number[] } {
+  const upcoming = allStages.filter((s) => s.stage >= fromStage);
+  const depth = autoHorizonDepth(fromStage);
+  const hv = horizonValues(riders, upcoming, cfg, depth);
+  const values: Record<string, number> = {};
+  for (const id of Object.keys(hv)) values[id] = hv[id].value;
+  return { values, hv, depth, stages: upcoming.slice(0, depth).map((s) => s.stage) };
 }
 
 export interface KeepSwapDecision {

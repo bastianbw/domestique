@@ -53,6 +53,12 @@ export function contentionStrength(
     w.pcsRank * rankScore +
     w.teamStrength * teamScore;
 
+  // Lead-out quality is a real predictive signal for sprinters on flat days:
+  // a strong train turns a fast finisher into a stage-win contender.
+  if (rider.archetype === 'sprinter' && stage.type === 'flat' && rider.sprintTrainSupport) {
+    strength += 0.10 * (rider.sprintTrainSupport / 100);
+  }
+
   // On a TTT, team strength dominates the result entirely.
   if (stage.type === 'ttt') {
     strength = 0.25 * strength + 0.75 * teamScore;
@@ -61,6 +67,92 @@ export function contentionStrength(
   if (rider.injury === 'doubt') strength *= cfg.doubtDampen;
 
   return Math.max(0, strength);
+}
+
+// ── Odds-ladder distribution ─────────────────────────────────────────────────
+// Bookmaker margins per market (place markets carry a wider margin). Used to
+// de-vig implied probabilities when field coverage is too sparse to normalise
+// to the exact slot count.
+const MARKET_MARGIN: Record<number, number> = { 1: 1.12, 3: 1.18, 5: 1.2, 10: 1.25 };
+
+/**
+ * De-vig one market across the field. `slots` = how many riders finish inside
+ * the market (1 for win, 3 for top-3, …). With full coverage we normalise the
+ * implied probabilities to sum to `slots`; with sparse coverage we fall back to
+ * a fixed margin so a lone favourite isn't over-inflated.
+ */
+export function devigMarket(odds: Array<number | undefined>, slots: number): number[] {
+  const implied = odds.map((o) => impliedProb(o) ?? 0);
+  const S = implied.reduce((a, b) => a + b, 0);
+  if (S <= 0) return implied.map(() => 0);
+  const divisor = Math.max(S / slots, MARKET_MARGIN[slots] ?? 1.15);
+  return implied.map((p) => (p > 0 ? clamp01(p / divisor) : 0));
+}
+
+interface Anchor { k: number; q: number; }
+
+/**
+ * Build a finishing distribution that HITS the de-vigged odds at each market
+ * threshold. P(top-k) at every supplied market equals the de-vigged number, so
+ * pWin ≈ the de-vigged win odds and the placement expectation is calibrated to
+ * the market rather than to a single hand-tuned decay parameter.
+ */
+function buildDistributionFromAnchors(
+  riderId: string,
+  rawAnchors: Anchor[],
+  pDNF: number,
+  headStrength: number,
+  N: number,
+): RiderDistribution {
+  const finishMass = 1 - pDNF;
+  const probs = new Array<number>(N).fill(0);
+
+  // Make cumulative targets monotonic and bounded by the finishing mass.
+  const pts = [...rawAnchors].sort((a, b) => a.k - b.k);
+  const clamped: Anchor[] = [];
+  let prev = 0;
+  for (const a of pts) {
+    const q = clamp(a.q, prev, finishMass);
+    clamped.push({ k: a.k, q });
+    prev = q;
+  }
+
+  // Tail sharpness: stronger riders pile their remaining mass nearer the front.
+  const r = clamp(0.05 + headStrength * 0.3, 0.05, 0.6);
+
+  let lastK = 0;
+  let lastQ = 0;
+  for (const { k, q } of clamped) {
+    distributeFrontHeavy(probs, lastK, k - 1, q - lastQ);
+    lastK = k;
+    lastQ = q;
+  }
+  // Remaining mass beyond the last anchor decays geometrically to the back.
+  const remaining = finishMass - lastQ;
+  if (remaining > 1e-9 && lastK < N) {
+    distributeGeometric(probs, lastK, N - 1, remaining, r);
+  }
+
+  return { riderId, probs, pDNF };
+}
+
+/** Spread `mass` over inclusive index range [i0..i1] with a front-heavy taper. */
+function distributeFrontHeavy(probs: number[], i0: number, i1: number, mass: number): void {
+  if (mass <= 0 || i1 < i0) return;
+  if (i1 === i0) { probs[i0] += mass; return; }
+  const ratio = 0.65;
+  let wSum = 0;
+  for (let i = i0; i <= i1; i++) wSum += Math.pow(ratio, i - i0);
+  for (let i = i0; i <= i1; i++) probs[i] += mass * (Math.pow(ratio, i - i0) / wSum);
+}
+
+/** Spread `mass` over [i0..i1] with geometric decay rate `r` (front-loaded). */
+function distributeGeometric(probs: number[], i0: number, i1: number, mass: number, r: number): void {
+  if (mass <= 0 || i1 < i0) return;
+  let wSum = 0;
+  for (let i = i0; i <= i1; i++) wSum += Math.pow(1 - r, i - i0);
+  if (wSum <= 0) { probs[i0] += mass; return; }
+  for (let i = i0; i <= i1; i++) probs[i] += mass * (Math.pow(1 - r, i - i0) / wSum);
 }
 
 /**
@@ -139,6 +231,7 @@ export function buildField(
   cfg: EngineConfig = defaultConfig(),
 ): RiderDistribution[] {
   const starters = riders.filter((r) => r.injury !== 'out');
+  const N = cfg.fieldSize;
 
   // Field strength normaliser = sum of contention strengths.
   const fieldStrength = starters.reduce(
@@ -146,22 +239,39 @@ export function buildField(
     0,
   );
 
-  // De-vig win odds across riders that supplied them.
-  const haveOdds = starters.some((r) => r.odds?.win);
-  let devigByIndex: Record<string, number> = {};
-  if (haveOdds) {
-    const ids = starters.map((r) => r.id);
-    const wins = starters.map((r) => r.odds?.win);
-    const devigged = devigWinOdds(wins);
-    ids.forEach((id, i) => (devigByIndex[id] = devigged[i]));
+  // De-vig each odds market across the field, once. A rider is "odds-driven"
+  // when it supplied at least one market; those get the calibrated anchor curve.
+  const ids = starters.map((r) => r.id);
+  const markets: Array<{ k: number; key: keyof NonNullable<Rider['odds']> }> = [
+    { k: 1, key: 'win' }, { k: 3, key: 'top3' }, { k: 5, key: 'top5' }, { k: 10, key: 'top10' },
+  ];
+  const devigByMarket: Record<number, Record<string, number>> = {};
+  for (const m of markets) {
+    const col = starters.map((r) => r.odds?.[m.key]);
+    if (!col.some((o) => o && o > 1)) continue;
+    const dv = devigMarket(col, m.k);
+    const map: Record<string, number> = {};
+    ids.forEach((id, i) => { if (dv[i] > 0) map[id] = dv[i]; });
+    devigByMarket[m.k] = map;
   }
 
   return riders.map((r) => {
     if (r.injury === 'out') {
-      return { riderId: r.id, probs: new Array(cfg.fieldSize).fill(0), pDNF: 0 };
+      return { riderId: r.id, probs: new Array(N).fill(0), pDNF: 0 };
     }
-    const dw = haveOdds && r.odds?.win ? devigByIndex[r.id] : undefined;
-    return buildDistribution(r, stage, fieldStrength, cfg, dw);
+    const anchors: Anchor[] = [];
+    for (const m of markets) {
+      const q = devigByMarket[m.k]?.[r.id];
+      if (typeof q === 'number' && q > 0) anchors.push({ k: m.k, q });
+    }
+    if (anchors.length > 0) {
+      const raw = contentionStrength(r, stage, cfg);
+      const rel = fieldStrength > 0 ? raw / fieldStrength : 0;
+      const pDNF = riderDnfRisk(r, stage, cfg);
+      return buildDistributionFromAnchors(r.id, anchors, pDNF, rel, N);
+    }
+    // No odds for this rider → model-strength geometric fallback (unchanged).
+    return buildDistribution(r, stage, fieldStrength, cfg);
   });
 }
 

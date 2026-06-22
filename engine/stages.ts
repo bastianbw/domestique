@@ -47,3 +47,15 @@ export function isTTT(stage: Stage): boolean {
 export function isITT(stage: Stage): boolean {
   return stage.type === 'hilly_itt';
 }
+
+/**
+ * Stage blocks between rest days: 1–9, 10–15, 16–21 (rest days Jul13 & Jul20).
+ * The forward-planning horizon is "how many stages until the next rest day",
+ * so the optimizer naturally values a rider over the rest of the current block
+ * rather than a fixed user-chosen depth. Capped so far stages don't dominate.
+ */
+export function autoHorizonDepth(fromStage: number, cap = 4): number {
+  const blockEnds = [9, 15, LAST_STAGE];
+  const end = blockEnds.find((e) => e >= fromStage) ?? LAST_STAGE;
+  return Math.max(1, Math.min(cap, end - fromStage + 1));
+}

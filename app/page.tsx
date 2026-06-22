@@ -5,9 +5,9 @@ import { useHydrated } from '@/lib/useHydrated';
 import { StageBar } from './components/StageBar';
 import { projectField } from '@/engine/growth';
 import { optimize } from '@/engine/optimizer';
-import { horizonValues, keepVsSwap } from '@/engine/horizon';
+import { forwardValues } from '@/engine/horizon';
 import type { OptimizerInput, RiskPreset, OptimizedTeam } from '@/engine/types';
-import { kr, growth, priceM, pct, ARCHE_LABEL } from '@/lib/format';
+import { kr, growth, priceM, ARCHE_LABEL } from '@/lib/format';
 
 const RISKS: RiskPreset[] = ['safe', 'balanced', 'aggressive'];
 
@@ -29,6 +29,15 @@ export default function OptimalPage() {
   );
   const buyingPower = s.bank + ownedValue;
 
+  // Forward-looking value (to the next rest day) baked into selection — no knob.
+  const forward = useMemo(
+    () => (hydrated ? forwardValues(s.riders, s.stages, s.selectedStage, s.config) : null),
+    [hydrated, s.riders, s.stages, s.selectedStage, s.config],
+  );
+
+  // Fees only bite once the race has started (initial squad / stage-1 are free).
+  const chargeFees = s.loggedStages.length > 0;
+
   const baseInput = useMemo<OptimizerInput>(() => ({
     stage,
     riders: s.riders,
@@ -38,10 +47,22 @@ export default function OptimalPage() {
     teamType: s.teamType,
     contractsRemaining: effectiveContracts(s.contractsRemaining),
     risk: s.risk,
-    differential: s.differential,
-  }), [stage, s.riders, projections, buyingPower, s.currentTeamIds, s.teamType, s.contractsRemaining, s.risk, s.differential]);
+    forwardValueById: forward?.values,
+    chargeFees,
+  }), [stage, s.riders, projections, buyingPower, s.currentTeamIds, s.teamType, s.contractsRemaining, s.risk, forward, chargeFees]);
 
   const recommended = useMemo(() => (hydrated ? optimize(baseInput) : null), [hydrated, baseInput]);
+
+  // Odds coverage for this stage: how much of the field is market-driven vs pure
+  // model guesswork. Low coverage → trust the EV less.
+  const oddsCoverage = useMemo(() => {
+    const starters = s.riders.filter((r) => r.injury !== 'out');
+    const withOdds = starters.filter((r) => {
+      const o = r.odds;
+      return !!o && (!!o.win || !!o.top3 || !!o.top5 || !!o.top10);
+    }).length;
+    return { withOdds, total: starters.length, pct: starters.length ? withOdds / starters.length : 0 };
+  }, [s.riders]);
 
   // The three risk presets side by side (§8.2 "show how the team changes").
   const presets = useMemo(() => {
@@ -51,15 +72,7 @@ export default function OptimalPage() {
     return out;
   }, [hydrated, baseInput]);
 
-  // Horizon reasoning across the upcoming stages.
-  const horizon = useMemo(() => {
-    if (!hydrated || !recommended) return null;
-    const upcoming = s.stages.filter((x) => x.stage >= s.selectedStage).slice(0, s.horizonDepth);
-    const hv = horizonValues(s.riders, upcoming, s.config, s.horizonDepth);
-    return { hv, upcoming };
-  }, [hydrated, recommended, s.riders, s.stages, s.selectedStage, s.config, s.horizonDepth]);
-
-  if (!hydrated || !recommended) return <div className="mono p-8 text-center text-chalk-500">Optimising…</div>;
+  if (!hydrated || !recommended || !forward) return <div className="mono p-8 text-center text-chalk-500">Optimising…</div>;
 
   const riderById = new Map(s.riders.map((r) => [r.id, r]));
   const projById = new Map(projections.map((p) => [p.riderId, p]));
@@ -69,7 +82,7 @@ export default function OptimalPage() {
       <StageBar />
 
       {/* control bar */}
-      <div className="card mb-3 grid grid-cols-2 gap-3 p-3 sm:grid-cols-4">
+      <div className="card mb-3 grid grid-cols-2 gap-3 p-3 sm:grid-cols-3">
         <label className="block">
           <span className="mono text-[11px] text-chalk-500">BANK (kr)</span>
           <input
@@ -92,32 +105,32 @@ export default function OptimalPage() {
               </button>
             ))}
           </div>
+          <span className="mono text-[10px] text-chalk-500">
+            Max EV · plans through stage {forward.stages[forward.stages.length - 1] ?? s.selectedStage}{!chargeFees ? ' · transfers free (pre-race)' : ''}
+          </span>
         </div>
         <div>
-          <span className="mono text-[11px] text-chalk-500">OBJECTIVE</span>
-          <div className="mt-1 flex gap-1">
-            <button onClick={() => s.setDifferential(false)}
-              className={`mono flex-1 rounded px-1 py-1 text-[11px] ${!s.differential ? 'bg-green text-ink-900 font-bold' : 'bg-ink-700 text-chalk-300'}`}>Max EV</button>
-            <button onClick={() => s.setDifferential(true)}
-              className={`mono flex-1 rounded px-1 py-1 text-[11px] ${s.differential ? 'bg-green text-ink-900 font-bold' : 'bg-ink-700 text-chalk-300'}`}>Differential</button>
+          <span className="mono text-[11px] text-chalk-500">ODDS COVERAGE</span>
+          <div className="mt-2 h-2 w-full overflow-hidden rounded bg-ink-700">
+            <div className={`h-full ${oddsCoverage.pct >= 0.5 ? 'bg-green' : oddsCoverage.pct >= 0.2 ? 'bg-yellow' : 'bg-polka'}`}
+              style={{ width: `${Math.round(oddsCoverage.pct * 100)}%` }} />
           </div>
+          <span className="mono text-[10px] text-chalk-500">
+            {oddsCoverage.withOdds}/{oddsCoverage.total} riders have odds ({Math.round(oddsCoverage.pct * 100)}%)
+            {oddsCoverage.pct < 0.2 ? ' — mostly model guesswork; paste an odds block' : ''}
+          </span>
         </div>
-        <label className="block">
-          <span className="mono text-[11px] text-chalk-500">HORIZON (stages)</span>
-          <input type="number" min={1} max={8} className="input mt-1 w-full"
-            value={s.horizonDepth} onChange={(e) => s.setHorizonDepth(Number(e.target.value))} />
-        </label>
       </div>
 
       <div className="grid gap-3 lg:grid-cols-3">
         {/* recommended team */}
         <div className="card p-3 lg:col-span-2">
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="mono text-sm font-bold">RECOMMENDED XI <span className="text-chalk-500">· {s.risk}{s.differential ? ' · differential' : ''}</span></h2>
+            <h2 className="mono text-sm font-bold">RECOMMENDED XI <span className="text-chalk-500">· {s.risk} · max EV</span></h2>
             <button className="btn-accent" onClick={() => s.setTeam(recommended.riderIds, recommended.captainId)}>Adopt this team</button>
           </div>
           <table className="sheet">
-            <thead><tr><th>Rider</th><th>Team</th><th>Arch</th><th>Price</th><th>xG</th><th>P(t15)</th><th></th></tr></thead>
+            <thead><tr><th>Rider</th><th>Team</th><th>Arch</th><th>Price</th><th>xG (stage)</th><th>Block</th><th></th></tr></thead>
             <tbody>
               {recommended.riderIds
                 .map((id) => ({ r: riderById.get(id)!, p: projById.get(id)! }))
@@ -133,7 +146,7 @@ export default function OptimalPage() {
                     <td className="text-chalk-500">{ARCHE_LABEL[r.archetype]}</td>
                     <td>{priceM(r.price)}</td>
                     <td className="j-green">{growth(p.xG)}</td>
-                    <td>{pct(p.pTop15)}</td>
+                    <td className="text-chalk-300" title="discounted xG through the rest of this block (to the next rest day)">{growth(forward.values[r.id] ?? 0)}</td>
                     <td>{recommended.captainId !== r.id && (
                       <button className="mono text-[11px] text-chalk-500 hover:j-yellow" onClick={() => s.setCaptain(r.id)}>set ©</button>
                     )}</td>
@@ -234,25 +247,27 @@ export default function OptimalPage() {
         );
       })()}
 
-      {/* horizon reasoning */}
-      {horizon && (
-        <div className="card mt-3 p-3">
-          <h2 className="mono mb-2 text-sm font-bold">HORIZON · stages {horizon.upcoming.map((x) => x.stage).join(', ')}</h2>
-          <div className="grid gap-1 sm:grid-cols-2">
-            {recommended.riderIds
-              .map((id) => ({ r: riderById.get(id)!, hv: horizon.hv[id] }))
-              .sort((a, b) => (b.hv?.value ?? 0) - (a.hv?.value ?? 0))
-              .map(({ r, hv }) => (
-                <div key={r.id} className="mono text-[11px] text-chalk-300">
-                  <span className="text-chalk-100">{r.name}</span>:{' '}
-                  {hv?.keyStages.length
-                    ? <>suits stages <span className="j-green">{hv.keyStages.join(', ')}</span> · horizon {growth(hv.value)}</>
-                    : <>low upcoming value · horizon {growth(hv?.value ?? 0)}</>}
-                </div>
-              ))}
-          </div>
+      {/* why these riders — forward value to the next rest day */}
+      <div className="card mt-3 p-3">
+        <h2 className="mono mb-2 text-sm font-bold">WHY THESE RIDERS · through stage {forward.stages[forward.stages.length - 1] ?? s.selectedStage}</h2>
+        <p className="mono mb-2 text-[10px] text-chalk-500">
+          The squad is chosen for its value over the rest of this block (auto-horizon to the next rest day), not just today —
+          so a rider who is better across the upcoming stages is preferred even if someone else edges this one stage.
+        </p>
+        <div className="grid gap-1 sm:grid-cols-2">
+          {recommended.riderIds
+            .map((id) => ({ r: riderById.get(id)!, hv: forward.hv[id] }))
+            .sort((a, b) => (b.hv?.value ?? 0) - (a.hv?.value ?? 0))
+            .map(({ r, hv }) => (
+              <div key={r.id} className="mono text-[11px] text-chalk-300">
+                <span className="text-chalk-100">{r.name}</span>:{' '}
+                {hv?.keyStages.length
+                  ? <>peaks on stages <span className="j-green">{hv.keyStages.join(', ')}</span> · block value {growth(hv.value)}</>
+                  : <>steady · block value {growth(hv?.value ?? 0)}</>}
+              </div>
+            ))}
         </div>
-      )}
+      </div>
 
       {/* preset comparison */}
       <div className="card mt-3 p-3">

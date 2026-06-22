@@ -47,8 +47,6 @@ interface AppState {
   /** null = unlimited (Guld). Number = remaining contracts (Basis). */
   contractsRemaining: number | null;
   risk: RiskPreset;
-  differential: boolean;
-  horizonDepth: number;
   /** optional URL the auto-collector publishes result blocks to (raw JSON) */
   autoFetchUrl: string;
   config: EngineConfig;
@@ -67,8 +65,6 @@ interface AppState {
   setTeamType: (t: TeamType) => void;
   setContracts: (n: number | null) => void;
   setRisk: (r: RiskPreset) => void;
-  setDifferential: (b: boolean) => void;
-  setHorizonDepth: (n: number) => void;
   setAutoFetchUrl: (u: string) => void;
   fetchResult: (stage?: number) => Promise<{ ok: boolean; messages: string[] }>;
 
@@ -102,8 +98,6 @@ const FRESH = () => ({
   teamType: 'guld' as TeamType,
   contractsRemaining: null as number | null,
   risk: 'balanced' as RiskPreset,
-  differential: false,
-  horizonDepth: 3,
   // Pre-wired to the GitHub Action's published feed; harmlessly 404s until the
   // collector runs (during the Tour). Editable on Stages & Data → ①½.
   autoFetchUrl: 'https://raw.githubusercontent.com/bastianbw/domestique/main/data/latest.json',
@@ -127,8 +121,6 @@ export const useStore = create<AppState>()(
         set({ teamType: t, contractsRemaining: t === 'guld' ? null : (get().contractsRemaining ?? 8) }),
       setContracts: (n) => set({ contractsRemaining: n }),
       setRisk: (r) => set({ risk: r }),
-      setDifferential: (b) => set({ differential: b }),
-      setHorizonDepth: (n) => set({ horizonDepth: Math.max(1, Math.min(8, n)) }),
       setAutoFetchUrl: (u) => set({ autoFetchUrl: u.trim() }),
 
       // Pull a published result block from the auto-collector URL and import it.
@@ -149,16 +141,12 @@ export const useStore = create<AppState>()(
 
       toggleRider: (id) => {
         const ids = get().currentTeamIds;
-        if (ids.includes(id)) {
-          const next = ids.filter((x) => x !== id);
-          set({ currentTeamIds: next, captainId: get().captainId === id ? undefined : get().captainId });
-        } else if (ids.length < 8) {
-          set({ currentTeamIds: [...ids, id] });
-        }
+        if (ids.includes(id)) reconcileTeam(get, set, ids.filter((x) => x !== id));
+        else if (ids.length < 8) reconcileTeam(get, set, [...ids, id]);
       },
-      setTeam: (ids, captainId) => set({ currentTeamIds: ids.slice(0, 8), captainId }),
+      setTeam: (ids, captainId) => reconcileTeam(get, set, ids.slice(0, 8), captainId),
       setCaptain: (id) => set({ captainId: id }),
-      clearTeam: () => set({ currentTeamIds: [], captainId: undefined }),
+      clearTeam: () => reconcileTeam(get, set, []),
 
       updateRider: (id, patch) =>
         set({ riders: get().riders.map((r) => (r.id === id ? { ...r, ...patch } : r)) }),
@@ -297,7 +285,7 @@ export const useStore = create<AppState>()(
       deleteSnapshot: (id) => set({ snapshots: get().snapshots.filter((s) => s.id !== id) }),
       loadSnapshot: (id) => {
         const s = get().snapshots.find((x) => x.id === id);
-        if (s) set({ currentTeamIds: [...s.riderIds], captainId: s.captainId });
+        if (s) reconcileTeam(get, set, [...s.riderIds], s.captainId);
       },
 
       resetAll: () => set({ ...FRESH() }),
@@ -309,6 +297,40 @@ export const useStore = create<AppState>()(
     },
   ),
 );
+
+// ── team change with real transfer accounting ────────────────────────────────
+// Every team mutation moves cash: selling a rider returns their current value to
+// the bank, buying one spends it, and a 1% fee is charged on the bought value
+// once the race has started (loggedStages non-empty — the initial squad and
+// stage-1 build are free). This keeps bank a true wallet and preserves the
+// invariant bank + team value ≈ constant (minus fees).
+function reconcileTeam(
+  get: () => AppState,
+  set: (p: Partial<AppState>) => void,
+  nextIds: string[],
+  nextCaptain?: string,
+): void {
+  const st = get();
+  const cur = new Set(st.currentTeamIds);
+  const next = new Set(nextIds);
+  const priceOf = (id: string) => st.riders.find((r) => r.id === id)?.price ?? 0;
+
+  let bankDelta = 0;
+  for (const id of st.currentTeamIds) if (!next.has(id)) bankDelta += priceOf(id); // sell → refund
+  let bought = 0;
+  for (const id of nextIds) if (!cur.has(id)) { bankDelta -= priceOf(id); bought += priceOf(id); }
+
+  const feesApply = st.loggedStages.length > 0;
+  const fee = feesApply ? Math.round(bought * 0.01) : 0;
+  bankDelta -= fee;
+
+  const captain =
+    nextCaptain !== undefined
+      ? nextCaptain
+      : next.has(st.captainId ?? '') ? st.captainId : undefined;
+
+  set({ currentTeamIds: nextIds.slice(0, 8), captainId: captain, bank: st.bank + bankDelta });
+}
 
 // ── helpers used by importRaw ────────────────────────────────────────────────
 

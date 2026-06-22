@@ -118,8 +118,18 @@ export interface OptimizerInput {
   teamType: TeamType;
   contractsRemaining: number; // Infinity for guld
   risk: RiskPreset;
-  /** differential-aware objective: subtract leverage of template riders */
-  differential?: boolean;
+  /**
+   * Forward-looking selection value per rider (discounted xG to the next rest
+   * day). When present the optimizer picks the squad on this rather than the
+   * single-stage xG, so it prefers a rider who is better across the block.
+   * Defaults to each rider's current-stage xG.
+   */
+  forwardValueById?: Record<string, number>;
+  /**
+   * Whether the 1% transfer fee applies. False before the race starts (the
+   * initial squad and any stage-1 changes are free). Defaults to true.
+   */
+  chargeFees?: boolean;
 }
 
 export interface OptimizedTeam {

@@ -100,6 +100,11 @@ export function scoreTeam(ctx: ScoreContext, riderIds: string[]): OptimizedTeam 
     const sumWin = projs.reduce((a, p) => a + p.pWin, 0);
     score += risk.winWeight * sumWin;
   }
+  if (risk.breakawayWeight) {
+    // lottery upside: pull toward breakaway specialists (low floor, high ceiling)
+    const sumBreak = riders.reduce((a, r) => a + (r.breakawayTendency ?? 0) / 100, 0);
+    score += risk.breakawayWeight * sumBreak;
+  }
   if (input.differential) {
     // Lean away from heavily-owned "template" riders: penalise ownership,
     // reward leverage from contrarian picks.

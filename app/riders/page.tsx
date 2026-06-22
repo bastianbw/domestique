@@ -89,6 +89,8 @@ export default function RidersPage() {
     <div>
       <StageBar />
 
+      <MyTeamBar />
+
       <div className="card mb-3 flex flex-wrap items-center gap-2 p-2">
         <input className="input w-40" placeholder="Search rider…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select className="input" value={arch} onChange={(e) => setArch(e.target.value as any)}>
@@ -162,6 +164,61 @@ export default function RidersPage() {
       <p className="mono mt-2 text-[11px] text-chalk-500">
         xG = expected DKK growth this stage · xG/M = growth per million · xG−fee = after the 1% transfer fee (0 if owned).
       </p>
+    </div>
+  );
+}
+
+function MyTeamBar() {
+  const riders = useStore((s) => s.riders);
+  const ids = useStore((s) => s.currentTeamIds);
+  const captainId = useStore((s) => s.captainId);
+  const bank = useStore((s) => s.bank);
+  const toggleRider = useStore((s) => s.toggleRider);
+  const setCaptain = useStore((s) => s.setCaptain);
+  const clearTeam = useStore((s) => s.clearTeam);
+  const saveSnapshot = useStore((s) => s.saveSnapshot);
+
+  const byId = new Map(riders.map((r) => [r.id, r]));
+  const picked = ids.map((id) => byId.get(id)).filter(Boolean) as typeof riders;
+  const spend = picked.reduce((a, r) => a + r.price, 0);
+
+  // legality
+  const teamCounts: Record<string, number> = {};
+  picked.forEach((r) => { teamCounts[r.team] = (teamCounts[r.team] ?? 0) + 1; });
+  const over2 = Object.entries(teamCounts).filter(([, c]) => c > 2).map(([t]) => t);
+  const buyingPower = bank + spend;
+
+  return (
+    <div className="card mb-3 p-2.5">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <span className="mono text-sm font-bold">MY TEAM</span>
+        <span className={`mono text-[11px] ${ids.length === 8 ? 'j-green' : 'text-chalk-500'}`}>{ids.length}/8</span>
+        <span className="mono text-[11px] text-chalk-500">spend {priceM(spend)} · buying power {priceM(buyingPower)}</span>
+        {over2.length > 0 && <span className="chip bg-polka/15 j-polka">&gt;2 from {over2.join(', ')}</span>}
+        <span className="mono ml-auto text-[10px] text-chalk-500">tap a rider below to add/remove · saved automatically</span>
+        <button className="btn !py-0.5" disabled={ids.length === 0}
+          onClick={() => { const n = prompt('Name this team snapshot'); if (n) saveSnapshot(n); }}>Save snapshot</button>
+        <button className="btn !py-0.5 j-polka" disabled={ids.length === 0}
+          onClick={() => { if (confirm('Clear your team?')) clearTeam(); }}>Clear</button>
+      </div>
+      {ids.length === 0 ? (
+        <p className="mono text-[11px] text-chalk-500">
+          No riders yet. Tap <span className="j-green">+ buy</span> on any rider in the table below to build your 8.
+          Your team is remembered in this browser and is the baseline the optimizer builds from next stage.
+        </p>
+      ) : (
+        <div className="flex flex-wrap gap-1.5">
+          {picked.map((r) => (
+            <span key={r.id} className={`chip border ${captainId === r.id ? 'border-yellow/60 j-yellow' : 'border-ink-500 text-chalk-200'}`}>
+              <button title="set captain" onClick={() => setCaptain(r.id)} className="hover:j-yellow">
+                {captainId === r.id ? '©' : '○'}
+              </button>
+              {r.name}
+              <button title="remove" onClick={() => toggleRider(r.id)} className="ml-0.5 j-polka hover:opacity-70">×</button>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

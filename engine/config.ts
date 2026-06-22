@@ -86,12 +86,17 @@ export const FIELD_SIZE = 176; // ~22 teams × 8
  *  - balanced/full-EV: neutral, pure expected net growth
  */
 export const RISK_TUNING: Record<RiskPreset, {
-  top15Weight: number; // DKK added per expected rider in the top-15
-  winWeight: number; // DKK added per expected stage win
+  top15Weight: number; // DKK added per expected rider in the top-15 (consistency/floor)
+  winWeight: number; // DKK added per expected stage win (ceiling)
+  breakawayWeight: number; // DKK added per unit breakaway tendency (lottery upside)
 }> = {
-  safe: { top15Weight: 130_000, winWeight: 0 },
-  balanced: { top15Weight: 0, winWeight: 0 },
-  aggressive: { top15Weight: 0, winWeight: 1_300_000 },
+  // Safe chases the Etapebonus floor (esp. 400k for 8-in-top15) via consistent
+  // finishers. Aggressive chases ceilings — stage wins AND high-variance
+  // breakaway riders that Safe deliberately avoids — so the two diverge even
+  // though P(win) and P(top15) are correlated for the favourites.
+  safe: { top15Weight: 160_000, winWeight: 0, breakawayWeight: 0 },
+  balanced: { top15Weight: 0, winWeight: 0, breakawayWeight: 0 },
+  aggressive: { top15Weight: 0, winWeight: 900_000, breakawayWeight: 220_000 },
 };
 
 /** Horizon planning: discount factor per stage into the future. */

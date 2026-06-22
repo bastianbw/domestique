@@ -21,17 +21,25 @@ export default function OptimalPage() {
     [hydrated, s.riders, stage, s.config],
   );
 
+  // Real buying power = bank + the value of riders you'd sell. Holding a team
+  // ties up value in riders, so the team budget is NOT just the leftover bank.
+  const ownedValue = useMemo(
+    () => s.currentTeamIds.reduce((a, id) => a + (s.riders.find((r) => r.id === id)?.price ?? 0), 0),
+    [s.currentTeamIds, s.riders],
+  );
+  const buyingPower = s.bank + ownedValue;
+
   const baseInput = useMemo<OptimizerInput>(() => ({
     stage,
     riders: s.riders,
     projections,
-    budget: s.bank,
+    budget: buyingPower,
     currentTeam: s.currentTeamIds.length === 8 ? s.currentTeamIds : undefined,
     teamType: s.teamType,
     contractsRemaining: effectiveContracts(s.contractsRemaining),
     risk: s.risk,
     differential: s.differential,
-  }), [stage, s.riders, projections, s.bank, s.currentTeamIds, s.teamType, s.contractsRemaining, s.risk, s.differential]);
+  }), [stage, s.riders, projections, buyingPower, s.currentTeamIds, s.teamType, s.contractsRemaining, s.risk, s.differential]);
 
   const recommended = useMemo(() => (hydrated ? optimize(baseInput) : null), [hydrated, baseInput]);
 
@@ -63,13 +71,16 @@ export default function OptimalPage() {
       {/* control bar */}
       <div className="card mb-3 grid grid-cols-2 gap-3 p-3 sm:grid-cols-4">
         <label className="block">
-          <span className="mono text-[11px] text-chalk-500">BANK / BUDGET (kr)</span>
+          <span className="mono text-[11px] text-chalk-500">BANK (kr)</span>
           <input
             type="number"
             className="input mt-1 w-full"
             value={s.bank}
             onChange={(e) => s.setBank(Number(e.target.value))}
           />
+          <span className="mono text-[10px] text-chalk-500">
+            buying power {(buyingPower / 1_000_000).toFixed(1)}M{ownedValue > 0 ? ` (bank + ${(ownedValue / 1_000_000).toFixed(1)}M team)` : ''}
+          </span>
         </label>
         <div>
           <span className="mono text-[11px] text-chalk-500">RISK</span>
@@ -97,9 +108,6 @@ export default function OptimalPage() {
             value={s.horizonDepth} onChange={(e) => s.setHorizonDepth(Number(e.target.value))} />
         </label>
       </div>
-
-      {/* my saved team — persists in this browser and is the baseline next day */}
-      <MyTeamPanel riderById={riderById} />
 
       <div className="grid gap-3 lg:grid-cols-3">
         {/* recommended team */}
@@ -221,61 +229,6 @@ export default function OptimalPage() {
           })}
         </div>
       </div>
-    </div>
-  );
-}
-
-function MyTeamPanel({ riderById }: { riderById: Map<string, ReturnType<typeof useStore.getState>['riders'][number]> }) {
-  const ids = useStore((s) => s.currentTeamIds);
-  const captainId = useStore((s) => s.captainId);
-  const saveSnapshot = useStore((s) => s.saveSnapshot);
-  const clearTeam = useStore((s) => s.clearTeam);
-  const snapshots = useStore((s) => s.snapshots);
-
-  if (ids.length === 0) {
-    return (
-      <div className="card mb-3 p-3 text-sm text-chalk-300">
-        <span className="mono text-[11px] text-chalk-500">MY TEAM · </span>
-        none saved yet. Press <span className="j-yellow">Adopt this team</span> below, or pick riders on the{' '}
-        <span className="j-yellow">Riders</span> page. Your team is remembered in this browser and becomes the
-        baseline the optimizer builds from tomorrow (after you log the stage result).
-      </div>
-    );
-  }
-
-  const spend = ids.reduce((a, id) => a + (riderById.get(id)?.price ?? 0), 0);
-
-  return (
-    <div className="card mb-3 p-3">
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        <span className="mono text-sm font-bold">MY TEAM</span>
-        <span className="mono text-[11px] text-chalk-500">
-          {ids.length}/8 · spend {(spend / 1_000_000).toFixed(1)}M · kept in this browser, used as tomorrow’s baseline
-        </span>
-        <div className="ml-auto flex gap-2">
-          <button className="btn !py-1" onClick={() => {
-            const name = prompt('Name this saved team', `Team stage ${useStore.getState().selectedStage}`);
-            if (name) saveSnapshot(name);
-          }}>Save as snapshot</button>
-          <button className="btn !py-1 j-polka" onClick={() => { if (confirm('Clear your current team?')) clearTeam(); }}>Clear</button>
-        </div>
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {ids.map((id) => {
-          const r = riderById.get(id);
-          if (!r) return null;
-          return (
-            <span key={id} className={`chip border ${captainId === id ? 'border-yellow/50 j-yellow' : 'border-ink-500 text-chalk-300'}`}>
-              {captainId === id ? '© ' : ''}{r.name}
-            </span>
-          );
-        })}
-      </div>
-      {snapshots.length > 0 && (
-        <div className="mono mt-2 text-[11px] text-chalk-500">
-          {snapshots.length} saved snapshot{snapshots.length > 1 ? 's' : ''} — load them on Stages &amp; Data → ⑦.
-        </div>
-      )}
     </div>
   );
 }

@@ -161,36 +161,78 @@ export default function OptimalPage() {
       </div>
 
       {/* what to actually do */}
-      <div className="card mt-3 p-3">
-        <h2 className="mono mb-2 text-sm font-bold">WHAT TO ACTUALLY DO</h2>
-        {s.currentTeamIds.length !== 8 ? (
-          <p className="text-sm text-chalk-300">
-            Pick your current 8 riders (on the <span className="j-yellow">Riders</span> page or by adopting a team) to get concrete sell/buy moves and a keep-vs-swap comparison. Right now this is a from-scratch build.
-          </p>
-        ) : recommended.buys.length === 0 ? (
-          <p className="text-sm j-green">Stand pat — your current team already maximises expected net growth for this stage.</p>
-        ) : (
-          <div className="space-y-2 text-sm">
-            <div className="flex flex-wrap gap-x-6 gap-y-1">
-              <div>
-                <div className="mono text-[11px] text-chalk-500">SELL</div>
-                {recommended.sells.map((id) => <div key={id} className="j-polka">− {riderById.get(id)?.name}</div>)}
-              </div>
-              <div>
-                <div className="mono text-[11px] text-chalk-500">BUY</div>
-                {recommended.buys.map((id) => <div key={id} className="j-green">+ {riderById.get(id)?.name} <span className="text-chalk-500">({priceM(riderById.get(id)!.price)})</span></div>)}
-              </div>
+      {(() => {
+        const noTeam = s.currentTeamIds.length !== 8;
+        const captainChange = !noTeam && recommended.captainId !== s.captainId;
+        const ridersChange = recommended.buys.length > 0;
+        const recCaptainName = riderById.get(recommended.captainId)?.name ?? '—';
+        const curCaptainName = s.captainId ? (riderById.get(s.captainId)?.name ?? '—') : 'none set';
+        const nm = (id: string) => riderById.get(id)?.name ?? '(unknown rider)';
+
+        return (
+          <div className="card mt-3 p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="mono text-sm font-bold">WHAT TO ACTUALLY DO</h2>
+              {!noTeam && (ridersChange || captainChange) && (
+                <button className="btn-accent" onClick={() => s.setTeam(recommended.riderIds, recommended.captainId)}>
+                  Apply all
+                </button>
+              )}
             </div>
-            <div className="mono text-xs text-chalk-300">
-              Fee cost {growth(-recommended.transferFees)} · net expected gain vs standing pat{' '}
-              <span className={recommended.netGainVsHold >= 0 ? 'j-green' : 'j-polka'}>{growth(recommended.netGainVsHold)}</span>
-            </div>
-            {recommended.netGainVsHold < 0 && (
-              <p className="j-polka text-xs">↳ The fees outweigh the gain across your horizon — consider keeping your team.</p>
+
+            {noTeam ? (
+              <p className="text-sm text-chalk-300">
+                Pick your current 8 riders (on the <span className="j-yellow">Riders</span> page or by adopting a team) to get
+                concrete sell/buy moves and a keep-vs-swap comparison. Right now this is a from-scratch build — the recommended
+                captain is <span className="j-yellow">{recCaptainName}</span>.
+              </p>
+            ) : !ridersChange && !captainChange ? (
+              <p className="text-sm j-green">
+                Stand pat — your 8 riders and captain (<span className="j-yellow">{recCaptainName}</span>) already maximise
+                expected net growth for this stage.
+              </p>
+            ) : (
+              <div className="space-y-2 text-sm">
+                {ridersChange && (
+                  <div className="flex flex-wrap gap-x-6 gap-y-1">
+                    <div>
+                      <div className="mono text-[11px] text-chalk-500">SELL</div>
+                      {recommended.sells.map((id) => <div key={id} className="j-polka">− {nm(id)}</div>)}
+                    </div>
+                    <div>
+                      <div className="mono text-[11px] text-chalk-500">BUY</div>
+                      {recommended.buys.map((id) => (
+                        <div key={id} className="j-green">+ {nm(id)} <span className="text-chalk-500">({priceM(riderById.get(id)!.price)})</span></div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {captainChange && (
+                  <div className="flex items-center gap-2">
+                    <span className="mono text-[11px] text-chalk-500">CAPTAIN</span>
+                    <span className="text-sm">
+                      {ridersChange ? <>captain the new XI’s <span className="j-yellow">{recCaptainName}</span></>
+                        : <>keep your 8 — switch captain from <span className="text-chalk-300">{curCaptainName}</span> to <span className="j-yellow">{recCaptainName}</span></>}
+                    </span>
+                    <button className="btn !py-0.5" onClick={() => s.setCaptain(recommended.captainId)}>Set ©</button>
+                  </div>
+                )}
+
+                {ridersChange && (
+                  <div className="mono text-xs text-chalk-300">
+                    Fee cost {growth(-recommended.transferFees)} · net expected gain vs standing pat{' '}
+                    <span className={recommended.netGainVsHold >= 0 ? 'j-green' : 'j-polka'}>{growth(recommended.netGainVsHold)}</span>
+                  </div>
+                )}
+                {ridersChange && recommended.netGainVsHold < 0 && (
+                  <p className="j-polka text-xs">↳ The fees outweigh the gain across your horizon — consider keeping your riders (the captain switch above is still free).</p>
+                )}
+              </div>
             )}
           </div>
-        )}
-      </div>
+        );
+      })()}
 
       {/* horizon reasoning */}
       {horizon && (

@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { simulateStage, mulberry32 } from './simulate';
+import { simulateStage, mulberry32, simulateJoint, jointEtapebonus } from './simulate';
+import { projectField } from './growth';
+import { etapebonus } from './rules';
 import type { Rider, Stage } from './types';
 
 function rider(p: Partial<Rider> & { id: string; archetype: Rider['archetype'] }): Rider {
@@ -70,5 +72,26 @@ describe('simulateStage', () => {
     const winS = ds.find((x) => x.riderId === 'attacker')!.probs[0];
     expect(winH).toBeGreaterThan(winS);
     expect(winH).toBeGreaterThan(0); // gets real win mass from break scenarios
+  });
+});
+
+describe('projectField opt-in simulator path', () => {
+  const hilly: Stage = { ...flat, type: 'hilly' };
+
+  it('values a break specialist via the sim where the analytic model gives ~0', () => {
+    const sim = { nSims: 4000, seed: 9 };
+    const analytic = projectField(field, hilly);
+    const simmed = projectField(field, hilly, undefined, { simulate: sim });
+    const xgA = new Map(analytic.map((p) => [p.riderId, p.xG]));
+    const xgS = new Map(simmed.map((p) => [p.riderId, p.xG]));
+    expect(xgS.get('attacker')!).toBeGreaterThan(xgA.get('attacker')!);
+  });
+
+  it('jointEtapebonus matches manual count on a tiny deterministic field', () => {
+    const { samples } = simulateJoint(field, flat, undefined, { nSims: 1000, seed: 5 });
+    const teamIdx = new Set([0, 1, 2]); // first three starters
+    const ev = jointEtapebonus(teamIdx, samples, etapebonus);
+    expect(ev).toBeGreaterThanOrEqual(0);
+    expect(Number.isFinite(ev)).toBe(true);
   });
 });

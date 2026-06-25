@@ -37,23 +37,18 @@ export interface SimConfig {
 export const DEFAULT_SIM: SimConfig = { nSims: 2000, seed: 0x5eed };
 
 /**
- * Simulate a stage and return per-rider finishing-position marginals
- * (probs[p] = P(finish position p+1)) with DNF mass folded out (Σ probs = 1−pDNF).
- * Coherent by construction (each sim is a permutation of the starters).
+ * Run the sims and invoke `onOrder(order)` once per sim with the classified
+ * finishing order (array of STARTER indices, DNFs excluded, position 0 = winner).
+ * Shared core for both the marginal and the joint-sample views.
  */
-export function simulateStage(
-  riders: Rider[],
+function forEachSimOrder(
+  starters: Rider[],
   stage: Stage,
-  cfg: EngineConfig = defaultConfig(),
-  sim: SimConfig = DEFAULT_SIM,
-): RiderDistribution[] {
-  const N = cfg.fieldSize;
-  const starters = riders.filter((r) => r.injury !== 'out');
+  cfg: EngineConfig,
+  sim: SimConfig,
+  onOrder: (order: number[]) => void,
+): void {
   const M = starters.length;
-  if (M === 0) {
-    return riders.map((r) => ({ riderId: r.id, probs: new Array(N).fill(0), pDNF: 0 }));
-  }
-
   const bunchSkill = starters.map((r) => Math.max(1e-6, riderSkill(r, stage, cfg)));
   const brkSkill = starters.map((r) => Math.max(1e-9, breakSkill(r, stage, cfg)));
   const pDNF = starters.map((r) => riderDnfRisk(r, stage, cfg));
@@ -62,10 +57,6 @@ export function simulateStage(
   const rng = mulberry32(sim.seed);
   const exp = () => -Math.log(rng() || 1e-12); // Exp(1)
 
-  const posCount: Float64Array[] = starters.map(() => new Float64Array(N));
-  const dnfCount = new Float64Array(M);
-
-  // scratch arrays reused each sim
   const idx = new Array<number>(M);
   const key = new Float64Array(M);
 
@@ -91,33 +82,116 @@ export function simulateStage(
       idx.sort((a, b) => bkey[a] - bkey[b]);
       const breakMembers = idx.slice(0, Math.min(k, M));
       const bunchMembers = idx.slice(Math.min(k, M));
-      // order each sub-group by terrain skill (strongest wins the break)
       breakMembers.sort((a, b) => exp() / bunchSkill[a] - exp() / bunchSkill[b]);
       bunchMembers.sort((a, b) => exp() / bunchSkill[a] - exp() / bunchSkill[b]);
       for (let i = 0; i < M; i++) idx[i] = i < breakMembers.length ? breakMembers[i] : bunchMembers[i - breakMembers.length];
     }
 
-    // Walk the finishing order, dropping DNFs (they take no finishing slot).
-    let pos = 0;
+    // Drop DNFs (they take no finishing slot); emit the classified order.
+    const order: number[] = [];
     for (let o = 0; o < M; o++) {
       const ri = idx[o];
-      if (rng() < pDNF[ri]) {
-        dnfCount[ri] += 1;
-        continue;
-      }
-      if (pos < N) posCount[ri][pos] += 1;
-      pos++;
+      if (rng() < pDNF[ri]) continue;
+      order.push(ri);
     }
+    onOrder(order);
   }
+}
+
+/**
+ * Simulate a stage and return per-rider finishing-position marginals
+ * (probs[p] = P(finish position p+1)) with DNF mass folded out (Σ probs = 1−pDNF).
+ * Coherent by construction (each sim is a permutation of the starters).
+ */
+export function simulateStage(
+  riders: Rider[],
+  stage: Stage,
+  cfg: EngineConfig = defaultConfig(),
+  sim: SimConfig = DEFAULT_SIM,
+): RiderDistribution[] {
+  const N = cfg.fieldSize;
+  const starters = riders.filter((r) => r.injury !== 'out');
+  const M = starters.length;
+  if (M === 0) {
+    return riders.map((r) => ({ riderId: r.id, probs: new Array(N).fill(0), pDNF: 0 }));
+  }
+
+  const posCount: Float64Array[] = starters.map(() => new Float64Array(N));
+  let finishes = new Float64Array(M);
+  forEachSimOrder(starters, stage, cfg, sim, (order) => {
+    for (let pos = 0; pos < order.length && pos < N; pos++) posCount[order[pos]][pos] += 1;
+    for (const ri of order) finishes[ri] += 1;
+  });
 
   const out = new Map<string, RiderDistribution>();
   starters.forEach((r, i) => {
     const probs = new Array<number>(N).fill(0);
     for (let p = 0; p < N; p++) probs[p] = posCount[i][p] / sim.nSims;
-    out.set(r.id, { riderId: r.id, probs, pDNF: dnfCount[i] / sim.nSims });
+    out.set(r.id, { riderId: r.id, probs, pDNF: 1 - finishes[i] / sim.nSims });
   });
 
   return riders.map(
     (r) => out.get(r.id) ?? { riderId: r.id, probs: new Array(N).fill(0), pDNF: 0 },
   );
+}
+
+// ── Joint samples (for correlated team EV: Etapebonus / Holdbonus / captain) ──
+
+export interface JointSamples {
+  /** starter ids, indexing the per-sim arrays below */
+  starterIds: string[];
+  /** number of sims */
+  nSims: number;
+  /** top15[s] = starter indices finishing in the top 15 in sim s */
+  top15: number[][];
+  /** winner[s] = starter index of the winner in sim s (−1 if none classified) */
+  winner: number[];
+}
+
+/**
+ * Simulate a stage and return BOTH the marginals and the per-sim joint samples
+ * needed to score a team's Etapebonus/Holdbonus on the EXACT same realisations
+ * (so teammate correlation and break scenarios are respected, not assumed
+ * independent).
+ */
+export function simulateJoint(
+  riders: Rider[],
+  stage: Stage,
+  cfg: EngineConfig = defaultConfig(),
+  sim: SimConfig = DEFAULT_SIM,
+): { distributions: RiderDistribution[]; samples: JointSamples } {
+  const N = cfg.fieldSize;
+  const starters = riders.filter((r) => r.injury !== 'out');
+  const M = starters.length;
+  const distributions = simulateStage(riders, stage, cfg, sim);
+  if (M === 0) {
+    return { distributions, samples: { starterIds: [], nSims: sim.nSims, top15: [], winner: [] } };
+  }
+  const top15: number[][] = [];
+  const winner: number[] = [];
+  forEachSimOrder(starters, stage, cfg, sim, (order) => {
+    top15.push(order.slice(0, Math.min(15, order.length)));
+    winner.push(order.length ? order[0] : -1);
+  });
+  return { distributions, samples: { starterIds: starters.map((r) => r.id), nSims: sim.nSims, top15, winner } };
+}
+
+/**
+ * Expected Etapebonus for a team, computed JOINTLY from the sim samples: per sim
+ * count how many of the team's riders are top-15, look up the tier, average.
+ * `teamIdx` = the team's rider indices into `samples.starterIds`.
+ */
+export function jointEtapebonus(
+  teamIdx: Set<number>,
+  samples: JointSamples,
+  etapebonusFn: (n: number) => number,
+): number {
+  if (samples.nSims === 0) return 0;
+  let total = 0;
+  for (let s = 0; s < samples.top15.length; s++) {
+    let count = 0;
+    for (const ri of samples.top15[s]) if (teamIdx.has(ri)) count++;
+    total += etapebonusFn(count);
+  }
+  return total / samples.nSims;
 }

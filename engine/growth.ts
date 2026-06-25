@@ -23,6 +23,7 @@ import {
   DNF_PENALTY,
 } from './rules';
 import { buildField } from './probability';
+import { simulateStage, type SimConfig } from './simulate';
 
 /** P(top-K) from a distribution (positions 1..K). */
 export function pTopK(dist: RiderDistribution, k: number): number {
@@ -188,13 +189,26 @@ export function projectRider(
   };
 }
 
-/** Convenience: project the whole field for a stage in one call. */
+/**
+ * Convenience: project the whole field for a stage in one call.
+ *
+ * `opts.simulate` swaps the finishing distributions from the analytic coherent
+ * model to the Monte Carlo simulator. The backtest shows the sim gives the best
+ * top-15 calibration and captures breakaway upside (cheap break riders get real
+ * xG instead of ~0), at the cost of a little top-5 precision — so it is OPT-IN,
+ * not the default. (Joint-sample Etapebonus was measured and is only ~0.7% better
+ * than the Poisson-binomial used in the optimizer — Holdet's ≤2-per-team rule
+ * decorrelates the roster — so the joint path is deliberately NOT wired in.)
+ */
 export function projectField(
   riders: Rider[],
   stage: Stage,
   cfg: EngineConfig = defaultConfig(),
+  opts?: { simulate?: SimConfig },
 ): RiderProjection[] {
-  const dists = buildField(riders, stage, cfg);
+  const dists = opts?.simulate
+    ? simulateStage(riders, stage, cfg, opts.simulate)
+    : buildField(riders, stage, cfg);
   const byId = new Map(dists.map((d) => [d.riderId, d]));
   return riders.map((r) => projectRider(r, stage, byId.get(r.id)!, cfg));
 }

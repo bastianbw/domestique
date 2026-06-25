@@ -354,6 +354,31 @@ EV, but swapping it in as the *marginal* finish-predictor would mildly regress P
 marginal predictor, use the sim for the optimiser's joint team evaluation
 (Etapebonus from correlated samples) — needs a joint metric to validate.
 
+## 4f. Step 4 integration — joint EV measured, sim wired opt-in (2026-06-25)
+
+Built `simulateJoint` (per-sim top-15 + winner samples) and `jointEtapebonus`
+(team Etapebonus from correlated samples). Validated over **9,100 sampled legal
+teams** — Etapebonus prediction MAE (DKK) vs realised:
+
+| method | MAE |
+|--------|-----|
+| sim-joint (correlated) | **3,046** |
+| Poisson-binomial on sim marginals | 3,067 |
+| Poisson-binomial on analytic marginals | 3,127 |
+
+**Key finding — the joint correlation buys ~0.7%.** Holdet's **≤2-riders-per-real-
+team rule decorrelates the roster** (your 8 span ≥4 teams), so the optimiser's
+existing Poisson-binomial (independence) is already an excellent approximation.
+→ The full joint-sample path is deliberately NOT wired into the optimiser; it
+would add complexity for ~0.7%.
+
+The sim's genuine value is **better marginals** (best top-15 calibration; captures
+break upside — a break specialist gets real xG instead of ~0). Wired as **opt-in**:
+`projectField(riders, stage, cfg, { simulate })` swaps the distribution source.
+Left OFF by default because sim marginals trade ~0.01 P@5 for the top-15/break
+gains — a product call (see §5). `app/page.tsx:20` is the single call-site to
+toggle it live. 87 tests pass; `tsc` clean.
+
 ## 5. Open questions for the user (review checkpoints)
 1. Confirm the **break-vs-bunch split** is worth the modelling weight — it's the
    single biggest lever for the growth objective (cheap break riders winning) and

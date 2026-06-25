@@ -13,7 +13,9 @@ import path from 'node:path';
 
 import type { Rider, Stage, StageType } from '../engine/types';
 import { buildField } from '../engine/probability';
-import { simulateStage } from '../engine/simulate';
+import { simulateStage, simulateJoint, jointEtapebonus, mulberry32 } from '../engine/simulate';
+import { expectedEtapebonus } from '../engine/optimizer';
+import { etapebonus } from '../engine/rules';
 import {
   classifyArchetype,
   computeForm,
@@ -178,6 +180,28 @@ function accPrec(distMap: Map<string, number[]>, top5: Set<string>, top15: Set<s
 function randomPrec(size: number): Prec {
   return { p5: size ? 5 / size : 0, p15: size ? 15 / size : 0, n: 1 };
 }
+
+function shuffle<T>(arr: T[], rng: () => number): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+/** Sample a legal fantasy team: 8 riders, ≤ 2 per real team. */
+function sampleLegalTeam(roster: Rider[], rng: () => number): Rider[] {
+  const team: Rider[] = [];
+  const perTeam: Record<string, number> = {};
+  for (const r of shuffle(roster, rng)) {
+    if (team.length >= 8) break;
+    if ((perTeam[r.team] ?? 0) >= 2) continue;
+    team.push(r);
+    perTeam[r.team] = (perTeam[r.team] ?? 0) + 1;
+  }
+  return team;
+}
 function meanPrec(ps: Prec[]): { p5: number; p15: number } {
   if (!ps.length) return { p5: 0, p15: 0 };
   return {
@@ -314,5 +338,49 @@ describe.skipIf(!haveData)('2026 structural backtest', () => {
     expect(usedStages).toBeGreaterThan(20);
     expect(mP.p5).toBeGreaterThan(uP.p5);
     expect(mP.p15).toBeGreaterThan(uP.p15);
+  });
+
+  it('joint Etapebonus (sim) vs Poisson-binomial vs realised', () => {
+    const { stages, profile, timeline } = loadCorpus();
+    let simMae = 0;
+    let pbSimMae = 0;
+    let pbAnaMae = 0;
+    let n = 0;
+
+    for (const s of stages) {
+      if (s.ourType === 'ttt') continue;
+      const finishers = s.results.filter((r) => r.rank != null && r.rank >= 1).length;
+      if (finishers < MIN_FINISHERS) continue;
+      const { roster, actuals } = buildRoster(s, profile, timeline);
+      if (roster.length < MIN_FINISHERS) continue;
+      const stage = toStage(s);
+
+      const { distributions: simDists, samples } = simulateJoint(roster, stage, undefined, { nSims: 2000, seed: 0x5eed });
+      const idxById = new Map(samples.starterIds.map((id, i) => [id, i] as const));
+      const simTop15 = new Map(simDists.map((d) => [d.riderId, d.probs.slice(0, 15).reduce((a, b) => a + b, 0)]));
+      const anaTop15 = new Map(buildField(roster, stage).map((d) => [d.riderId, d.probs.slice(0, 15).reduce((a, b) => a + b, 0)]));
+      const realTop15 = new Set(actuals.filter((a) => (a.rank ?? 999) <= 15).map((a) => a.riderId));
+
+      const rng = mulberry32(s.stage * 1000 + 7);
+      for (let k = 0; k < 100; k++) {
+        const team = sampleLegalTeam(roster, rng);
+        const realized = etapebonus(team.filter((r) => realTop15.has(r.id)).length);
+        const teamIdx = new Set(team.map((r) => idxById.get(r.id)!).filter((i) => i !== undefined));
+        simMae += Math.abs(jointEtapebonus(teamIdx, samples, etapebonus) - realized);
+        pbSimMae += Math.abs(expectedEtapebonus(team.map((r) => simTop15.get(r.id) ?? 0)) - realized);
+        pbAnaMae += Math.abs(expectedEtapebonus(team.map((r) => anaTop15.get(r.id) ?? 0)) - realized);
+        n++;
+      }
+    }
+
+    // eslint-disable-next-line no-console
+    console.log([
+      '',
+      `=== Etapebonus prediction MAE (DKK) over ${n} sampled legal teams ===`,
+      `  sim-joint              ${Math.round(simMae / n).toLocaleString()}`,
+      `  PB on sim marginals    ${Math.round(pbSimMae / n).toLocaleString()}`,
+      `  PB on analytic marg.   ${Math.round(pbAnaMae / n).toLocaleString()}`,
+    ].join('\n'));
+    expect(n).toBeGreaterThan(1000);
   });
 });

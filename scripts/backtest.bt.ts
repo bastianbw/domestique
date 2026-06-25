@@ -202,6 +202,8 @@ describe.skipIf(!haveData)('2026 structural backtest', () => {
     const modelPrec: Prec[] = [];
     const uniPrec: Prec[] = [];
     const rankPrec: Prec[] = [];
+    const breakStagePrec: Prec[] = [];
+    const bunchStagePrec: Prec[] = [];
     const byType = new Map<string, StageScore[]>();
     const reliability: Array<{ pTop5: number; actualTop5: boolean }> = [];
     let usedStages = 0;
@@ -227,9 +229,15 @@ describe.skipIf(!haveData)('2026 structural backtest', () => {
       const rankById = new Map(actuals.map((a) => [a.riderId, a.rank ?? 999]));
       const top5 = new Set(actuals.filter((a) => (a.rank ?? 999) <= 5).map((a) => a.riderId));
       const top15 = new Set(actuals.filter((a) => (a.rank ?? 999) <= 15).map((a) => a.riderId));
-      modelPrec.push(accPrec(model, top5, top15));
+      const mPrec = accPrec(model, top5, top15);
+      modelPrec.push(mPrec);
       uniPrec.push(randomPrec(roster.length));
       rankPrec.push(accPrec(rk, top5, top15));
+
+      // Was this stage won from a break? (winner spent km up the road.)
+      const winner = s.results.find((r) => r.rank === 1);
+      const breakWon = (winner?.breakawayKms ?? 0) > 0;
+      (breakWon ? breakStagePrec : bunchStagePrec).push(mPrec);
 
       const tarr = byType.get(s.ourType) ?? [];
       tarr.push(mScore);
@@ -260,6 +268,10 @@ describe.skipIf(!haveData)('2026 structural backtest', () => {
     lines.push(`  MODEL      P@5 ${mP.p5.toFixed(3)}  P@15 ${mP.p15.toFixed(3)}`);
     lines.push(`  rank-only  P@5 ${rP.p5.toFixed(3)}  P@15 ${rP.p15.toFixed(3)}`);
     lines.push(`  uniform    P@5 ${uP.p5.toFixed(3)}  P@15 ${uP.p15.toFixed(3)}  (≈ random)`);
+    const bkP = meanPrec(breakStagePrec);
+    const bnP = meanPrec(bunchStagePrec);
+    lines.push(`  MODEL on break-won stages  (n=${breakStagePrec.length})  P@5 ${bkP.p5.toFixed(3)}  P@15 ${bkP.p15.toFixed(3)}`);
+    lines.push(`  MODEL on bunch-won stages  (n=${bunchStagePrec.length})  P@5 ${bnP.p5.toFixed(3)}  P@15 ${bnP.p15.toFixed(3)}`);
     lines.push('');
     lines.push('--- model NLL by stage type ---');
     for (const [t, arr] of [...byType.entries()].sort()) {

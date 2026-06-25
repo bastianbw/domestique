@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildCoherentField, riderSkill, buildField, climbiness } from './probability';
+import { buildCoherentField, riderSkill, buildField, climbiness, breakSkill } from './probability';
 import { STAGES_2026 } from './stages';
 import type { Rider, Stage } from './types';
 
@@ -89,6 +89,15 @@ describe('coherent-joint field', () => {
     expect(queen.verticalMeters).toBeGreaterThan(5000); // Alpe d'Huez queen stage
     expect(queen.profileScore).toBeGreaterThan(300);
     expect(climbiness(queen)).toBeGreaterThan(0.9);
+  });
+
+  it('breakSkill favours break-prone riders over a star who never attacks', () => {
+    const hilly: Stage = { ...flat, type: 'hilly' };
+    const attacker = rider({ id: 'atk', archetype: 'breakaway', pcsRank: 80, breakawayTendency: 90 });
+    const star = rider({ id: 'star', archetype: 'gc', pcsRank: 3, breakawayTendency: 0 });
+    expect(breakSkill(attacker, hilly)).toBeGreaterThan(breakSkill(star, hilly));
+    // but for the plain bunch result the star is still stronger
+    expect(riderSkill(star, hilly)).toBeGreaterThan(riderSkill(attacker, hilly));
   });
 
   it('buildField routes the no-odds field through the coherent model', () => {

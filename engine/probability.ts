@@ -300,9 +300,62 @@ function sinkhorn(m: number[][], iters: number): void {
 }
 
 /**
- * Build a coherent finishing field for the no-odds case. Returns a distribution
- * per rider (length cfg.fieldSize) whose column sums ≈ 1 (one rider per slot),
- * with per-rider DNF mass folded in.
+ * Break-win skill: a rider takes a stage from the break only if they (a) tend to
+ * be in the move and (b) carry enough class to win it. Combines breakaway
+ * tendency with the √ of terrain skill so a strong-but-rouleur break specialist
+ * outranks a GC star who never goes up the road.
+ */
+export function breakSkill(
+  rider: Rider,
+  stage: Stage,
+  cfg: EngineConfig = defaultConfig(),
+): number {
+  if (rider.injury === 'out') return 0;
+  const propensity = clamp01(0.05 + (rider.breakawayTendency ?? 0) / 100);
+  return propensity * Math.sqrt(riderSkill(rider, stage, cfg) + 1e-4);
+}
+
+/**
+ * Build a Sinkhorn-normalised (doubly stochastic) M×M finishing matrix from a
+ * skill function: each rider's modal slot is their skill rank, with a Gaussian
+ * spread. `rowIndex` maps rider id → matrix row.
+ */
+function sinkhornRows(
+  starters: Rider[],
+  skillOf: (r: Rider) => number,
+  cfg: EngineConfig,
+): { rows: number[][]; rowIndex: Map<string, number> } {
+  const M = starters.length;
+  const order = starters
+    .map((r) => ({ r, s: skillOf(r) }))
+    .sort((a, b) => b.s - a.s);
+  const muById = new Map<string, number>();
+  order.forEach((o, i) => muById.set(o.r.id, i));
+
+  const sigma = Math.max(2, cfg.jointSpread);
+  const twoSig2 = 2 * sigma * sigma;
+  const rowIndex = new Map<string, number>();
+  const rows: number[][] = starters.map((r, i) => {
+    rowIndex.set(r.id, i);
+    const mu = muById.get(r.id)!;
+    const row = new Array<number>(M);
+    for (let p = 0; p < M; p++) row[p] = Math.exp(-((p - mu) ** 2) / twoSig2) + 1e-9;
+    return row;
+  });
+  sinkhorn(rows, 40);
+  return { rows, rowIndex };
+}
+
+/**
+ * Build a coherent finishing field for the no-odds case: a Sinkhorn-normalised
+ * skill field (one rider per finishing slot) with per-rider DNF folded in.
+ *
+ * NOTE on breakaways: a blanket per-type mixture of a breakaway-pool field into
+ * each rider's *marginal* was tried and REJECTED by the backtest — it helped on
+ * break-won stages (+0.014 P@5) but, smeared across the majority of bunch-won
+ * stages, cost more overall (0.290 → 0.279 P@5). Break-vs-bunch is a per-race
+ * *scenario*, not a marginal smear, so it moves to the Monte Carlo simulator
+ * (step 4), which uses `breakSkill` + `cfg.breakawayWinRate` there.
  */
 export function buildCoherentField(
   riders: Rider[],
@@ -316,35 +369,17 @@ export function buildCoherentField(
     return riders.map((r) => ({ riderId: r.id, probs: new Array(N).fill(0), pDNF: 0 }));
   }
 
-  // Order starters by skill (desc); modal finishing slot = skill rank.
-  const withSkill = starters.map((r) => ({ r, s: riderSkill(r, stage, cfg) }));
-  const order = [...withSkill].sort((a, b) => b.s - a.s);
-  const muById = new Map<string, number>();
-  order.forEach((o, i) => muById.set(o.r.id, i));
-
-  // Seed an M×M matrix: Gaussian around each rider's skill rank.
-  const sigma = Math.max(2, cfg.jointSpread);
-  const twoSig2 = 2 * sigma * sigma;
-  const rowIndex = new Map<string, number>();
-  const seed: number[][] = starters.map((r, i) => {
-    rowIndex.set(r.id, i);
-    const mu = muById.get(r.id)!;
-    const row = new Array<number>(M);
-    for (let p = 0; p < M; p++) row[p] = Math.exp(-((p - mu) ** 2) / twoSig2) + 1e-9;
-    return row;
-  });
-
-  sinkhorn(seed, 40);
+  const bunch = sinkhornRows(starters, (r) => riderSkill(r, stage, cfg), cfg);
 
   return riders.map((r) => {
-    if (r.injury === 'out' || !rowIndex.has(r.id)) {
+    if (r.injury === 'out' || !bunch.rowIndex.has(r.id)) {
       return { riderId: r.id, probs: new Array(N).fill(0), pDNF: 0 };
     }
     const pDNF = riderDnfRisk(r, stage, cfg);
     const finishMass = 1 - pDNF;
-    const row = seed[rowIndex.get(r.id)!];
+    const bRow = bunch.rows[bunch.rowIndex.get(r.id)!];
     const probs = new Array<number>(N).fill(0);
-    for (let p = 0; p < M && p < N; p++) probs[p] = row[p] * finishMass;
+    for (let p = 0; p < M && p < N; p++) probs[p] = bRow[p] * finishMass;
     return { riderId: r.id, probs, pDNF };
   });
 }

@@ -296,6 +296,33 @@ minority of mistyped stages — but it meaningfully sharpens the heterogeneous
 "hilly" bucket, which is 50/91 corpus stages and several TdF stages). Finish-
 gradient / last-climb-to-line would need a non-PCS source and is deferred.
 
+## 4d. Step 3 RESULTS — breakaway model: tried, rejected on the marginal path (2026-06-25)
+
+Calibrated break-win rates from the corpus (winner spent km up the road):
+flat 8%, **hilly 24%**, high_mtn 6%, summit/ITT ~0% (n: 12/50/16/8/5). Added a
+`breakSkill` (breakaway tendency × √terrain-skill) and mixed a breakaway-pool
+coherent field into the no-odds marginals at these rates.
+
+Backtest verdict (split by outcome):
+
+| subset | break mix ON | OFF |
+|--------|--------------|-----|
+| break-won stages (n=14) | P@5 0.143 | 0.129 |
+| bunch-won stages (n=77) | P@5 0.304 | 0.319 |
+| **overall** | 0.279 | **0.290** |
+
+It helps exactly where expected and hurts where expected, but bunch stages
+outnumber break stages 77:14, so the blanket marginal smear is **net-negative on
+the gate → not shipped.** Lesson: a breakaway is a per-race *scenario* (one break
+rider wins, the bunch loses), not a probability to spread across every rider's
+marginal. **Moved to step 4 (Monte Carlo):** on a break-scenario sim one break
+rider takes the win/placement; bunch sims stay clean — capturing break upside for
+the growth/EV objective without corrupting point predictions. `breakSkill` +
+`cfg.breakawayWinRate` are kept in place to feed that sim.
+
+Current shipped model: step 1b + route climbiness, **P@5 0.290 / P@15 0.351**
+(rank-only 0.259 / 0.312).
+
 ## 5. Open questions for the user (review checkpoints)
 1. Confirm the **break-vs-bunch split** is worth the modelling weight — it's the
    single biggest lever for the growth objective (cheap break riders winning) and

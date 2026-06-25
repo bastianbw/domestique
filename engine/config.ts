@@ -124,6 +124,17 @@ export const CLIMBINESS_RESPONSE: Record<Archetype, number> = {
   sprinter: -0.7, rouleur: -0.3, domestique: -0.2,
 };
 
+/**
+ * Breakaway-win rate by stage type, calibrated from the 2026 corpus (fraction of
+ * stages whose winner spent km in the break). The no-odds model mixes a
+ * breakaway-pool field in at this weight so cheap break-prone riders get real
+ * top-k / win mass on break-friendly stages instead of ~0. Summit/ITT ≈ 0 (won
+ * by GC/climbers from the front).
+ */
+export const BREAKAWAY_WIN_RATE: Record<StageType, number> = {
+  flat: 0.08, hilly: 0.24, high_mtn: 0.10, summit: 0.02, ttt: 0, hilly_itt: 0,
+};
+
 /** Differential mode: how strongly to lean away from heavily-owned riders. */
 export const OWNERSHIP_LEVERAGE = 0.15;
 
@@ -143,6 +154,7 @@ export interface EngineConfig {
   skillFormFloor: number;
   climbinessGain: number;
   climbinessResponse: Record<Archetype, number>;
+  breakawayWinRate: Record<StageType, number>;
 }
 
 export function defaultConfig(): EngineConfig {
@@ -163,5 +175,6 @@ export function defaultConfig(): EngineConfig {
     skillFormFloor: SKILL_FORM_FLOOR,
     climbinessGain: CLIMBINESS_GAIN,
     climbinessResponse: { ...CLIMBINESS_RESPONSE },
+    breakawayWinRate: { ...BREAKAWAY_WIN_RATE },
   };
 }

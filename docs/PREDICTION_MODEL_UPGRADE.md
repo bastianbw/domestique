@@ -323,6 +323,37 @@ the growth/EV objective without corrupting point predictions. `breakSkill` +
 Current shipped model: step 1b + route climbiness, **P@5 0.290 / P@15 0.351**
 (rank-only 0.259 / 0.312).
 
+## 4e. Step 4 RESULTS — Monte Carlo simulator (2026-06-25)
+
+`engine/simulate.ts`: seeded (mulberry32) Plackett–Luce stage simulator. Each sim
+is a full finishing permutation; break-vs-bunch is a per-race SCENARIO (Bernoulli
+at `cfg.breakawayWinRate`) — on a break sim a breakaway pool (by `breakSkill`)
+fills the front and the bunch finishes behind; DNFs drop out of classification.
+Aggregated to coherent marginals. 85 tests pass (6 new); `tsc` clean. ~10s for the
+whole 91-stage backtest at 2000 sims/stage.
+
+Harness, sim vs analytic:
+
+| metric | analytic | MODEL-sim |
+|--------|----------|-----------|
+| Precision@5 | **0.290** | 0.277 |
+| Precision@15 | 0.351 | **0.355** |
+| Top15 Brier | 0.0958 | **0.0896** (best of all) |
+| break-won P@5 (n=14) | 0.129 | **0.143** |
+| bunch-won P@5 (n=77) | **0.319** | 0.301 |
+
+As predicted, the sim's *marginals* mirror the analytic (slightly lower P@5 from
+spreading break mass; recovers break-won stages) — its standout is **best-in-class
+top-15 calibration**, which is exactly what Etapebonus (count-of-top-15) needs. The
+sim's real, not-yet-measured value is the **joint** EV (correlated Etapebonus /
+Holdbonus / captain from internally-consistent samples).
+
+Decision pending (see §5): the sim is sound and the right substrate for joint team
+EV, but swapping it in as the *marginal* finish-predictor would mildly regress P@5
+/ placement-MAE. Recommended split: keep the analytic coherent model as the fast
+marginal predictor, use the sim for the optimiser's joint team evaluation
+(Etapebonus from correlated samples) — needs a joint metric to validate.
+
 ## 5. Open questions for the user (review checkpoints)
 1. Confirm the **break-vs-bunch split** is worth the modelling weight — it's the
    single biggest lever for the growth objective (cheap break riders winning) and

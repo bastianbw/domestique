@@ -13,6 +13,7 @@ import path from 'node:path';
 
 import type { Rider, Stage, StageType } from '../engine/types';
 import { buildField } from '../engine/probability';
+import { simulateStage } from '../engine/simulate';
 import {
   classifyArchetype,
   computeForm,
@@ -140,6 +141,11 @@ function modelDistMap(roster: Rider[], stage: Stage): Map<string, number[]> {
   return new Map(dists.map((d) => [d.riderId, d.probs]));
 }
 
+function simDistMap(roster: Rider[], stage: Stage): Map<string, number[]> {
+  const dists = simulateStage(roster, stage, undefined, { nSims: 2000, seed: 0x5eed });
+  return new Map(dists.map((d) => [d.riderId, d.probs]));
+}
+
 function uniformMap(roster: Rider[]): Map<string, number[]> {
   const u = uniformDist(N);
   return new Map(roster.map((r) => [r.id, u]));
@@ -199,11 +205,15 @@ describe.skipIf(!haveData)('2026 structural backtest', () => {
     const modelScores: StageScore[] = [];
     const uniScores: StageScore[] = [];
     const rankScores: StageScore[] = [];
+    const simScores: StageScore[] = [];
     const modelPrec: Prec[] = [];
     const uniPrec: Prec[] = [];
     const rankPrec: Prec[] = [];
+    const simPrec: Prec[] = [];
     const breakStagePrec: Prec[] = [];
     const bunchStagePrec: Prec[] = [];
+    const simBreakPrec: Prec[] = [];
+    const simBunchPrec: Prec[] = [];
     const byType = new Map<string, StageScore[]>();
     const reliability: Array<{ pTop5: number; actualTop5: boolean }> = [];
     let usedStages = 0;
@@ -234,10 +244,16 @@ describe.skipIf(!haveData)('2026 structural backtest', () => {
       uniPrec.push(randomPrec(roster.length));
       rankPrec.push(accPrec(rk, top5, top15));
 
+      const simMap = simDistMap(roster, stage);
+      simScores.push(scoreStage(simMap, actuals));
+      const sPrec = accPrec(simMap, top5, top15);
+      simPrec.push(sPrec);
+
       // Was this stage won from a break? (winner spent km up the road.)
       const winner = s.results.find((r) => r.rank === 1);
       const breakWon = (winner?.breakawayKms ?? 0) > 0;
       (breakWon ? breakStagePrec : bunchStagePrec).push(mPrec);
+      (breakWon ? simBreakPrec : simBunchPrec).push(sPrec);
 
       const tarr = byType.get(s.ourType) ?? [];
       tarr.push(mScore);
@@ -260,18 +276,24 @@ describe.skipIf(!haveData)('2026 structural backtest', () => {
     const lines: string[] = [];
     lines.push('');
     lines.push(`=== 2026 structural backtest — ${usedStages} stages used, ${skipped} skipped ===`);
+    const simAgg = aggregateScores(simScores);
     lines.push(fmt(model, 'MODEL'));
+    lines.push(fmt(simAgg, 'MODEL-sim'));
     lines.push(fmt(rank, 'rank-only'));
     lines.push(fmt(uni, 'uniform'));
     lines.push('');
+    const sP = meanPrec(simPrec);
     lines.push('--- precision@k (fraction of model top-k that actually finish top-k) ---');
     lines.push(`  MODEL      P@5 ${mP.p5.toFixed(3)}  P@15 ${mP.p15.toFixed(3)}`);
+    lines.push(`  MODEL-sim  P@5 ${sP.p5.toFixed(3)}  P@15 ${sP.p15.toFixed(3)}`);
     lines.push(`  rank-only  P@5 ${rP.p5.toFixed(3)}  P@15 ${rP.p15.toFixed(3)}`);
     lines.push(`  uniform    P@5 ${uP.p5.toFixed(3)}  P@15 ${uP.p15.toFixed(3)}  (≈ random)`);
     const bkP = meanPrec(breakStagePrec);
     const bnP = meanPrec(bunchStagePrec);
-    lines.push(`  MODEL on break-won stages  (n=${breakStagePrec.length})  P@5 ${bkP.p5.toFixed(3)}  P@15 ${bkP.p15.toFixed(3)}`);
-    lines.push(`  MODEL on bunch-won stages  (n=${bunchStagePrec.length})  P@5 ${bnP.p5.toFixed(3)}  P@15 ${bnP.p15.toFixed(3)}`);
+    const sbkP = meanPrec(simBreakPrec);
+    const sbnP = meanPrec(simBunchPrec);
+    lines.push(`  break-won stages (n=${breakStagePrec.length}):  MODEL P@5 ${bkP.p5.toFixed(3)}  |  MODEL-sim P@5 ${sbkP.p5.toFixed(3)}`);
+    lines.push(`  bunch-won stages (n=${bunchStagePrec.length}):  MODEL P@5 ${bnP.p5.toFixed(3)}  |  MODEL-sim P@5 ${sbnP.p5.toFixed(3)}`);
     lines.push('');
     lines.push('--- model NLL by stage type ---');
     for (const [t, arr] of [...byType.entries()].sort()) {

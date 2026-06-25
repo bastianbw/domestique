@@ -42,6 +42,10 @@ export interface Stage {
   summitFinish?: boolean;
   /** double intermediate sprint → extra green-jersey points */
   doubleSprint?: boolean;
+  /** PCS parcours difficulty score (higher = harder); refines the coarse type */
+  profileScore?: number;
+  /** total climbing (m); with km gives "climbiness" (vertical-m per km) */
+  verticalMeters?: number;
 }
 
 export interface Rider {

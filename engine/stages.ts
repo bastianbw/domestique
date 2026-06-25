@@ -33,6 +33,42 @@ export const STAGES_2026: Stage[] = [
   { stage: 21, date: 'Jul26', type: 'hilly',     route: 'Thoiry → Paris (Champs-Élysées)',          km: 130,  note: 'Montmartre climbs then sprint',   sprintPtsOnOffer: 75,  intermediateSprints: 1, mtnPtsOnOffer: 15 },
 ];
 
+// Per-stage parcours difficulty from ProCyclingStats (available pre-race; scraped
+// via scripts/scrape_tdf2026_route.py). profileScore = PCS difficulty rating;
+// verticalMeters = total climbing. Fed to the model's continuous "climbiness"
+// refinement (engine/probability.ts) so the coarse type bucket is sharpened by
+// each stage's real vertical load.
+const TDF2026_DIFFICULTY: Record<number, { profileScore: number; verticalMeters: number }> = {
+  1: { profileScore: 20, verticalMeters: 231 },
+  2: { profileScore: 137, verticalMeters: 2049 },
+  3: { profileScore: 185, verticalMeters: 3940 },
+  4: { profileScore: 108, verticalMeters: 2784 },
+  5: { profileScore: 44, verticalMeters: 1883 },
+  6: { profileScore: 384, verticalMeters: 3978 },
+  7: { profileScore: 21, verticalMeters: 2053 },
+  8: { profileScore: 65, verticalMeters: 1346 },
+  9: { profileScore: 121, verticalMeters: 2427 },
+  10: { profileScore: 246, verticalMeters: 2990 },
+  11: { profileScore: 12, verticalMeters: 653 },
+  12: { profileScore: 39, verticalMeters: 1555 },
+  13: { profileScore: 58, verticalMeters: 2373 },
+  14: { profileScore: 313, verticalMeters: 4602 },
+  15: { profileScore: 428, verticalMeters: 4701 },
+  16: { profileScore: 40, verticalMeters: 465 },
+  17: { profileScore: 67, verticalMeters: 2361 },
+  18: { profileScore: 234, verticalMeters: 3950 },
+  19: { profileScore: 341, verticalMeters: 3605 },
+  20: { profileScore: 416, verticalMeters: 5601 },
+  21: { profileScore: 72, verticalMeters: 1978 },
+};
+for (const s of STAGES_2026) {
+  const d = TDF2026_DIFFICULTY[s.stage];
+  if (d) {
+    s.profileScore = d.profileScore;
+    s.verticalMeters = d.verticalMeters;
+  }
+}
+
 export const LAST_STAGE = 21;
 export const REST_DAYS = ['Jul13', 'Jul20'];
 

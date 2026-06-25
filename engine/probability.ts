@@ -11,6 +11,7 @@ import type {
   Archetype,
 } from './types';
 import { EngineConfig, defaultConfig } from './config';
+import { strengthFromRank } from './features';
 
 /** Convert a single decimal odd to an implied probability. */
 export function impliedProb(decimalOdd?: number): number | undefined {
@@ -221,6 +222,133 @@ export function riderDnfRisk(
   return clamp(risk, 0, 0.5);
 }
 
+// ── Coherent-joint structural model (§1b, no-odds path) ──────────────────────
+// The independent per-rider model double-counts: each rider's marginal puts
+// ~10% mass on top-5, so Σ over the field implies ~18 top-5 finishers when only
+// 5 exist (proven over-confident in the backtest). This builds ONE coherent
+// finishing matrix instead: a multiplicative skill (rank-strength × stage
+// suitability × form) seeds a Gaussian around each rider's skill-rank, then a
+// Sinkhorn normalisation makes the matrix doubly stochastic so every finishing
+// position is taken by exactly one rider and Σ P(top-k) = k by construction.
+// Suitability MODULATES the dominant season-rank signal rather than competing
+// with it additively (which diluted it and lost to a rank-only baseline).
+
+/**
+ * Stage "climbiness" = vertical metres per km, mapped to 0..1 (flat ≈ 8 m/km → 0,
+ * hard mountain ≥ 32 m/km → 1). Returns −1 when the stage carries no vertical
+ * data (so the modifier is skipped and behaviour is unchanged).
+ */
+export function climbiness(stage: Stage): number {
+  if (!stage.verticalMeters || !stage.km) return -1;
+  const mPerKm = stage.verticalMeters / Math.max(1, stage.km);
+  return clamp01((mPerKm - 8) / (32 - 8));
+}
+
+/** Multiplicative per-rider skill on a stage (>0). */
+export function riderSkill(
+  rider: Rider,
+  stage: Stage,
+  cfg: EngineConfig = defaultConfig(),
+): number {
+  if (rider.injury === 'out') return 0;
+
+  // TTT: the team rules the result; individual archetype barely matters.
+  if (stage.type === 'ttt') {
+    let s = clamp01(rider.teamStrength / 100) + 1e-3;
+    if (rider.injury === 'doubt') s *= cfg.doubtDampen;
+    return s;
+  }
+
+  const suit = cfg.suitability[stage.type][rider.archetype];
+  const rankStrength = strengthFromRank(rider.pcsRank) / 100; // rank 1 ≈ 1.0
+  const formFactor = cfg.skillFormFloor + (1 - cfg.skillFormFloor) * clamp01(rider.form / 100);
+  let skill = rankStrength * suit * formFactor;
+
+  // Continuous climbiness refines the coarse stage type (e.g. a "hilly" stage
+  // with mountain-level vertical lifts climbers and drops sprinters).
+  const c = climbiness(stage);
+  if (c >= 0) {
+    const slope = cfg.climbinessResponse[rider.archetype] ?? 0;
+    skill *= Math.max(0.2, 1 + cfg.climbinessGain * slope * c);
+  }
+
+  // A strong lead-out turns a fast finisher into a real contender on flat days.
+  if (rider.archetype === 'sprinter' && stage.type === 'flat' && rider.sprintTrainSupport) {
+    skill *= 1 + 0.12 * (rider.sprintTrainSupport / 100);
+  }
+  if (rider.injury === 'doubt') skill *= cfg.doubtDampen;
+  return Math.max(0, skill);
+}
+
+/** In-place Sinkhorn: scale a positive square matrix toward doubly stochastic. */
+function sinkhorn(m: number[][], iters: number): void {
+  const n = m.length;
+  for (let it = 0; it < iters; it++) {
+    // rows → 1
+    for (let i = 0; i < n; i++) {
+      let s = 0;
+      for (let j = 0; j < n; j++) s += m[i][j];
+      if (s > 0) for (let j = 0; j < n; j++) m[i][j] /= s;
+    }
+    // cols → 1
+    for (let j = 0; j < n; j++) {
+      let s = 0;
+      for (let i = 0; i < n; i++) s += m[i][j];
+      if (s > 0) for (let i = 0; i < n; i++) m[i][j] /= s;
+    }
+  }
+}
+
+/**
+ * Build a coherent finishing field for the no-odds case. Returns a distribution
+ * per rider (length cfg.fieldSize) whose column sums ≈ 1 (one rider per slot),
+ * with per-rider DNF mass folded in.
+ */
+export function buildCoherentField(
+  riders: Rider[],
+  stage: Stage,
+  cfg: EngineConfig = defaultConfig(),
+): RiderDistribution[] {
+  const N = cfg.fieldSize;
+  const starters = riders.filter((r) => r.injury !== 'out');
+  const M = starters.length;
+  if (M === 0) {
+    return riders.map((r) => ({ riderId: r.id, probs: new Array(N).fill(0), pDNF: 0 }));
+  }
+
+  // Order starters by skill (desc); modal finishing slot = skill rank.
+  const withSkill = starters.map((r) => ({ r, s: riderSkill(r, stage, cfg) }));
+  const order = [...withSkill].sort((a, b) => b.s - a.s);
+  const muById = new Map<string, number>();
+  order.forEach((o, i) => muById.set(o.r.id, i));
+
+  // Seed an M×M matrix: Gaussian around each rider's skill rank.
+  const sigma = Math.max(2, cfg.jointSpread);
+  const twoSig2 = 2 * sigma * sigma;
+  const rowIndex = new Map<string, number>();
+  const seed: number[][] = starters.map((r, i) => {
+    rowIndex.set(r.id, i);
+    const mu = muById.get(r.id)!;
+    const row = new Array<number>(M);
+    for (let p = 0; p < M; p++) row[p] = Math.exp(-((p - mu) ** 2) / twoSig2) + 1e-9;
+    return row;
+  });
+
+  sinkhorn(seed, 40);
+
+  return riders.map((r) => {
+    if (r.injury === 'out' || !rowIndex.has(r.id)) {
+      return { riderId: r.id, probs: new Array(N).fill(0), pDNF: 0 };
+    }
+    const pDNF = riderDnfRisk(r, stage, cfg);
+    const finishMass = 1 - pDNF;
+    const row = seed[rowIndex.get(r.id)!];
+    const probs = new Array<number>(N).fill(0);
+    for (let p = 0; p < M && p < N; p++) probs[p] = row[p] * finishMass;
+    return { riderId: r.id, probs, pDNF };
+  });
+}
+
 /**
  * Build distributions for the whole field at once, handling odds de-vigging
  * across the field and the shared field-strength normaliser.
@@ -253,6 +381,11 @@ export function buildField(
     const map: Record<string, number> = {};
     ids.forEach((id, i) => { if (dv[i] > 0) map[id] = dv[i]; });
     devigByMarket[m.k] = map;
+  }
+
+  // No odds anywhere in the field → coherent-joint structural model (§1b).
+  if (Object.keys(devigByMarket).length === 0) {
+    return buildCoherentField(riders, stage, cfg);
   }
 
   return riders.map((r) => {

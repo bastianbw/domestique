@@ -103,6 +103,27 @@ export const RISK_TUNING: Record<RiskPreset, {
 export const HORIZON_DISCOUNT = 0.75;
 export const DEFAULT_HORIZON_DEPTH = 3;
 
+/**
+ * Coherent-joint (no-odds) finishing model (§1b). `jointSpread` is the Gaussian
+ * spread (in finishing positions) of the skill-seeded distribution before the
+ * Sinkhorn column-normalisation; smaller = sharper/more confident. `skillForm`
+ * is the floor of the form multiplier so form modulates but never zeroes skill.
+ */
+export const JOINT_SPREAD = 16;
+export const SKILL_FORM_FLOOR = 0.6;
+
+/**
+ * Continuous "climbiness" (vertical-m per km) refines the coarse 6-way stage
+ * type: a stage typed `hilly` but with mountain-level climbing should still lift
+ * climbers/GC and drop sprinters. `climbinessGain` scales the per-archetype
+ * response (0 disables); the matrix below is the response slope at full mountain.
+ */
+export const CLIMBINESS_GAIN = 1.5;
+export const CLIMBINESS_RESPONSE: Record<Archetype, number> = {
+  climber: 0.6, gc: 0.5, puncheur: 0.1, breakaway: 0.3,
+  sprinter: -0.7, rouleur: -0.3, domestique: -0.2,
+};
+
 /** Differential mode: how strongly to lean away from heavily-owned riders. */
 export const OWNERSHIP_LEVERAGE = 0.15;
 
@@ -118,6 +139,10 @@ export interface EngineConfig {
   riskTuning: typeof RISK_TUNING;
   horizonDiscount: number;
   ownershipLeverage: number;
+  jointSpread: number;
+  skillFormFloor: number;
+  climbinessGain: number;
+  climbinessResponse: Record<Archetype, number>;
 }
 
 export function defaultConfig(): EngineConfig {
@@ -134,5 +159,9 @@ export function defaultConfig(): EngineConfig {
     riskTuning: JSON.parse(JSON.stringify(RISK_TUNING)),
     horizonDiscount: HORIZON_DISCOUNT,
     ownershipLeverage: OWNERSHIP_LEVERAGE,
+    jointSpread: JOINT_SPREAD,
+    skillFormFloor: SKILL_FORM_FLOOR,
+    climbinessGain: CLIMBINESS_GAIN,
+    climbinessResponse: { ...CLIMBINESS_RESPONSE },
   };
 }

@@ -8,3 +8,8 @@ next-env.d.ts
 
 .vercel
 public/data/
+
+# Backtest scrape artifacts: raw HTML cache (large) + run logs. The derived
+# datasets data/historical/*.json are kept (commit them for reproducibility).
+data/historical/_cache/
+data/historical/*.log

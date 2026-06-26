@@ -406,11 +406,17 @@ toward the hand-tuned prior). Validated **out-of-sample: fit on 2024+2025, test 
    the hand-tuned matrix (now a data-checked choice), fitter retained to revisit.
 3. **The ensemble is the one robust model win**: Top15 Brier 0.0902→0.0845 (~6%),
    the metric that matters most for Etapebonus (count-of-top-15), at a within-noise
-   P@5 cost. **SHIPPED as the `projectField` default (2026-06-26)** — every app
-   consumer (Optimal page, riders page, forward-value horizon, EMA calibration)
-   now blends analytic+sim 50/50. Deterministic (seeded sim) so the UI is stable;
-   `{ analytic: true }` is the escape hatch for tests/debug. Verified live: Optimal
-   page renders clean (Σ xG +1.30M, Etapebonus +43k), no console errors.
+   P@5 cost. Shipped via an **ODDS-AWARE `projectField` default (2026-06-26)**:
+   when the field carries pasted odds → `buildField` (Shin-de-vigged market, the
+   strongest signal); otherwise → the analytic+sim ensemble (50/50). NOTE: the
+   ensemble blends the *no-odds* structural model with the *no-odds* sim, so making
+   it the unconditional default briefly THREW PASTED ODDS AWAY — fixed by the
+   odds-aware guard (`fieldHasOdds`). The held-out backtest validated the ensemble
+   only on the no-odds corpus, so this is exactly the regime it applies to. Every
+   consumer (Optimal/Riders pages, forward-value horizon, EMA calibration) uses this
+   default; `{ analytic: true }` is the escape hatch for tests/debug. Verified live:
+   a domestique given win 1.25 becomes the recommended captain at +285k stage xG
+   (proving pasted odds now flow into xG), and no-odds stages render clean.
 4. Terrain-form and field-strength: within noise on precision (small Brier help).
    Kept wired (opt-in / always-on-but-harmless), no overfit risk.
 5. Shin de-vig (win market) ships in the odds path — favourite–longshot corrected;

@@ -43,6 +43,31 @@ describe('finishing distribution', () => {
   });
 });
 
+describe('odds-aware default', () => {
+  it('projectField default uses pasted odds (does not throw the market away)', () => {
+    const flat = getStage(7)!;
+    // 6 priced riders (real overround) + filler with no odds.
+    const winOdds = [3, 4, 6, 8, 10, 12];
+    const priced = winOdds.map((w, i) => rider({ id: `p${i}`, archetype: 'sprinter', pcsRank: 20 + i, odds: { win: w } }));
+    const filler = Array.from({ length: 8 }, (_, i) => rider({ id: `f${i}`, archetype: 'domestique', pcsRank: 120 + i }));
+    const field = [...priced, ...filler];
+
+    const withOdds = projectField(field, flat); // default → odds-aware
+    const noOdds = projectField(field.map((r) => ({ ...r, odds: undefined })), flat); // default → ensemble
+
+    const favWith = withOdds.find((p) => p.riderId === 'p0')!; // win odd 3.0 = the favourite
+    const favNo = noOdds.find((p) => p.riderId === 'p0')!;
+    const longWith = withOdds.find((p) => p.riderId === 'p5')!; // win odd 12.0 = longshot
+
+    // The market favourite's win prob must rise once odds are present (the
+    // regression was the default IGNORING odds — pWin identical with/without).
+    expect(favWith.pWin).toBeGreaterThan(0.2);
+    expect(favWith.pWin).toBeGreaterThan(favNo.pWin + 0.1);
+    // And the market must separate the favourite from the longshot.
+    expect(favWith.pWin).toBeGreaterThan(longWith.pWin + 0.1);
+  });
+});
+
 describe('captain EV', () => {
   it('doubles positive expected growth', () => {
     const proj = projectField(field, getStage(7)!);

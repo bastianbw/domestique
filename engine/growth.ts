@@ -189,20 +189,37 @@ export function projectRider(
   };
 }
 
+/** True if any starter carries a usable betting-odds market (the strongest signal). */
+export function fieldHasOdds(riders: Rider[]): boolean {
+  return riders.some((r) => {
+    if (r.injury === 'out') return false;
+    const o = r.odds;
+    return !!o && ((o.win ?? 0) > 1 || (o.top3 ?? 0) > 1 || (o.top5 ?? 0) > 1 || (o.top10 ?? 0) > 1);
+  });
+}
+
 /**
  * Convenience: project the whole field for a stage in one call.
  *
- * DEFAULT = the analytic+sim ENSEMBLE (convex blend, 50/50). The held-out
- * backtest (docs §4g) made this the one robust model win: top-15 Brier 0.0902 →
- * 0.0845 (~6% better) — the calibration that drives Etapebonus, the biggest DKK
- * lever — at a within-noise top-5 cost. It is deterministic (seeded sim), so the
- * UI is stable across renders. Every app consumer (Optimal page, riders page,
- * the forward-value horizon, EMA calibration) now goes through this same blend.
+ * DEFAULT is ODDS-AWARE:
+ *  - If the field carries pasted betting odds → `buildField`, which anchors the
+ *    distribution to the (Shin-de-vigged) market. Odds are the strongest signal
+ *    in the system, so when present they MUST drive xG — the ensemble below is
+ *    blind to odds (it blends the no-odds structural model with the no-odds sim),
+ *    so using it when odds exist would silently throw the market away.
+ *  - Otherwise → the analytic+sim ENSEMBLE (convex blend, 50/50). The held-out
+ *    backtest (docs §4g) — run on a corpus with NO odds — made this the one robust
+ *    model win: top-15 Brier 0.0902 → 0.0845 (~6%), the calibration that drives
+ *    Etapebonus. Deterministic (seeded sim), so the UI is stable across renders.
  *
- * Escape hatches via `opts`:
- *  - `analytic: true` → pure analytic coherent model (used by tests/debug).
+ * Every weather/news modifier feeds both paths (riderSkill/effectiveSpread/
+ * riderDnfRisk/breakSkill), so the displayed xG always reflects odds + structural
+ * model + sim + weather/news, recomputed whenever riders/stage/config change.
+ *
+ * Escape hatches via `opts` (override the odds-aware default):
+ *  - `analytic: true` → pure analytic `buildField` (odds-aware, no sim blend).
  *  - `simulate` → full Monte Carlo only (best break upside, looser top-5).
- *  - `ensemble: { w, sim }` → tune the blend weight / sim config.
+ *  - `ensemble: { w, sim }` → force the analytic+sim blend (no-odds structural).
  *
  * (Joint-sample Etapebonus was measured and is only ~0.7% better than the
  * Poisson-binomial used in the optimizer — Holdet's ≤2-per-team rule decorrelates
@@ -220,8 +237,10 @@ export function projectField(
       ? simulateStage(riders, stage, cfg, opts.simulate)
       : opts?.ensemble
         ? buildEnsembleField(riders, stage, cfg, opts.ensemble.w, opts.ensemble.sim)
-        // Default: the ensemble blend (analytic + sim) with engine defaults.
-        : buildEnsembleField(riders, stage, cfg, DEFAULT_ENSEMBLE_W, DEFAULT_SIM);
+        // Odds-aware default: market when odds exist, else the no-odds ensemble.
+        : fieldHasOdds(riders)
+          ? buildField(riders, stage, cfg)
+          : buildEnsembleField(riders, stage, cfg, DEFAULT_ENSEMBLE_W, DEFAULT_SIM);
   const byId = new Map(dists.map((d) => [d.riderId, d]));
   return riders.map((r) => projectRider(r, stage, byId.get(r.id)!, cfg));
 }

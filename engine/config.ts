@@ -58,6 +58,16 @@ export const MTN_POINT_WEIGHT: Record<Archetype, number> = {
 /** How much betting odds (when present) anchor the head of the distribution. */
 export const ODDS_ANCHOR_WEIGHT = 0.7;
 
+/**
+ * Start-list fraction at which a betting market is treated as "complete" enough
+ * to fully trust. Below this, the odds-anchored distribution is blended toward
+ * the structural model in proportion to coverage — so a lone favourite (or a
+ * 2-3 rider market) doesn't read as a near-certainty across Win/Top5/Top15, and
+ * unpriced riders don't collapse onto a flat fallback. A normally-priced field
+ * (≥ this fraction) is unaffected; odds remain the dominant signal.
+ */
+export const ODDS_COVERAGE_REF = 0.35;
+
 /** Form / PCS rank / team-strength blend for shaping the non-odds curve. */
 export const SIGNAL_WEIGHTS = {
   suitability: 0.45,
@@ -152,6 +162,7 @@ export interface EngineConfig {
   sprintPointWeight: Record<Archetype, number>;
   mtnPointWeight: Record<Archetype, number>;
   oddsAnchorWeight: number;
+  oddsCoverageRef: number;
   signalWeights: typeof SIGNAL_WEIGHTS;
   doubtDampen: number;
   baseDnfRisk: Record<Archetype, number>;
@@ -175,6 +186,7 @@ export function defaultConfig(): EngineConfig {
     sprintPointWeight: { ...SPRINT_POINT_WEIGHT },
     mtnPointWeight: { ...MTN_POINT_WEIGHT },
     oddsAnchorWeight: ODDS_ANCHOR_WEIGHT,
+    oddsCoverageRef: ODDS_COVERAGE_REF,
     signalWeights: { ...SIGNAL_WEIGHTS },
     doubtDampen: DOUBT_DAMPEN,
     baseDnfRisk: { ...BASE_DNF_RISK },

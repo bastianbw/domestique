@@ -57,7 +57,7 @@ function forEachSimOrder(
   const brkSkill = starters.map((r) => Math.max(1e-9, breakSkill(r, stage, cfg)));
   const pDNF = starters.map((r) => riderDnfRisk(r, stage, cfg));
   // Optional weather nudges the break-success rate (×1 when no weather supplied).
-  const pBreak = Math.min(0.6, (cfg.breakawayWinRate[stage.type] ?? 0) * weatherBreakFactor(stage));
+  const pBreak = Math.min(0.6, (cfg.breakawayWinRate?.[stage.type] ?? 0) * weatherBreakFactor(stage));
 
   const rng = mulberry32(sim.seed);
   const exp = () => -Math.log(rng() || 1e-12); // Exp(1)

@@ -48,12 +48,12 @@ describe('odds-aware default', () => {
     const flat = getStage(7)!;
     // 6 priced riders (real overround) + filler with no odds.
     const winOdds = [3, 4, 6, 8, 10, 12];
-    const priced = winOdds.map((w, i) => rider({ id: `p${i}`, archetype: 'sprinter', pcsRank: 20 + i, odds: { win: w } }));
+    const priced = winOdds.map((w, i) => rider({ id: `p${i}`, archetype: 'sprinter', pcsRank: 20 + i, oddsByStage: { 7: { win: w } } }));
     const filler = Array.from({ length: 8 }, (_, i) => rider({ id: `f${i}`, archetype: 'domestique', pcsRank: 120 + i }));
     const field = [...priced, ...filler];
 
     const withOdds = projectField(field, flat); // default → odds-aware
-    const noOdds = projectField(field.map((r) => ({ ...r, odds: undefined })), flat); // default → ensemble
+    const noOdds = projectField(field.map((r) => ({ ...r, oddsByStage: undefined })), flat); // default → ensemble
 
     const favWith = withOdds.find((p) => p.riderId === 'p0')!; // win odd 3.0 = the favourite
     const favNo = noOdds.find((p) => p.riderId === 'p0')!;

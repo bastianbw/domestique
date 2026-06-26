@@ -189,11 +189,11 @@ export function projectRider(
   };
 }
 
-/** True if any starter carries a usable betting-odds market (the strongest signal). */
-export function fieldHasOdds(riders: Rider[]): boolean {
+/** True if any starter carries a usable betting market FOR THIS STAGE (the strongest signal). */
+export function fieldHasOdds(riders: Rider[], stageNo: number): boolean {
   return riders.some((r) => {
     if (r.injury === 'out') return false;
-    const o = r.odds;
+    const o = r.oddsByStage?.[stageNo];
     return !!o && ((o.win ?? 0) > 1 || (o.top3 ?? 0) > 1 || (o.top5 ?? 0) > 1 || (o.top10 ?? 0) > 1);
   });
 }
@@ -237,8 +237,8 @@ export function projectField(
       ? simulateStage(riders, stage, cfg, opts.simulate)
       : opts?.ensemble
         ? buildEnsembleField(riders, stage, cfg, opts.ensemble.w, opts.ensemble.sim)
-        // Odds-aware default: market when odds exist, else the no-odds ensemble.
-        : fieldHasOdds(riders)
+        // Odds-aware default: market when THIS STAGE has odds, else the ensemble.
+        : fieldHasOdds(riders, stage.stage)
           ? buildField(riders, stage, cfg)
           : buildEnsembleField(riders, stage, cfg, DEFAULT_ENSEMBLE_W, DEFAULT_SIM);
   const byId = new Map(dists.map((d) => [d.riderId, d]));

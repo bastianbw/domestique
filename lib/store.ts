@@ -8,7 +8,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type {
-  Rider, Stage, RiskPreset, TeamType,
+  Rider, RiderOdds, Stage, RiskPreset, TeamType,
   StageResultBlock, OddsBlock, StartlistBlock, WeatherBlock, NewsBlock, ImportBlock, Archetype,
 } from '@/engine/types';
 import { STAGES_2026, LAST_STAGE } from '@/engine/stages';
@@ -311,9 +311,55 @@ export const useStore = create<AppState>()(
       name: 'domestique-v1',
       storage: createJSONStorage(() => localStorage),
       version: 1,
+      // Zustand's default rehydrate merge is SHALLOW, so a persisted `config`
+      // object wholesale-replaces the current default. A config written by an
+      // older build (before fields like `climbinessResponse`/`breakawayWinRate`
+      // existed) would then be missing those keys, and the model throws when it
+      // reads them — crashing the whole app on load. Deep-merge the persisted
+      // config over the current defaults so newly-added knobs are backfilled.
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<AppState>;
+        // Migrate legacy GLOBAL rider odds (a single `odds` field, reused on every
+        // stage) to stage-scoped `oddsByStage`, attributing them to the stage the
+        // user was last looking at — the stage they were pasted for.
+        const legacyStage = p.selectedStage ?? current.selectedStage;
+        const riders = p.riders?.map((raw) => {
+          const r = raw as Rider & { odds?: RiderOdds };
+          if (r.oddsByStage || !r.odds) return r as Rider;
+          const { odds, ...rest } = r;
+          return { ...rest, oddsByStage: { [legacyStage]: odds } } as Rider;
+        });
+        return {
+          ...current,
+          ...p,
+          ...(riders ? { riders } : {}),
+          config: mergeConfig(current.config, p.config),
+          configHistory: (p.configHistory ?? []).map((c) => mergeConfig(current.config, c)),
+        };
+      },
     },
   ),
 );
+
+/**
+ * Backfill a (possibly stale) persisted config against the current defaults:
+ * any missing top-level knob is taken from defaults, and each nested record
+ * (suitability, climbinessResponse, …) is merged over its default so partial
+ * objects don't strip required keys. Defends rehydration AND imported state.
+ */
+function mergeConfig(base: EngineConfig, override?: Partial<EngineConfig>): EngineConfig {
+  if (!override || typeof override !== 'object') return base;
+  const out: any = { ...base };
+  for (const key of Object.keys(base) as (keyof EngineConfig)[]) {
+    const o = (override as any)[key];
+    if (o && typeof o === 'object' && !Array.isArray(o)) {
+      out[key] = { ...(base as any)[key], ...o };
+    } else if (o !== undefined) {
+      out[key] = o;
+    }
+  }
+  return out as EngineConfig;
+}
 
 // ── team change with real transfer accounting ────────────────────────────────
 // Every team mutation moves cash: selling a rider returns their current value to
@@ -363,9 +409,14 @@ function applyOdds(
     const m = matchRider(row.rider, riders);
     if (!m.riderId) { unmatched.push(row.rider); continue; }
     const idx = riders.findIndex((r) => r.id === m.riderId);
+    // Store under the block's stage so the market only anchors THAT stage —
+    // never another profile or the forward-horizon projection of later stages.
     riders[idx] = {
       ...riders[idx],
-      odds: { win: row.win, top3: row.top3, top5: row.top5, top10: row.top10 },
+      oddsByStage: {
+        ...(riders[idx].oddsByStage ?? {}),
+        [block.stage]: { win: row.win, top3: row.top3, top5: row.top5, top10: row.top10 },
+      },
     };
   }
   set({

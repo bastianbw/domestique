@@ -8,9 +8,9 @@ import { projectField } from '@/engine/growth';
 import type { Archetype, Rider, RiderProjection } from '@/engine/types';
 import { growth, priceM, pct, ARCHE_LABEL } from '@/lib/format';
 
-/** Did this rider's distribution come from the betting market or the model? */
-function riderHasOdds(r: Rider): boolean {
-  const o = r.odds;
+/** Did this rider's distribution come from the betting market or the model, for THIS stage? */
+function riderHasOdds(r: Rider, stageNo: number): boolean {
+  const o = r.oddsByStage?.[stageNo];
   return !!o && ((o.win ?? 0) > 1 || (o.top3 ?? 0) > 1 || (o.top5 ?? 0) > 1 || (o.top10 ?? 0) > 1);
 }
 
@@ -144,7 +144,7 @@ export default function RidersPage() {
                     <span className="font-medium text-chalk-100 hover:text-gold">{r.name}</span>
                     {r.jerseys?.map((j) => <Jersey key={j} kind={j} size={13} />)}
                     {r.injury !== 'fit' && <span className="chip bg-polka/15 j-polka capitalize">{r.injury}</span>}
-                    {riderHasOdds(r) && <span className="chip bg-gold/15 text-gold">Market</span>}
+                    {riderHasOdds(r, selected) && <span className="chip bg-gold/15 text-gold">Market</span>}
                   </button>
                 </td>
                 <td className="hidden text-chalk-300 md:table-cell">{r.team}</td>
@@ -176,7 +176,7 @@ export default function RidersPage() {
               {openId === r.id && (
                 <tr className="bg-ink-900/50">
                   <td colSpan={8} className="!py-0">
-                    <RiderDetail r={r} p={p} />
+                    <RiderDetail r={r} p={p} stageNo={selected} />
                   </td>
                 </tr>
               )}
@@ -193,8 +193,8 @@ export default function RidersPage() {
   );
 }
 
-function RiderDetail({ r, p }: { r: Rider; p: RiderProjection }) {
-  const fromMarket = riderHasOdds(r);
+function RiderDetail({ r, p, stageNo }: { r: Rider; p: RiderProjection; stageNo: number }) {
+  const fromMarket = riderHasOdds(r, stageNo);
   const probs: Array<{ label: string; v: number }> = [
     { label: 'Win', v: p.pWin },
     { label: 'Top 5', v: p.pTop5 },

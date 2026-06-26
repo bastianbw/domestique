@@ -1,13 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { buildField, devigMarket } from './probability';
-import type { Rider } from './types';
+import type { Rider, RiderOdds } from './types';
 import { getStage } from './stages';
 
-function rider(id: string, odds?: Rider['odds']): Rider {
+// All buildField tests below project stage 7, so odds are scoped to stage 7.
+function rider(id: string, odds?: RiderOdds): Rider {
   return {
     id, name: id, team: 'T', archetype: 'sprinter', price: 8_000_000,
     form: 70, pcsRank: 30, teamStrength: 60, injury: 'fit',
-    breakawayTendency: 20, odds,
+    breakawayTendency: 20, oddsByStage: odds ? { 7: odds } : undefined,
   };
 }
 
@@ -53,5 +54,46 @@ describe('odds-ladder distribution', () => {
     const pTop15 = fav.probs.slice(0, 15).reduce((a, b) => a + b, 0);
     expect(pTop5).toBeGreaterThanOrEqual(pWin);
     expect(pTop15).toBeGreaterThanOrEqual(pTop5);
+  });
+});
+
+describe('sparse-odds guard', () => {
+  const flat = getStage(7)!;
+
+  it('a lone short-odds favourite is not read as a near-certainty', () => {
+    // One rider priced at ~evens, 30 others unpriced. Without the guard the win
+    // de-vig normalises the single priced slot toward 1.0 → ~97% across markets.
+    const field = [
+      rider('lone', { win: 1.05 }),
+      ...Array.from({ length: 30 }, (_, i) => rider(`f${i}`)),
+    ];
+    const dists = buildField(field, flat);
+    const fav = dists.find((d) => d.riderId === 'lone')!;
+    expect(fav.probs[0]).toBeLessThan(0.5); // tempered, not ~1.0
+    // and the three markets no longer collapse onto the same number
+    const pTop5 = fav.probs.slice(0, 5).reduce((a, b) => a + b, 0);
+    const pTop15 = fav.probs.slice(0, 15).reduce((a, b) => a + b, 0);
+    expect(pTop15).toBeGreaterThan(pTop5 + 1e-3);
+    expect(pTop5).toBeGreaterThan(fav.probs[0] + 1e-3);
+  });
+
+  it('unpriced riders stay differentiated (not a flat fallback)', () => {
+    // A strong sprinter and a weak domestique, neither priced, alongside one
+    // priced favourite. Their structural strengths must still separate them.
+    const sprinter = rider('sprint');
+    const weak: Rider = { ...rider('weak'), archetype: 'domestique', pcsRank: 120, form: 55 };
+    const field = [rider('fav', { win: 3.0 }), sprinter, weak,
+      ...Array.from({ length: 20 }, (_, i) => rider(`f${i}`))];
+    const dists = buildField(field, flat);
+    const s = dists.find((d) => d.riderId === 'sprint')!.probs.slice(0, 5).reduce((a, b) => a + b, 0);
+    const w = dists.find((d) => d.riderId === 'weak')!.probs.slice(0, 5).reduce((a, b) => a + b, 0);
+    expect(s).toBeGreaterThan(w);
+  });
+
+  it('a fully-priced field is unchanged (odds stay the boss)', () => {
+    // 12 riders all priced at win 12.0 → coverage 1 → Shin de-vig only, pWin 1/12.
+    const field = Array.from({ length: 12 }, (_, i) => rider(`r${i}`, { win: 12.0 }));
+    const dists = buildField(field, flat);
+    for (const d of dists) expect(d.probs[0]).toBeCloseTo(1 / 12, 4);
   });
 });

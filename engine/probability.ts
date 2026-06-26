@@ -16,6 +16,11 @@ import {
   weatherSpreadFactor, weatherDnfFactor, newsSkillFactor, newsBreakFactor,
 } from './modifiers';
 
+/** A rider's betting market for one stage (undefined → no odds for that stage). */
+export function oddsForStage(rider: Rider, stageNo: number): RiderOdds | undefined {
+  return rider.oddsByStage?.[stageNo];
+}
+
 /** Convert a single decimal odd to an implied probability. */
 export function impliedProb(decimalOdd?: number): number | undefined {
   if (!decimalOdd || decimalOdd <= 1) return undefined;
@@ -306,7 +311,7 @@ export function riderSkill(
   // with mountain-level vertical lifts climbers and drops sprinters).
   const c = climbiness(stage);
   if (c >= 0) {
-    const slope = cfg.climbinessResponse[rider.archetype] ?? 0;
+    const slope = cfg.climbinessResponse?.[rider.archetype] ?? 0;
     skill *= Math.max(0.2, 1 + cfg.climbinessGain * slope * c);
   }
 
@@ -463,12 +468,13 @@ export function buildField(
   // De-vig each odds market across the field, once. A rider is "odds-driven"
   // when it supplied at least one market; those get the calibrated anchor curve.
   const ids = starters.map((r) => r.id);
-  const markets: Array<{ k: number; key: keyof NonNullable<Rider['odds']> }> = [
+  const markets: Array<{ k: number; key: keyof RiderOdds }> = [
     { k: 1, key: 'win' }, { k: 3, key: 'top3' }, { k: 5, key: 'top5' }, { k: 10, key: 'top10' },
   ];
   const devigByMarket: Record<number, Record<string, number>> = {};
   for (const m of markets) {
-    const col = starters.map((r) => r.odds?.[m.key]);
+    // Only this stage's odds anchor this stage (never another profile's market).
+    const col = starters.map((r) => oddsForStage(r, stage.stage)?.[m.key]);
     if (!col.some((o) => o && o > 1)) continue;
     // Win market uses Shin de-vig (favourite–longshot correction); place markets
     // (top-3/5/10) sum to k, where the proportional/divisor method is apt.
@@ -483,24 +489,55 @@ export function buildField(
     return buildCoherentField(riders, stage, cfg);
   }
 
+  // Sparse-odds guard. The structural model (§1b) is the blend partner that
+  // tempers a thin market. Two failure modes it fixes:
+  //  - a LONE favourite (or 2-3 priced riders) reads as a near-certainty across
+  //    Win/Top5/Top15 because the win de-vig normalises the priced slice toward 1;
+  //  - UNPRICED riders collapse onto a flat geometric fallback, so the whole
+  //    field looks undifferentiated.
+  // The weight on the market saturates at `oddsCoverageRef`, so a normally-priced
+  // start list (≥ that fraction) is unchanged — odds stay the dominant signal.
+  const structural = buildCoherentField(riders, stage, cfg);
+  const structById = new Map(structural.map((d) => [d.riderId, d]));
+  const priced = starters.filter((r) =>
+    markets.some((m) => typeof devigByMarket[m.k]?.[r.id] === 'number'),
+  ).length;
+  const coverage = starters.length > 0 ? priced / starters.length : 0;
+  const wOdds = clamp01(coverage / Math.max(1e-6, cfg.oddsCoverageRef));
+
   return riders.map((r) => {
     if (r.injury === 'out') {
       return { riderId: r.id, probs: new Array(N).fill(0), pDNF: 0 };
     }
+    const struct = structById.get(r.id) ?? { riderId: r.id, probs: new Array(N).fill(0), pDNF: 0 };
     const anchors: Anchor[] = [];
     for (const m of markets) {
       const q = devigByMarket[m.k]?.[r.id];
       if (typeof q === 'number' && q > 0) anchors.push({ k: m.k, q });
     }
-    if (anchors.length > 0) {
-      const raw = contentionStrength(r, stage, cfg);
-      const rel = fieldStrength > 0 ? raw / fieldStrength : 0;
-      const pDNF = riderDnfRisk(r, stage, cfg);
-      return buildDistributionFromAnchors(r.id, anchors, pDNF, rel, N);
-    }
-    // No odds for this rider → model-strength geometric fallback (unchanged).
-    return buildDistribution(r, stage, fieldStrength, cfg);
+    // No odds for this rider → the structural model (coherent + differentiated),
+    // not a flat geometric guess. Priced peers still own the front slots.
+    if (anchors.length === 0) return struct;
+
+    const raw = contentionStrength(r, stage, cfg);
+    const rel = fieldStrength > 0 ? raw / fieldStrength : 0;
+    const pDNF = riderDnfRisk(r, stage, cfg);
+    const oddsDist = buildDistributionFromAnchors(r.id, anchors, pDNF, rel, N);
+    // Full-coverage fast path: identical to the pure odds-anchored distribution.
+    return wOdds >= 0.999 ? oddsDist : blendDistributions(oddsDist, struct, wOdds);
   });
+}
+
+/** Convex blend of two distributions: w·a + (1−w)·b (mass-preserving). */
+function blendDistributions(
+  a: RiderDistribution,
+  b: RiderDistribution,
+  w: number,
+): RiderDistribution {
+  const n = Math.max(a.probs.length, b.probs.length);
+  const probs = new Array<number>(n).fill(0);
+  for (let i = 0; i < n; i++) probs[i] = w * (a.probs[i] ?? 0) + (1 - w) * (b.probs[i] ?? 0);
+  return { riderId: a.riderId, probs, pDNF: w * a.pDNF + (1 - w) * b.pDNF };
 }
 
 // helpers

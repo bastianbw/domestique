@@ -59,11 +59,11 @@ export default function OptimalPage() {
   const oddsCoverage = useMemo(() => {
     const starters = s.riders.filter((r) => r.injury !== 'out');
     const withOdds = starters.filter((r) => {
-      const o = r.odds;
+      const o = r.oddsByStage?.[s.selectedStage];
       return !!o && (!!o.win || !!o.top3 || !!o.top5 || !!o.top10);
     }).length;
     return { withOdds, total: starters.length, pct: starters.length ? withOdds / starters.length : 0 };
-  }, [s.riders]);
+  }, [s.riders, s.selectedStage]);
 
   // The three risk presets side by side (§8.2 "show how the team changes").
   const presets = useMemo(() => {

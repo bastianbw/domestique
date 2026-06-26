@@ -81,8 +81,13 @@ export interface Rider {
   injury: InjuryFlag;
   breakawayTendency: number; // 0..100 propensity to be in the break
   sprintTrainSupport?: number; // 0..100 quality of lead-out (sprinters)
-  /** decimal betting odds, optional, additive only */
-  odds?: RiderOdds;
+  /**
+   * Decimal betting odds keyed by the stage number they were pasted for. Odds
+   * are STAGE-SCOPED on purpose: a market reflects one stage's parcours, so
+   * stage-7 sprint odds must never anchor a mountain stage or bleed into the
+   * forward-horizon projection of later stages. Absent stage → pure model.
+   */
+  oddsByStage?: Record<number, RiderOdds>;
   /** manual popular-ownership guess (%) for differential mode, optional */
   ownershipPct?: number;
   /** optional Phase-2 news nudges (neutral when absent); see RiderNews */

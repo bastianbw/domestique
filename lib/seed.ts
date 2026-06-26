@@ -26,7 +26,7 @@ function mk(
     gcPosition: o.gcPosition,
     jerseys: o.jerseys,
     sprintTrainSupport: o.sprintTrainSupport,
-    odds: o.odds,
+    oddsByStage: o.oddsByStage,
     ownershipPct: o.ownershipPct,
   };
 }

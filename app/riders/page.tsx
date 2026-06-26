@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { useHydrated } from '@/lib/useHydrated';
 import { StageBar } from '../components/StageBar';
+import { RoleIcon, Jersey, CaptainStar, BarMeter } from '../components/graphics';
 import { projectField } from '@/engine/growth';
 import type { Archetype } from '@/engine/types';
 import { growth, priceM, ARCHE_LABEL } from '@/lib/format';
@@ -72,39 +73,39 @@ export default function RidersPage() {
   const maxXg = Math.max(1, ...rows.map((x) => x.p.xG));
   const maxPerM = Math.max(1, ...rows.map((x) => x.perM));
 
-  function th(key: SortKey, label: string) {
+  function th(key: SortKey, label: string, right = false) {
     return (
-      <th onClick={() => { if (sort === key) setAsc(!asc); else { setSort(key); setAsc(false); } }}>
-        {label} {sort === key ? (asc ? '▲' : '▼') : ''}
+      <th onClick={() => { if (sort === key) setAsc(!asc); else { setSort(key); setAsc(false); } }} className={right ? 'text-right' : ''}>
+        {label} <span className="text-gold">{sort === key ? (asc ? '▲' : '▼') : ''}</span>
       </th>
     );
   }
 
-  if (!hydrated) return <Skeleton />;
+  if (!hydrated) return <div className="p-16 text-center text-sm text-chalk-500">Loading the field…</div>;
 
   return (
-    <div>
+    <div className="space-y-5">
       <StageBar />
-
       <MyTeamBar />
 
-      <div className="card mb-3 flex flex-wrap items-center gap-2 p-2">
-        <input className="input w-40" placeholder="Search rider…" value={q} onChange={(e) => setQ(e.target.value)} />
+      {/* filters */}
+      <div className="card flex flex-wrap items-center gap-2.5 p-3">
+        <input className="input w-44" placeholder="Search rider…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select className="input" value={arch} onChange={(e) => setArch(e.target.value as any)}>
           <option value="all">All archetypes</option>
           {Object.keys(ARCHE_LABEL).map((a) => <option key={a} value={a}>{ARCHE_LABEL[a]}</option>)}
         </select>
-        <select className="input" value={team} onChange={(e) => setTeam(e.target.value)}>
+        <select className="input max-w-[180px]" value={team} onChange={(e) => setTeam(e.target.value)}>
           {teams.map((t) => <option key={t} value={t}>{t === 'all' ? 'All teams' : t}</option>)}
         </select>
-        <label className="mono flex items-center gap-1 text-xs text-chalk-300">
-          ≤ <span className="j-yellow">{maxPrice}M</span>
-          <input type="range" min={2} max={20} step={0.5} value={maxPrice} onChange={(e) => setMaxPrice(Number(e.target.value))} />
+        <label className="flex items-center gap-2 text-[13px] text-chalk-300">
+          ≤ <span className="mono font-medium text-gold">{maxPrice}M</span>
+          <input type="range" className="accent-gold" min={2} max={20} step={0.5} value={maxPrice} onChange={(e) => setMaxPrice(Number(e.target.value))} />
         </label>
-        <label className="mono flex items-center gap-1 text-xs text-chalk-300">
-          <input type="checkbox" checked={ownedOnly} onChange={(e) => setOwnedOnly(e.target.checked)} /> owned
+        <label className="flex items-center gap-1.5 text-[13px] text-chalk-300">
+          <input type="checkbox" className="accent-gold" checked={ownedOnly} onChange={(e) => setOwnedOnly(e.target.checked)} /> owned only
         </label>
-        <span className="mono ml-auto text-xs text-chalk-500">{filtered.length} riders</span>
+        <span className="ml-auto text-[13px] text-chalk-500"><span className="mono text-chalk-300">{filtered.length}</span> riders</span>
       </div>
 
       <div className="card overflow-x-auto">
@@ -112,39 +113,49 @@ export default function RidersPage() {
           <thead>
             <tr>
               <th>Rider</th>
-              <th>Team</th>
-              <th>Arch</th>
-              {th('price', 'Price')}
+              <th className="hidden md:table-cell">Team</th>
+              {th('price', 'Price', true)}
               {th('xG', 'xG')}
-              {th('perM', 'xG/M')}
-              {th('xGfee', 'xG−fee')}
-              {th('captainEV', 'Capt EV')}
+              {th('perM', 'xG / M')}
+              {th('xGfee', 'xG − fee', true)}
+              {th('captainEV', 'Capt EV', true)}
               <th></th>
             </tr>
           </thead>
           <tbody>
             {filtered.map(({ r, p, perM, xGfee, owned: own }) => (
-              <tr key={r.id} className={own ? 'bg-yellow/5' : ''}>
-                <td className="!font-sans">
-                  <span className="font-medium">{r.name}</span>
-                  {r.jerseys?.map((j) => (
-                    <span key={j} className={`ml-1 inline-block h-2 w-2 rounded-full ${jerseyDot(j)}`} title={j} />
-                  ))}
-                  {r.injury !== 'fit' && <span className="ml-1 chip bg-polka/15 j-polka">{r.injury}</span>}
-                </td>
-                <td className="text-chalk-300">{r.team}</td>
-                <td className="text-chalk-500">{ARCHE_LABEL[r.archetype]}</td>
-                <td>{priceM(r.price)}</td>
-                <td style={{ background: `rgba(25,179,90,${(Math.max(0, p.xG) / maxXg * 0.5).toFixed(3)})` }}>{growth(p.xG)}</td>
-                <td style={{ background: `rgba(245,212,6,${(Math.max(0, perM) / maxPerM * 0.4).toFixed(3)})` }}>{growth(perM)}</td>
-                <td className={xGfee < 0 ? 'j-polka' : ''}>{growth(xGfee)}</td>
-                <td className="text-chalk-300">{growth(p.captainEV)}</td>
+              <tr key={r.id} className={own ? 'bg-gold/[0.04]' : ''}>
                 <td>
+                  <div className="flex items-center gap-2.5">
+                    <RoleIcon role={r.archetype} size={16} />
+                    <span className="font-medium text-chalk-100">{r.name}</span>
+                    {r.jerseys?.map((j) => <Jersey key={j} kind={j} size={13} />)}
+                    {r.injury !== 'fit' && <span className="chip bg-polka/15 j-polka capitalize">{r.injury}</span>}
+                  </div>
+                </td>
+                <td className="hidden text-chalk-300 md:table-cell">{r.team}</td>
+                <td className="mono tnum text-right text-chalk-200">{priceM(r.price)}</td>
+                <td>
+                  <div className="flex items-center gap-2">
+                    <span className="mono tnum w-12 shrink-0 j-green">{growth(p.xG)}</span>
+                    <BarMeter value={Math.max(0, p.xG)} max={maxXg} className="hidden w-14 sm:inline-block" />
+                  </div>
+                </td>
+                <td>
+                  <div className="flex items-center gap-2">
+                    <span className="mono tnum w-12 shrink-0 text-chalk-200">{growth(perM)}</span>
+                    <BarMeter value={Math.max(0, perM)} max={maxPerM} tone="gold" className="hidden w-12 sm:inline-block" />
+                  </div>
+                </td>
+                <td className={`mono tnum text-right ${xGfee < 0 ? 'j-polka' : 'text-chalk-200'}`}>{growth(xGfee)}</td>
+                <td className="mono tnum text-right text-chalk-300">{growth(p.captainEV)}</td>
+                <td className="text-right">
                   <button
                     onClick={() => toggleRider(r.id)}
-                    className={`mono rounded px-1.5 py-0.5 text-[11px] ${own ? 'bg-polka/20 j-polka' : 'bg-green/20 j-green'}`}
+                    className={`rounded-md px-2.5 py-1 text-[12px] font-medium transition-colors ${
+                      own ? 'bg-polka/15 j-polka hover:bg-polka/25' : 'bg-green/15 j-green hover:bg-green/25'}`}
                   >
-                    {own ? '− sell' : '+ buy'}
+                    {own ? 'Sell' : 'Buy'}
                   </button>
                 </td>
               </tr>
@@ -152,8 +163,9 @@ export default function RidersPage() {
           </tbody>
         </table>
       </div>
-      <p className="mono mt-2 text-[11px] text-chalk-500">
-        xG = expected DKK growth this stage · xG/M = growth per million · xG−fee = after the 1% transfer fee (0 if owned).
+      <p className="text-[12px] text-chalk-500">
+        <span className="mono">xG</span> = expected DKK growth this stage · <span className="mono">xG/M</span> = growth per million spent ·
+        <span className="mono"> xG−fee</span> = after the 1% transfer fee (0 if already owned).
       </p>
     </div>
   );
@@ -173,51 +185,48 @@ function MyTeamBar() {
   const picked = ids.map((id) => byId.get(id)).filter(Boolean) as typeof riders;
   const spend = picked.reduce((a, r) => a + r.price, 0);
 
-  // legality
   const teamCounts: Record<string, number> = {};
   picked.forEach((r) => { teamCounts[r.team] = (teamCounts[r.team] ?? 0) + 1; });
   const over2 = Object.entries(teamCounts).filter(([, c]) => c > 2).map(([t]) => t);
   const buyingPower = bank + spend;
 
   return (
-    <div className="card mb-3 p-2.5">
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        <span className="mono text-sm font-bold">MY TEAM</span>
-        <span className={`mono text-[11px] ${ids.length === 8 ? 'j-green' : 'text-chalk-500'}`}>{ids.length}/8</span>
-        <span className="mono text-[11px] text-chalk-500">spend {priceM(spend)} · buying power {priceM(buyingPower)}</span>
+    <div className="card p-4">
+      <div className="mb-3 flex flex-wrap items-center gap-2.5">
+        <h2 className="text-base font-semibold text-chalk-100">My team</h2>
+        <span className={`mono text-[13px] font-medium ${ids.length === 8 ? 'j-green' : 'text-chalk-500'}`}>{ids.length}/8</span>
+        <span className="text-[12px] text-chalk-500">spend <span className="mono">{priceM(spend)}</span> · buying power <span className="mono">{priceM(buyingPower)}</span></span>
         {over2.length > 0 && <span className="chip bg-polka/15 j-polka">&gt;2 from {over2.join(', ')}</span>}
-        <span className="mono ml-auto text-[10px] text-chalk-500">tap a rider below to add/remove · saved automatically</span>
-        <button className="btn !py-0.5" disabled={ids.length === 0}
-          onClick={() => { const n = prompt('Name this team snapshot'); if (n) saveSnapshot(n); }}>Save snapshot</button>
-        <button className="btn !py-0.5 j-polka" disabled={ids.length === 0}
-          onClick={() => { if (confirm('Clear your team?')) clearTeam(); }}>Clear</button>
+        <div className="ml-auto flex items-center gap-2">
+          <button className="btn-ghost" disabled={ids.length === 0}
+            onClick={() => { const n = prompt('Name this team snapshot'); if (n) saveSnapshot(n); }}>Save snapshot</button>
+          <button className="btn-ghost j-polka" disabled={ids.length === 0}
+            onClick={() => { if (confirm('Clear your team?')) clearTeam(); }}>Clear</button>
+        </div>
       </div>
       {ids.length === 0 ? (
-        <p className="mono text-[11px] text-chalk-500">
-          No riders yet. Tap <span className="j-green">+ buy</span> on any rider in the table below to build your 8.
-          Your team is remembered in this browser and is the baseline the optimizer builds from next stage.
+        <p className="text-[13px] leading-relaxed text-chalk-500">
+          No riders yet. Tap <span className="j-green font-medium">Buy</span> on any rider below to build your 8.
+          Your team is saved in this browser and is the baseline the optimizer builds from next stage.
         </p>
       ) : (
-        <div className="flex flex-wrap gap-1.5">
-          {picked.map((r) => (
-            <span key={r.id} className={`chip border ${captainId === r.id ? 'border-yellow/60 j-yellow' : 'border-ink-500 text-chalk-200'}`}>
-              <button title="set captain" onClick={() => setCaptain(r.id)} className="hover:j-yellow">
-                {captainId === r.id ? '©' : '○'}
-              </button>
-              {r.name}
-              <button title="remove" onClick={() => toggleRider(r.id)} className="ml-0.5 j-polka hover:opacity-70">×</button>
-            </span>
-          ))}
+        <div className="flex flex-wrap gap-2">
+          {picked.map((r) => {
+            const isCap = captainId === r.id;
+            return (
+              <span key={r.id} className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[13px] ${
+                isCap ? 'border-gold/50 bg-gold/5 text-chalk-100' : 'border-ink-500/70 bg-ink-700/40 text-chalk-200'}`}>
+                <button title="set captain" onClick={() => setCaptain(r.id)} className="shrink-0">
+                  <CaptainStar size={15} active={isCap} />
+                </button>
+                <RoleIcon role={r.archetype} size={13} />
+                {r.name}
+                <button title="remove" onClick={() => toggleRider(r.id)} className="ml-0.5 text-chalk-500 hover:j-polka">×</button>
+              </span>
+            );
+          })}
         </div>
       )}
     </div>
   );
-}
-
-function jerseyDot(j: string) {
-  return { yellow: 'bg-yellow', green: 'bg-green', polka: 'bg-polka', white: 'bg-white', aggressive: 'bg-polka' }[j] ?? 'bg-chalk-500';
-}
-
-function Skeleton() {
-  return <div className="mono p-8 text-center text-chalk-500">Loading board…</div>;
 }

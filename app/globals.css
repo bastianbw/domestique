@@ -4,64 +4,85 @@
 
 :root {
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  --font-sans: system-ui, -apple-system, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 html, body {
-  background: #0a0c0f;
-  color: #f4f6f8;
+  background: #0d1117;
+  color: #e9edf2;
   -webkit-text-size-adjust: 100%;
 }
 
 body {
   font-family: var(--font-sans);
-  /* faint timing-sheet ruling */
+  font-feature-settings: 'cv11', 'ss01';
+  letter-spacing: -0.006em;
+  /* calm editorial backdrop: a soft top glow, no game-y ruling lines */
+  background-color: #0d1117;
   background-image:
-    repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.025) 39px, rgba(255,255,255,0.025) 40px);
+    radial-gradient(1200px 480px at 50% -240px, rgba(242, 193, 0, 0.06), transparent 70%),
+    radial-gradient(900px 600px at 100% 0, rgba(47, 168, 102, 0.04), transparent 60%);
+  background-attachment: fixed;
 }
 
-/* race-roadbook data type */
-.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+/* numerics only — tabular, never for prose/labels */
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; letter-spacing: 0; }
 .tnum { font-variant-numeric: tabular-nums; }
 
+/* section eyebrow — replaces the old all-mono uppercase headings */
+.eyebrow {
+  @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-chalk-500;
+}
+
 /* jersey accents — meaning only */
-.j-yellow { color: #f5d406; }
-.j-green { color: #19b35a; }
-.j-polka { color: #e23b3b; }
+.j-yellow { color: #f2c100; }
+.j-green { color: #2fa866; }
+.j-polka { color: #e5544b; }
 .j-white { color: #ffffff; }
 
 .chip {
-  @apply inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] mono uppercase tracking-wide;
+  @apply inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium;
 }
 
 .card {
-  @apply rounded-lg border border-ink-500 bg-ink-800/80 backdrop-blur;
+  @apply rounded-2xl border border-ink-500/70 bg-ink-800/70 shadow-card backdrop-blur-sm;
 }
 
 .btn {
-  @apply rounded border border-ink-400 bg-ink-700 px-3 py-1.5 text-sm hover:bg-ink-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
+  @apply inline-flex items-center gap-1.5 rounded-lg border border-ink-400/80 bg-ink-700/80 px-3.5 py-2 text-sm font-medium text-chalk-200
+    hover:bg-ink-600 hover:text-chalk-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
 }
 .btn-accent {
-  @apply rounded border border-yellow/40 bg-yellow/10 px-3 py-1.5 text-sm text-yellow hover:bg-yellow/20 transition-colors;
+  @apply inline-flex items-center gap-1.5 rounded-lg bg-gold px-3.5 py-2 text-sm font-semibold text-ink-900
+    hover:brightness-105 transition disabled:opacity-40 disabled:cursor-not-allowed shadow-[0_2px_12px_-2px_rgba(242,193,0,0.4)];
+}
+.btn-ghost {
+  @apply inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-chalk-300 hover:bg-ink-700 hover:text-chalk-100 transition-colors;
 }
 
 .input {
-  @apply rounded border border-ink-500 bg-ink-900 px-2 py-1 text-sm mono focus:border-yellow/50 focus:outline-none;
+  @apply rounded-lg border border-ink-500 bg-ink-900/80 px-3 py-2 text-sm text-chalk-100 placeholder:text-chalk-500
+    focus:border-gold/60 focus:ring-2 focus:ring-gold/15 focus:outline-none transition;
 }
 
+/* data table — quieter, roomier, sans headers */
 table.sheet { @apply w-full text-sm; }
 table.sheet th {
-  @apply text-left text-[11px] uppercase tracking-wider text-chalk-500 font-medium px-2 py-1.5 border-b border-ink-500 sticky top-0 bg-ink-800 cursor-pointer select-none;
+  @apply text-left text-[11px] font-semibold uppercase tracking-[0.1em] text-chalk-500 px-3 py-2.5
+    border-b border-ink-500 sticky top-0 bg-ink-800/95 backdrop-blur cursor-pointer select-none;
 }
-table.sheet td { @apply px-2 py-1.5 border-b border-ink-700/60 mono tnum; }
-table.sheet tr:hover td { @apply bg-ink-700/40; }
+table.sheet td { @apply px-3 py-2.5 border-b border-ink-600/50 align-middle; }
+table.sheet tbody tr { @apply transition-colors; }
+table.sheet tbody tr:hover td { @apply bg-ink-700/40; }
+/* numeric columns lean on .tnum/.mono per-cell, not the whole table */
 
-/* elevation profile motif */
-.elev path { vector-effect: non-scaling-stroke; }
+.elev path, .elev polyline { vector-effect: non-scaling-stroke; }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
 
-::-webkit-scrollbar { height: 8px; width: 8px; }
-::-webkit-scrollbar-thumb { background: #2e3742; border-radius: 4px; }
+::-webkit-scrollbar { height: 9px; width: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2c3440; border-radius: 6px; border: 2px solid #0d1117; }
+::-webkit-scrollbar-thumb:hover { background: #3a4452; }

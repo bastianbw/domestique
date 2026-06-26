@@ -28,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ServiceWorker />
         <div className="min-h-screen">
           <Nav />
-          <main className="mx-auto max-w-6xl px-3 pb-24 pt-4 sm:px-4">{children}</main>
+          <main className="mx-auto max-w-6xl animate-fade-up px-4 pb-24 pt-6 sm:px-6">{children}</main>
         </div>
       </body>
     </html>

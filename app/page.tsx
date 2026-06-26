@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useStore, effectiveContracts } from '@/lib/store';
 import { useHydrated } from '@/lib/useHydrated';
 import { StageBar } from './components/StageBar';
+import { RoleIcon, Jersey, CaptainStar, BarMeter, ContribBar, PelotonBanner } from './components/graphics';
 import { projectField } from '@/engine/growth';
 import { optimize } from '@/engine/optimizer';
 import { forwardValues } from '@/engine/horizon';
@@ -72,104 +73,165 @@ export default function OptimalPage() {
     return out;
   }, [hydrated, baseInput]);
 
-  if (!hydrated || !recommended || !forward) return <div className="mono p-8 text-center text-chalk-500">Optimising…</div>;
+  if (!hydrated || !recommended || !forward)
+    return <div className="p-16 text-center text-sm text-chalk-500">Optimising the field…</div>;
 
   const riderById = new Map(s.riders.map((r) => [r.id, r]));
   const projById = new Map(projections.map((p) => [p.riderId, p]));
+  const lastStage = forward.stages[forward.stages.length - 1] ?? s.selectedStage;
+
+  const recRows = recommended.riderIds
+    .map((id) => ({ r: riderById.get(id)!, p: projById.get(id)! }))
+    .sort((a, b) => b.p.xG - a.p.xG);
+  const maxXg = Math.max(1, ...recRows.map(({ p }) => p.xG));
+
+  // EV breakdown for the visual bar list
+  const breakdown = [
+    { label: 'Rider xG', value: recommended.expectedGrowth, tone: 'green' as const },
+    { label: 'Captain bonus', value: recommended.captainBonus, tone: 'gold' as const },
+    { label: 'Etapebonus', value: recommended.expectedEtapebonus, tone: 'green' as const },
+    { label: 'Holdbonus', value: recommended.expectedHoldbonus, tone: 'green' as const },
+    { label: 'Transfer fees', value: -recommended.transferFees, tone: 'polka' as const },
+  ];
+  const evScale = Math.max(1, ...breakdown.map((b) => Math.abs(b.value)));
 
   return (
-    <div>
+    <div className="space-y-5">
+      {/* hero */}
+      <section className="relative overflow-hidden rounded-2xl border border-ink-500/70 bg-gradient-to-br from-ink-800 to-ink-850 px-5 py-5 shadow-card sm:px-6">
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-2/3 text-gold/20">
+          <PelotonBanner className="h-full w-full" />
+        </div>
+        <div className="relative max-w-xl">
+          <p className="eyebrow">Tour de France 2026 · Holdet.dk</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-chalk-100">Your optimal team for stage {stage.stage}</h1>
+          <p className="mt-1.5 text-sm text-chalk-300">
+            Picked to maximise expected <span className="text-chalk-100">value growth in DKK</span> through stage {lastStage}, not just today.
+          </p>
+        </div>
+      </section>
+
       <StageBar />
 
       {/* control bar */}
-      <div className="card mb-3 grid grid-cols-2 gap-3 p-3 sm:grid-cols-3">
-        <label className="block">
-          <span className="mono text-[11px] text-chalk-500">BANK (kr)</span>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <label className="card flex flex-col gap-1 p-4">
+          <span className="eyebrow">Bank (kr)</span>
           <input
             type="number"
-            className="input mt-1 w-full"
+            className="input mono mt-0.5 w-full"
             value={s.bank}
             onChange={(e) => s.setBank(Number(e.target.value))}
           />
-          <span className="mono text-[10px] text-chalk-500">
-            buying power {(buyingPower / 1_000_000).toFixed(1)}M{ownedValue > 0 ? ` (bank + ${(ownedValue / 1_000_000).toFixed(1)}M team)` : ''}
+          <span className="text-[12px] text-chalk-500">
+            Buying power <span className="mono text-chalk-300">{(buyingPower / 1_000_000).toFixed(1)}M</span>
+            {ownedValue > 0 ? ` (bank + ${(ownedValue / 1_000_000).toFixed(1)}M team)` : ''}
           </span>
         </label>
-        <div>
-          <span className="mono text-[11px] text-chalk-500">RISK</span>
-          <div className="mt-1 flex gap-1">
+
+        <div className="card flex flex-col gap-1 p-4">
+          <span className="eyebrow">Risk profile</span>
+          <div className="mt-0.5 flex gap-1 rounded-lg border border-ink-500/60 bg-ink-900/50 p-1">
             {RISKS.map((r) => (
               <button key={r} onClick={() => s.setRisk(r)}
-                className={`mono flex-1 rounded px-1 py-1 text-[11px] capitalize ${s.risk === r ? 'bg-yellow text-ink-900 font-bold' : 'bg-ink-700 text-chalk-300'}`}>
+                className={`flex-1 rounded-md px-1 py-1.5 text-[12px] font-medium capitalize transition-colors ${
+                  s.risk === r ? 'bg-gold text-ink-900' : 'text-chalk-300 hover:bg-ink-700'}`}>
                 {r}
               </button>
             ))}
           </div>
-          <span className="mono text-[10px] text-chalk-500">
-            Max EV · plans through stage {forward.stages[forward.stages.length - 1] ?? s.selectedStage}{!chargeFees ? ' · transfers free (pre-race)' : ''}
+          <span className="text-[12px] text-chalk-500">
+            Max EV · through stage {lastStage}{!chargeFees ? ' · transfers free' : ''}
           </span>
         </div>
-        <div>
-          <span className="mono text-[11px] text-chalk-500">ODDS COVERAGE</span>
-          <div className="mt-2 h-2 w-full overflow-hidden rounded bg-ink-700">
-            <div className={`h-full ${oddsCoverage.pct >= 0.5 ? 'bg-green' : oddsCoverage.pct >= 0.2 ? 'bg-yellow' : 'bg-polka'}`}
-              style={{ width: `${Math.round(oddsCoverage.pct * 100)}%` }} />
-          </div>
-          <span className="mono text-[10px] text-chalk-500">
-            {oddsCoverage.withOdds}/{oddsCoverage.total} riders have odds ({Math.round(oddsCoverage.pct * 100)}%)
-            {oddsCoverage.pct < 0.2 ? ' — mostly model guesswork; paste an odds block' : ''}
+
+        <div className="card flex flex-col gap-1.5 p-4">
+          <span className="eyebrow">Odds coverage</span>
+          <BarMeter value={oddsCoverage.pct} max={1} className="mt-1"
+            tone={oddsCoverage.pct >= 0.5 ? 'green' : oddsCoverage.pct >= 0.2 ? 'gold' : 'polka'} />
+          <span className="text-[12px] text-chalk-500">
+            <span className="mono text-chalk-300">{oddsCoverage.withOdds}/{oddsCoverage.total}</span> riders priced ({Math.round(oddsCoverage.pct * 100)}%)
+            {oddsCoverage.pct < 0.2 ? ' — mostly model; paste odds' : ''}
           </span>
         </div>
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-3">
         {/* recommended team */}
-        <div className="card p-3 lg:col-span-2">
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="mono text-sm font-bold">RECOMMENDED XI <span className="text-chalk-500">· {s.risk} · max EV</span></h2>
-            <button className="btn-accent" onClick={() => s.setTeam(recommended.riderIds, recommended.captainId)}>Adopt this team</button>
+        <div className="card overflow-hidden lg:col-span-2">
+          <div className="flex items-center justify-between gap-3 border-b border-ink-600/60 px-4 py-3.5">
+            <div>
+              <h2 className="text-base font-semibold text-chalk-100">Recommended XI</h2>
+              <p className="text-[12px] text-chalk-500 capitalize">{s.risk} · maximum expected value</p>
+            </div>
+            <button className="btn-accent" onClick={() => s.setTeam(recommended.riderIds, recommended.captainId)}>Adopt team</button>
           </div>
           <table className="sheet">
-            <thead><tr><th>Rider</th><th>Team</th><th>Arch</th><th>Price</th><th>xG (stage)</th><th>Block</th><th></th></tr></thead>
+            <thead>
+              <tr>
+                <th>Rider</th>
+                <th className="hidden sm:table-cell">Team</th>
+                <th className="text-right">Price</th>
+                <th>Stage xG</th>
+                <th className="hidden text-right sm:table-cell">Block</th>
+              </tr>
+            </thead>
             <tbody>
-              {recommended.riderIds
-                .map((id) => ({ r: riderById.get(id)!, p: projById.get(id)! }))
-                .sort((a, b) => b.p.xG - a.p.xG)
-                .map(({ r, p }) => (
+              {recRows.map(({ r, p }) => {
+                const isCap = recommended.captainId === r.id;
+                return (
                   <tr key={r.id}>
-                    <td className="!font-sans font-medium">
-                      {r.name}
-                      {recommended.captainId === r.id && <span className="ml-1 chip bg-yellow/20 j-yellow">©  captain</span>}
-                      {recommended.buys.includes(r.id) && <span className="ml-1 chip bg-green/15 j-green">buy</span>}
+                    <td>
+                      <div className="flex items-center gap-2.5">
+                        <button onClick={() => s.setCaptain(r.id)} title={isCap ? 'captain' : 'set captain'} className="shrink-0">
+                          <CaptainStar size={17} active={isCap} />
+                        </button>
+                        <RoleIcon role={r.archetype} size={16} />
+                        <span className="font-medium text-chalk-100">{r.name}</span>
+                        {r.jerseys?.map((j) => <Jersey key={j} kind={j} size={14} />)}
+                        {recommended.buys.includes(r.id) && <span className="chip bg-green/15 j-green">Buy</span>}
+                      </div>
                     </td>
-                    <td className="text-chalk-300">{r.team}</td>
-                    <td className="text-chalk-500">{ARCHE_LABEL[r.archetype]}</td>
-                    <td>{priceM(r.price)}</td>
-                    <td className="j-green">{growth(p.xG)}</td>
-                    <td className="text-chalk-300" title="discounted xG through the rest of this block (to the next rest day)">{growth(forward.values[r.id] ?? 0)}</td>
-                    <td>{recommended.captainId !== r.id && (
-                      <button className="mono text-[11px] text-chalk-500 hover:j-yellow" onClick={() => s.setCaptain(r.id)}>set ©</button>
-                    )}</td>
+                    <td className="hidden text-chalk-300 sm:table-cell">{r.team}</td>
+                    <td className="mono tnum text-right text-chalk-200">{priceM(r.price)}</td>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <span className="mono tnum w-14 shrink-0 j-green">{growth(p.xG)}</span>
+                        <BarMeter value={Math.max(0, p.xG)} max={maxXg} className="w-16" />
+                      </div>
+                    </td>
+                    <td className="mono tnum hidden text-right text-chalk-300 sm:table-cell"
+                      title="discounted xG through the rest of this block">{growth(forward.values[r.id] ?? 0)}</td>
                   </tr>
-                ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
 
-        {/* metrics */}
-        <div className="card space-y-1 p-3">
-          <h2 className="mono mb-2 text-sm font-bold">EXPECTED RETURN</h2>
-          <Metric label="Σ rider xG" value={growth(recommended.expectedGrowth)} />
-          <Metric label="Captain bonus" value={growth(recommended.captainBonus)} accent="yellow" />
-          <Metric label="Exp. Etapebonus" value={growth(recommended.expectedEtapebonus)} accent="green" />
-          <Metric label="Exp. Holdbonus" value={growth(recommended.expectedHoldbonus)} />
-          <Metric label="Transfer fees" value={growth(-recommended.transferFees)} accent="polka" />
-          <div className="my-1 border-t border-ink-600" />
-          <Metric label="Net after fees" value={growth(recommended.expectedGrowthAfterFees)} big />
-          <div className="my-1 border-t border-ink-600" />
-          <Metric label="Spend" value={`${kr(recommended.spend)} kr`} />
-          <Metric label="Bank left" value={`${kr(recommended.bankLeft)} kr`} />
-          {s.teamType === 'basis' && <Metric label="Contracts used" value={`${recommended.contractsUsed}`} />}
+        {/* expected return — visual breakdown */}
+        <div className="card flex flex-col p-4">
+          <h2 className="eyebrow">Expected return</h2>
+          <div className="mt-2 flex items-baseline justify-between">
+            <span className="text-[13px] text-chalk-300">Net after fees</span>
+            <span className="mono tnum text-2xl font-semibold j-green">{growth(recommended.expectedGrowthAfterFees)}</span>
+          </div>
+          <div className="mt-4 space-y-3">
+            {breakdown.map((b) => (
+              <div key={b.label}>
+                <div className="mb-1 flex items-baseline justify-between text-[12px]">
+                  <span className="text-chalk-300">{b.label}</span>
+                  <span className={`mono tnum ${b.value < 0 ? 'j-polka' : b.tone === 'gold' ? 'j-yellow' : 'text-chalk-200'}`}>{growth(b.value)}</span>
+                </div>
+                <ContribBar value={b.value} scale={evScale} tone={b.tone} />
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 space-y-1.5 border-t border-ink-600/60 pt-3 text-[13px]">
+            <Stat label="Spend" value={`${kr(recommended.spend)} kr`} />
+            <Stat label="Bank left" value={`${kr(recommended.bankLeft)} kr`} />
+            {s.teamType === 'basis' && <Stat label="Contracts used" value={`${recommended.contractsUsed}`} />}
+          </div>
         </div>
       </div>
 
@@ -183,63 +245,61 @@ export default function OptimalPage() {
         const nm = (id: string) => riderById.get(id)?.name ?? '(unknown rider)';
 
         return (
-          <div className="card mt-3 p-3">
-            <div className="mb-2 flex items-center justify-between">
-              <h2 className="mono text-sm font-bold">WHAT TO ACTUALLY DO</h2>
+          <div className="card p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-chalk-100">What to do</h2>
               {!noTeam && (ridersChange || captainChange) && (
-                <button className="btn-accent" onClick={() => s.setTeam(recommended.riderIds, recommended.captainId)}>
-                  Apply all
-                </button>
+                <button className="btn-accent" onClick={() => s.setTeam(recommended.riderIds, recommended.captainId)}>Apply all</button>
               )}
             </div>
 
             {noTeam ? (
-              <p className="text-sm text-chalk-300">
-                Pick your current 8 riders (on the <span className="j-yellow">Riders</span> page or by adopting a team) to get
+              <p className="text-sm leading-relaxed text-chalk-300">
+                Pick your current 8 riders (on the <span className="font-medium text-gold">Riders</span> page or by adopting a team) to get
                 concrete sell/buy moves and a keep-vs-swap comparison. Right now this is a from-scratch build — the recommended
-                captain is <span className="j-yellow">{recCaptainName}</span>.
+                captain is <span className="font-medium text-chalk-100">{recCaptainName}</span>.
               </p>
             ) : !ridersChange && !captainChange ? (
               <p className="text-sm j-green">
-                Stand pat — your 8 riders and captain (<span className="j-yellow">{recCaptainName}</span>) already maximise
+                Stand pat — your 8 riders and captain (<span className="font-medium">{recCaptainName}</span>) already maximise
                 expected net growth for this stage.
               </p>
             ) : (
-              <div className="space-y-2 text-sm">
+              <div className="space-y-3 text-sm">
                 {ridersChange && (
-                  <div className="flex flex-wrap gap-x-6 gap-y-1">
-                    <div>
-                      <div className="mono text-[11px] text-chalk-500">SELL</div>
-                      {recommended.sells.map((id) => <div key={id} className="j-polka">− {nm(id)}</div>)}
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-xl border border-polka/20 bg-polka/5 p-3">
+                      <div className="eyebrow mb-1.5 j-polka">Sell</div>
+                      {recommended.sells.map((id) => <div key={id} className="text-chalk-200">− {nm(id)}</div>)}
                     </div>
-                    <div>
-                      <div className="mono text-[11px] text-chalk-500">BUY</div>
+                    <div className="rounded-xl border border-green/20 bg-green/5 p-3">
+                      <div className="eyebrow mb-1.5 j-green">Buy</div>
                       {recommended.buys.map((id) => (
-                        <div key={id} className="j-green">+ {nm(id)} <span className="text-chalk-500">({priceM(riderById.get(id)!.price)})</span></div>
+                        <div key={id} className="text-chalk-200">+ {nm(id)} <span className="mono text-chalk-500">({priceM(riderById.get(id)!.price)})</span></div>
                       ))}
                     </div>
                   </div>
                 )}
 
                 {captainChange && (
-                  <div className="flex items-center gap-2">
-                    <span className="mono text-[11px] text-chalk-500">CAPTAIN</span>
-                    <span className="text-sm">
-                      {ridersChange ? <>captain the new XI’s <span className="j-yellow">{recCaptainName}</span></>
-                        : <>keep your 8 — switch captain from <span className="text-chalk-300">{curCaptainName}</span> to <span className="j-yellow">{recCaptainName}</span></>}
+                  <div className="flex flex-wrap items-center gap-2 rounded-xl border border-ink-600/60 bg-ink-900/30 p-3">
+                    <CaptainStar size={16} />
+                    <span>
+                      {ridersChange ? <>captain the new XI’s <span className="font-medium text-gold">{recCaptainName}</span></>
+                        : <>keep your 8 — switch captain from <span className="text-chalk-300">{curCaptainName}</span> to <span className="font-medium text-gold">{recCaptainName}</span></>}
                     </span>
-                    <button className="btn !py-0.5" onClick={() => s.setCaptain(recommended.captainId)}>Set ©</button>
+                    <button className="btn !py-1 ml-auto" onClick={() => s.setCaptain(recommended.captainId)}>Set captain</button>
                   </div>
                 )}
 
                 {ridersChange && (
-                  <div className="mono text-xs text-chalk-300">
-                    Fee cost {growth(-recommended.transferFees)} · net expected gain vs standing pat{' '}
-                    <span className={recommended.netGainVsHold >= 0 ? 'j-green' : 'j-polka'}>{growth(recommended.netGainVsHold)}</span>
+                  <div className="text-[13px] text-chalk-300">
+                    Fee cost <span className="mono">{growth(-recommended.transferFees)}</span> · net expected gain vs standing pat{' '}
+                    <span className={`mono ${recommended.netGainVsHold >= 0 ? 'j-green' : 'j-polka'}`}>{growth(recommended.netGainVsHold)}</span>
                   </div>
                 )}
                 {ridersChange && recommended.netGainVsHold < 0 && (
-                  <p className="j-polka text-xs">↳ The fees outweigh the gain across your horizon — consider keeping your riders (the captain switch above is still free).</p>
+                  <p className="j-polka text-[13px]">↳ The fees outweigh the gain across your horizon — consider keeping your riders (the captain switch above is still free).</p>
                 )}
               </div>
             )}
@@ -247,55 +307,62 @@ export default function OptimalPage() {
         );
       })()}
 
-      {/* why these riders — forward value to the next rest day */}
-      <div className="card mt-3 p-3">
-        <h2 className="mono mb-2 text-sm font-bold">WHY THESE RIDERS · through stage {forward.stages[forward.stages.length - 1] ?? s.selectedStage}</h2>
-        <p className="mono mb-2 text-[10px] text-chalk-500">
-          The squad is chosen for its value over the rest of this block (auto-horizon to the next rest day), not just today —
-          so a rider who is better across the upcoming stages is preferred even if someone else edges this one stage.
-        </p>
-        <div className="grid gap-1 sm:grid-cols-2">
-          {recommended.riderIds
-            .map((id) => ({ r: riderById.get(id)!, hv: forward.hv[id] }))
-            .sort((a, b) => (b.hv?.value ?? 0) - (a.hv?.value ?? 0))
-            .map(({ r, hv }) => (
-              <div key={r.id} className="mono text-[11px] text-chalk-300">
-                <span className="text-chalk-100">{r.name}</span>:{' '}
-                {hv?.keyStages.length
-                  ? <>peaks on stages <span className="j-green">{hv.keyStages.join(', ')}</span> · block value {growth(hv.value)}</>
-                  : <>steady · block value {growth(hv?.value ?? 0)}</>}
-              </div>
-            ))}
+      <div className="grid gap-4 lg:grid-cols-2">
+        {/* why these riders */}
+        <div className="card p-4">
+          <h2 className="text-base font-semibold text-chalk-100">Why these riders</h2>
+          <p className="mt-0.5 text-[12px] text-chalk-500">
+            Chosen for value over the rest of this block (through stage {lastStage}), not just today.
+          </p>
+          <div className="mt-3 space-y-2.5">
+            {recommended.riderIds
+              .map((id) => ({ r: riderById.get(id)!, hv: forward.hv[id] }))
+              .sort((a, b) => (b.hv?.value ?? 0) - (a.hv?.value ?? 0))
+              .map(({ r, hv }) => {
+                const v = hv?.value ?? 0;
+                return (
+                  <div key={r.id} className="flex items-center gap-3">
+                    <RoleIcon role={r.archetype} size={15} />
+                    <span className="w-32 shrink-0 truncate text-[13px] font-medium text-chalk-200">{r.name}</span>
+                    <BarMeter value={Math.max(0, v)} max={Math.max(1, ...recommended.riderIds.map((id) => forward.hv[id]?.value ?? 0))} className="flex-1" />
+                    <span className="mono tnum w-14 shrink-0 text-right text-[12px] j-green">{growth(v)}</span>
+                  </div>
+                );
+              })}
+          </div>
         </div>
-      </div>
 
-      {/* preset comparison */}
-      <div className="card mt-3 p-3">
-        <h2 className="mono mb-2 text-sm font-bold">RISK PRESETS — net after fees</h2>
-        <div className="grid grid-cols-3 gap-2">
-          {RISKS.map((r) => {
-            const t = presets[r];
-            return (
-              <button key={r} onClick={() => s.setRisk(r)}
-                className={`rounded border p-2 text-left ${s.risk === r ? 'border-yellow/50 bg-yellow/5' : 'border-ink-600'}`}>
-                <div className="mono text-[11px] uppercase text-chalk-500">{r}</div>
-                <div className="mono text-sm j-green">{growth(t?.expectedGrowthAfterFees ?? 0)}</div>
-                <div className="mono text-[10px] text-chalk-500">cap: {riderById.get(t?.captainId ?? '')?.name?.split(' ').slice(-1)[0]}</div>
-              </button>
-            );
-          })}
+        {/* risk presets */}
+        <div className="card p-4">
+          <h2 className="text-base font-semibold text-chalk-100">Risk presets</h2>
+          <p className="mt-0.5 text-[12px] text-chalk-500">Net after fees by profile — tap to switch.</p>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {RISKS.map((r) => {
+              const t = presets[r];
+              const max = Math.max(1, ...RISKS.map((x) => presets[x]?.expectedGrowthAfterFees ?? 0));
+              return (
+                <button key={r} onClick={() => s.setRisk(r)}
+                  className={`rounded-xl border p-3 text-left transition-colors ${
+                    s.risk === r ? 'border-gold/50 bg-gold/5' : 'border-ink-600/60 hover:bg-ink-700/40'}`}>
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-chalk-500 capitalize">{r}</div>
+                  <div className="mono tnum mt-1 text-base font-semibold j-green">{growth(t?.expectedGrowthAfterFees ?? 0)}</div>
+                  <BarMeter value={Math.max(0, t?.expectedGrowthAfterFees ?? 0)} max={max} tone="gold" className="mt-2" />
+                  <div className="mt-2 text-[11px] text-chalk-500">cap · {riderById.get(t?.captainId ?? '')?.name?.split(' ').slice(-1)[0]}</div>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function Metric({ label, value, accent, big }: { label: string; value: string; accent?: 'yellow' | 'green' | 'polka'; big?: boolean }) {
-  const cls = accent === 'yellow' ? 'j-yellow' : accent === 'green' ? 'j-green' : accent === 'polka' ? 'j-polka' : 'text-chalk-100';
+function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between">
-      <span className="mono text-[11px] text-chalk-500">{label}</span>
-      <span className={`mono tnum ${big ? 'text-lg font-bold' : 'text-sm'} ${cls}`}>{value}</span>
+      <span className="text-chalk-500">{label}</span>
+      <span className="mono tnum text-chalk-200">{value}</span>
     </div>
   );
 }

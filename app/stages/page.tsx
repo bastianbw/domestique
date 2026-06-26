@@ -10,7 +10,7 @@ import { ARCHE_LABEL, priceM } from '@/lib/format';
 
 export default function StagesPage() {
   const hydrated = useHydrated();
-  if (!hydrated) return <div className="mono p-8 text-center text-chalk-500">Loading…</div>;
+  if (!hydrated) return <div className="p-16 text-center text-sm text-chalk-500">Loading…</div>;
   return (
     <div className="space-y-3">
       <StageBar />
@@ -31,11 +31,11 @@ function Section({ title, children, defaultOpen = false }: { title: string; chil
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="card">
-      <button onClick={() => setOpen(!open)} className="flex w-full items-center justify-between p-3">
-        <span className="mono text-sm font-bold">{title}</span>
-        <span className="mono text-chalk-500">{open ? '−' : '+'}</span>
+      <button onClick={() => setOpen(!open)} className="flex w-full items-center justify-between p-4 text-left">
+        <span className="text-sm font-semibold text-chalk-100">{title}</span>
+        <span className="text-lg text-chalk-500">{open ? '−' : '+'}</span>
       </button>
-      {open && <div className="border-t border-ink-600 p-3">{children}</div>}
+      {open && <div className="border-t border-ink-600/60 p-4">{children}</div>}
     </div>
   );
 }
@@ -50,8 +50,9 @@ function ImportSection() {
   return (
     <Section title="① IMPORT BLOCK  (paste from Claude chat — primary daily loop)" defaultOpen>
       <p className="mb-2 text-sm text-chalk-300">
-        Paste one JSON block: a <span className="j-green">stageResult</span>, <span className="j-yellow">odds</span>, or{' '}
-        <span className="j-white">startlist</span> block. See <a className="underline" href="/how">How it works</a> for the exact schema.
+        Paste one JSON block: <span className="j-green">stageResult</span>, <span className="j-yellow">odds</span>,{' '}
+        <span className="j-white">startlist</span>, <span className="text-sky-300">weather</span>, or <span className="text-orange-300">news</span>.
+        Weather &amp; news are optional and only nudge the model. See <a className="underline" href="/how">How it works</a> for the exact schema.
       </p>
       <textarea className="input h-32 w-full font-mono text-xs" value={raw}
         placeholder='{"type":"stageResult","stage":7,"results":[{"rider":"Jasper Philipsen","pos":1,"sprintPts":20}], ...}'

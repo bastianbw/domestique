@@ -3,22 +3,29 @@ import {
   PLACEMENT_TABLE, GC_TABLE, ETAPEBONUS_TABLE, TTT_TABLE, HOLDBONUS_TABLE, JERSEY_PAYOUT,
 } from '@/engine/rules';
 import { kr } from '@/lib/format';
+import { PelotonBanner } from '../components/graphics';
 
 export default function HowPage() {
   return (
     <div className="space-y-4">
-      <section className="card p-4">
-        <h1 className="mono text-lg font-bold"><span className="j-yellow">D</span>OMESTIQUE — how it works</h1>
-        <p className="mt-2 text-sm text-chalk-300">
+      <section className="relative overflow-hidden rounded-2xl border border-ink-500/70 bg-gradient-to-br from-ink-800 to-ink-850 p-5 shadow-card sm:p-6">
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-1/2 text-gold/15">
+          <PelotonBanner className="h-full w-full" />
+        </div>
+        <div className="relative max-w-2xl">
+          <p className="eyebrow">Domestique</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-chalk-100">How it works</h1>
+          <p className="mt-2 text-sm leading-relaxed text-chalk-300">
           Domestique maximises your Holdet.dk <strong>team value growth (vækst) in DKK</strong> — not points — across all 21
           Tour de France 2026 stages. For each stage the engine builds a finishing-position probability distribution for every
           rider, then takes the expectation over the exact Holdet growth rules to get <span className="j-green">xG</span>
           (expected growth). The optimizer then picks the best legal 8-rider team.
-        </p>
+          </p>
+        </div>
       </section>
 
-      <section className="card p-4">
-        <h2 className="mono text-sm font-bold">THE MODEL — signal blend</h2>
+      <section className="card p-5">
+        <h2 className="text-base font-semibold text-chalk-100">The model — signal blend</h2>
         <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-chalk-300">
           <li><strong>Betting odds</strong> (when pasted, de-vigged) anchor the head of the distribution — the strongest signal.</li>
           <li><strong>Stage-profile × archetype</strong> suitability (sprinter→flat, climber→summit, rouleur→ITT, team strength→TTT).</li>
@@ -33,8 +40,8 @@ export default function HowPage() {
         </p>
       </section>
 
-      <section className="card p-4">
-        <h2 className="mono text-sm font-bold">THE EXACT RULES (single source of truth)</h2>
+      <section className="card p-5">
+        <h2 className="text-base font-semibold text-chalk-100">THE EXACT RULES (single source of truth)</h2>
         <div className="mt-3 grid gap-4 sm:grid-cols-2">
           <RuleTable title="Etapeplacering (stage finish)" table={PLACEMENT_TABLE} note="16th+ pays 0" />
           <RuleTable title="Sammenlagt (GC after stage)" table={GC_TABLE} note="11th+ pays 0" />
@@ -42,7 +49,7 @@ export default function HowPage() {
           <RuleTable title="Holdtidskørsel TTT (all active riders)" table={TTT_TABLE} note="replaces placement/holdbonus/late/etapebonus on stage 1" />
           <RuleTable title="Holdbonus (rider's team result)" table={HOLDBONUS_TABLE} />
           <div>
-            <h3 className="mono text-xs uppercase text-chalk-500">Jerseys (per day, to wearer)</h3>
+            <h3 className="eyebrow">Jerseys (per day, to wearer)</h3>
             <table className="sheet mt-1"><tbody>
               {Object.entries(JERSEY_PAYOUT).map(([k, v]) => (
                 <tr key={k}><td className="!font-sans capitalize">{k}</td><td className="text-right j-green">{kr(v)}</td></tr>
@@ -60,26 +67,39 @@ export default function HowPage() {
         </ul>
       </section>
 
-      <section className="card p-4">
-        <h2 className="mono text-sm font-bold">DAILY LOOP (Phase 2 — no Claude Code needed)</h2>
+      <section className="card p-5">
+        <h2 className="text-base font-semibold text-chalk-100">Daily loop (Phase 2 — no Claude Code needed)</h2>
         <ol className="mt-2 list-decimal space-y-1 pl-5 text-sm text-chalk-300">
-          <li>In the <strong>free Claude chat app</strong>: “Start stage N” + optionally paste an odds screenshot / news.</li>
-          <li>Chat-Claude reads ProCyclingStats, applies these rules, and emits <strong>one JSON block</strong>.</li>
-          <li>Paste it into <strong>Stages &amp; Data → ① Import block</strong>. Prices roll forward, bank updates (captain, Etapebonus, interest), the model recalibrates.</li>
+          <li>In the <strong>free Claude chat app</strong>, paste the daily prompt template below for “stage N”.</li>
+          <li>Chat-Claude reads ProCyclingStats, applies these rules, and emits <strong>one or more JSON blocks</strong> (results required; odds, weather and news if it can find them).</li>
+          <li>Paste each into <strong>Stages &amp; Data → ① Import block</strong>. Prices roll forward, bank updates (captain, Etapebonus, interest), the model recalibrates.</li>
           <li>Open <strong>Optimal</strong> for the next stage’s best team.</li>
         </ol>
+        <h3 className="eyebrow mt-4">Daily prompt template (copy into Claude chat)</h3>
+        <pre className="mt-1 overflow-x-auto rounded-lg border border-ink-600 bg-ink-900 p-3 text-[11px] text-chalk-200">{DAILY_PROMPT}</pre>
       </section>
 
-      <section className="card p-4">
-        <h2 className="mono text-sm font-bold">IMPORT SCHEMAS (what chat-Claude must produce)</h2>
+      <section className="card p-5">
+        <h2 className="text-base font-semibold text-chalk-100">Import schemas (what chat-Claude must produce)</h2>
+        <p className="mb-1 text-sm text-chalk-300">
+          Required each day: a <strong>results</strong> block (after the stage) and, when you can, an <strong>odds</strong> block (pre-stage —
+          the strongest signal). <strong>Weather</strong> and <strong>news</strong> are fully optional: they only nudge the model when supplied,
+          and a results+odds-only day works exactly as before.
+        </p>
         <Schema title="(a) Results block — after a stage" code={RESULTS_EXAMPLE} />
         <Schema title="(b) Odds block — optional, pre-stage" code={ODDS_EXAMPLE} />
         <Schema title="(c) Startlist block — once, before the Tour" code={STARTLIST_EXAMPLE} />
-        <p className="mt-2 text-xs text-chalk-500">Name matching is accent- and typo-tolerant; unmatched names are reported so you can fix them.</p>
+        <Schema title="(d) Weather block — optional, pre-stage" code={WEATHER_EXAMPLE} />
+        <Schema title="(e) News block — optional, pre-stage" code={NEWS_EXAMPLE} />
+        <p className="mt-2 text-xs text-chalk-500">
+          Name matching is accent- and typo-tolerant; unmatched names are reported so you can fix them.
+          Weather widens the finishing spread (echelons) and raises wet/cold attrition; news <code className="mono">status</code> sets a
+          rider’s injury flag, <code className="mono">formDelta</code> / <code className="mono">intent</code> apply a small skill &amp; breakaway nudge.
+        </p>
       </section>
 
-      <section className="card p-4">
-        <h2 className="mono text-sm font-bold">INSTALL & INDEPENDENCE</h2>
+      <section className="card p-5">
+        <h2 className="text-base font-semibold text-chalk-100">INSTALL & INDEPENDENCE</h2>
         <ul className="mt-2 space-y-1 text-sm text-chalk-300">
           <li>• <strong>Install:</strong> open in Chrome/Safari → “Add to Home Screen” / “Install”. Works offline after first load.</li>
           <li>• <strong>No accounts, no backend, no API key, no subscription.</strong> Your data lives in this browser (localStorage).</li>
@@ -94,7 +114,7 @@ export default function HowPage() {
 function RuleTable({ title, table, note, keyLabel }: { title: string; table: Record<number, number>; note?: string; keyLabel?: string }) {
   return (
     <div>
-      <h3 className="mono text-xs uppercase text-chalk-500">{title}</h3>
+      <h3 className="eyebrow">{title}</h3>
       <table className="sheet mt-1"><tbody>
         {Object.entries(table).map(([k, v]) => (
           <tr key={k}><td>{keyLabel ? `${k} ${keyLabel}` : `pos ${k}`}</td><td className="text-right j-green">{kr(v)}</td></tr>
@@ -132,3 +152,22 @@ const ODDS_EXAMPLE = `{ "type": "odds", "stage": 8,
 
 const STARTLIST_EXAMPLE = `{ "type": "startlist",
   "riders": [ {"name":"Jasper Philipsen","team":"Alpecin-Deceuninck","archetype":"sprinter","price":8000000,"form":88,"pcsRank":8} ] }`;
+
+const WEATHER_EXAMPLE = `{ "type": "weather", "stage": 8,
+  "windKph": 38, "windDir": "NW", "gustRisk": "high",
+  "crosswindSections": 3, "rainProb": 60, "tempC": 12 }`;
+
+const NEWS_EXAMPLE = `{ "type": "news", "stage": 8, "items": [
+  {"rider":"Mathieu van der Poel","intent":"breakaway","motivation":"home roads","formDelta":10},
+  {"rider":"Primoz Roglic","status":"doubt","formDelta":-15,"note":"crash recovery"}
+] }`;
+
+const DAILY_PROMPT = `You are my Tour de France 2026 data assistant for the Holdet "Domestique" app.
+For STAGE N, using ProCyclingStats + public sources, return JSON blocks I can paste
+(one per code block, no prose):
+  1. odds       — pre-stage decimal odds (win/top3/top5/top10) for as many riders as you can. REQUIRED if available.
+  2. weather    — wind (kph + dir), gustRisk low/med/high, crosswindSections, rainProb %, tempC. OPTIONAL.
+  3. news       — per rider: intent (breakaway/gc/sprint), role, motivation, formDelta (-30..30), status (fit/doubt/out). OPTIONAL.
+After the stage finishes, also return:
+  4. stageResult — finishing order with pos, sprintPts, mtnPts, gap (s), gcPos, jerseys, dnf, dns, teamResultTop3.
+Use the schemas exactly. Skip any block you have no data for — never invent numbers.`;

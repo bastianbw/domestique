@@ -8,6 +8,8 @@ import type {
   StageResultBlock,
   OddsBlock,
   StartlistBlock,
+  WeatherBlock,
+  NewsBlock,
   Rider,
 } from './types';
 
@@ -111,8 +113,12 @@ export function parseImportBlock(raw: string): ParseResult<ImportBlock> {
       return validateOdds(json);
     case 'startlist':
       return validateStartlist(json);
+    case 'weather':
+      return validateWeather(json);
+    case 'news':
+      return validateNews(json);
     default:
-      return { ok: false, errors: [`Unknown block type "${json.type}". Expected stageResult | odds | startlist.`] };
+      return { ok: false, errors: [`Unknown block type "${json.type}". Expected stageResult | odds | startlist | weather | news.`] };
   }
 }
 
@@ -144,6 +150,21 @@ function validateStartlist(json: any): ParseResult<StartlistBlock> {
   else if (json.riders.length === 0) errors.push('startlist "riders" is empty.');
   if (errors.length) return { ok: false, errors };
   return { ok: true, block: json as StartlistBlock, errors: [] };
+}
+
+function validateWeather(json: any): ParseResult<WeatherBlock> {
+  if (typeof json.stage !== 'number') return { ok: false, errors: ['weather block needs a numeric "stage".'] };
+  return { ok: true, block: json as WeatherBlock, errors: [] };
+}
+
+function validateNews(json: any): ParseResult<NewsBlock> {
+  const errors: string[] = [];
+  if (!Array.isArray(json.items)) errors.push('news block needs an "items" array.');
+  else json.items.forEach((it: any, i: number) => {
+    if (typeof it.rider !== 'string') errors.push(`items[${i}] missing "rider".`);
+  });
+  if (errors.length) return { ok: false, errors };
+  return { ok: true, block: json as NewsBlock, errors: [] };
 }
 
 /**

@@ -17,6 +17,7 @@
 import type { Rider, Stage, RiderDistribution } from './types';
 import { EngineConfig, defaultConfig } from './config';
 import { riderSkill, breakSkill, riderDnfRisk, buildCoherentField } from './probability';
+import { weatherBreakFactor } from './modifiers';
 
 /** Small fast seeded PRNG (deterministic across platforms) → [0,1). */
 export function mulberry32(seed: number): () => number {
@@ -55,7 +56,8 @@ function forEachSimOrder(
   const bunchSkill = starters.map((r) => Math.max(1e-6, riderSkill(r, stage, cfg)));
   const brkSkill = starters.map((r) => Math.max(1e-9, breakSkill(r, stage, cfg)));
   const pDNF = starters.map((r) => riderDnfRisk(r, stage, cfg));
-  const pBreak = cfg.breakawayWinRate[stage.type] ?? 0;
+  // Optional weather nudges the break-success rate (×1 when no weather supplied).
+  const pBreak = Math.min(0.6, (cfg.breakawayWinRate[stage.type] ?? 0) * weatherBreakFactor(stage));
 
   const rng = mulberry32(sim.seed);
   const exp = () => -Math.log(rng() || 1e-12); // Exp(1)

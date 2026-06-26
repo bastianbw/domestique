@@ -12,6 +12,9 @@ import type {
 } from './types';
 import { EngineConfig, defaultConfig } from './config';
 import { strengthFromRank } from './features';
+import {
+  weatherSpreadFactor, weatherDnfFactor, newsSkillFactor, newsBreakFactor,
+} from './modifiers';
 
 /** Convert a single decimal odd to an implied probability. */
 export function impliedProb(decimalOdd?: number): number | undefined {
@@ -66,6 +69,9 @@ export function contentionStrength(
   }
 
   if (rider.injury === 'doubt') strength *= cfg.doubtDampen;
+
+  // Optional news nudge (×1 when no news supplied).
+  strength *= newsSkillFactor(rider);
 
   return Math.max(0, strength);
 }
@@ -249,6 +255,8 @@ export function riderDnfRisk(
     risk *= 1.5;
   }
   if (rider.injury === 'doubt') risk *= 2;
+  // Optional weather attrition (×1 when no weather supplied).
+  risk *= weatherDnfFactor(stage);
   return clamp(risk, 0, 0.5);
 }
 
@@ -286,7 +294,7 @@ export function riderSkill(
   if (stage.type === 'ttt') {
     let s = clamp01(rider.teamStrength / 100) + 1e-3;
     if (rider.injury === 'doubt') s *= cfg.doubtDampen;
-    return s;
+    return s * newsSkillFactor(rider);
   }
 
   const suit = cfg.suitability[stage.type][rider.archetype];
@@ -307,6 +315,8 @@ export function riderSkill(
     skill *= 1 + 0.12 * (rider.sprintTrainSupport / 100);
   }
   if (rider.injury === 'doubt') skill *= cfg.doubtDampen;
+  // Optional news nudge (×1 when no news supplied).
+  skill *= newsSkillFactor(rider);
   return Math.max(0, skill);
 }
 
@@ -341,7 +351,8 @@ export function breakSkill(
   cfg: EngineConfig = defaultConfig(),
 ): number {
   if (rider.injury === 'out') return 0;
-  const propensity = clamp01(0.05 + (rider.breakawayTendency ?? 0) / 100);
+  // Optional news intent raises/lowers break propensity (×1 when no news).
+  const propensity = clamp01((0.05 + (rider.breakawayTendency ?? 0) / 100) * newsBreakFactor(rider));
   return propensity * Math.sqrt(riderSkill(rider, stage, cfg) + 1e-4);
 }
 
@@ -356,11 +367,13 @@ export function breakSkill(
  * start-list quality → the base spread, unchanged.
  */
 export function effectiveSpread(stage: Stage, cfg: EngineConfig): number {
+  // Optional weather (cross-winds/gusts) widens the spread; ×1 when no weather.
+  const wx = weatherSpreadFactor(stage);
   const q = stage.startlistQuality;
-  if (typeof q !== 'number' || !Number.isFinite(q) || q <= 0 || !cfg.fieldQualityRef) return cfg.jointSpread;
+  if (typeof q !== 'number' || !Number.isFinite(q) || q <= 0 || !cfg.fieldQualityRef) return cfg.jointSpread * wx;
   const rel = clamp01(q / cfg.fieldQualityRef); // 0 (weak) .. 1 (≥ ref strength)
   const factor = 1 + cfg.fieldSpreadRange * (rel - 0.5) * 2; // 1±range
-  return Math.max(2, cfg.jointSpread * factor);
+  return Math.max(2, cfg.jointSpread * factor * wx);
 }
 
 function sinkhornRows(

@@ -9,7 +9,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type {
   Rider, Stage, RiskPreset, TeamType,
-  StageResultBlock, OddsBlock, StartlistBlock, ImportBlock, Archetype,
+  StageResultBlock, OddsBlock, StartlistBlock, WeatherBlock, NewsBlock, ImportBlock, Archetype,
 } from '@/engine/types';
 import { STAGES_2026, LAST_STAGE } from '@/engine/stages';
 import { defaultConfig, EngineConfig } from '@/engine/config';
@@ -170,6 +170,12 @@ export const useStore = create<AppState>()(
         }
         if (block.type === 'startlist') {
           return applyStartlist(block, set);
+        }
+        if (block.type === 'weather') {
+          return applyWeather(block, get, set);
+        }
+        if (block.type === 'news') {
+          return applyNews(block, get, set);
         }
         return { ok: false, messages: ['Unhandled block type.'] };
       },
@@ -359,6 +365,62 @@ function applyOdds(
     ].slice(0, 50),
   });
   const messages = [`Applied odds for ${block.odds.length - unmatched.length} riders on stage ${block.stage}.`];
+  if (unmatched.length) messages.push(`⚠ Unmatched: ${unmatched.join(', ')}`);
+  return { ok: true, messages };
+}
+
+function applyWeather(
+  block: WeatherBlock,
+  get: () => AppState,
+  set: (p: Partial<AppState>) => void,
+): { ok: boolean; messages: string[] } {
+  const st = get();
+  const { type, stage: stageNo, ...weather } = block;
+  if (!st.stages.some((s) => s.stage === stageNo)) {
+    return { ok: false, messages: [`Stage ${stageNo} not found.`] };
+  }
+  // Drop undefined keys so an empty block is a true no-op (clears weather).
+  const clean = Object.fromEntries(Object.entries(weather).filter(([, v]) => v !== undefined && v !== null));
+  const hasAny = Object.keys(clean).length > 0;
+  const stages = st.stages.map((s) => (s.stage === stageNo ? { ...s, weather: hasAny ? clean : undefined } : s));
+  set({
+    stages,
+    importLog: [
+      { at: Date.now(), kind: 'weather' as const, stage: stageNo, summary: hasAny ? `Weather for stage ${stageNo}` : `Cleared weather for stage ${stageNo}`, unmatched: [] },
+      ...st.importLog,
+    ].slice(0, 50),
+  });
+  return { ok: true, messages: [hasAny ? `Applied weather to stage ${stageNo}.` : `Cleared weather for stage ${stageNo}.`] };
+}
+
+function applyNews(
+  block: NewsBlock,
+  get: () => AppState,
+  set: (p: Partial<AppState>) => void,
+): { ok: boolean; messages: string[] } {
+  const st = get();
+  const unmatched: string[] = [];
+  const riders = st.riders.map((r) => ({ ...r }));
+  let applied = 0;
+  for (const item of block.items) {
+    const m = matchRider(item.rider, riders);
+    if (!m.riderId) { unmatched.push(item.rider); continue; }
+    const idx = riders.findIndex((r) => r.id === m.riderId);
+    const { rider: _name, status, ...news } = item;
+    // `status` maps onto the existing injury flag (reuses all base-model logic).
+    if (status) riders[idx].injury = status;
+    const clean = Object.fromEntries(Object.entries(news).filter(([, v]) => v !== undefined && v !== null && v !== ''));
+    riders[idx].news = Object.keys(clean).length > 0 ? clean : undefined;
+    applied++;
+  }
+  set({
+    riders,
+    importLog: [
+      { at: Date.now(), kind: 'news' as const, stage: block.stage ?? 0, summary: `News for ${applied} riders`, unmatched },
+      ...st.importLog,
+    ].slice(0, 50),
+  });
+  const messages = [`Applied news to ${applied} riders.`];
   if (unmatched.length) messages.push(`⚠ Unmatched: ${unmatched.join(', ')}`);
   return { ok: true, messages };
 }

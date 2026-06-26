@@ -197,7 +197,7 @@ exact JSON to return. Everything optional so a results+odds-only day still works
 | 3 | Break-vs-bunch split + role inference | ↑ precision@k, growth-MAE not worse |
 | 4 | Monte Carlo simulator (joint outcome) | ≥ analytic; Etapebonus/Holdbonus more accurate |
 | 5 | Odds de-vig upgrade (Shin/power + smooth fit) | shape sanity; no live regression |
-| 6 | Weather + news P2 fields + chat-prompt template + docs | neutral-default = no change; tests green |
+| 6 | Weather + news P2 fields + chat-prompt template + docs | DONE (§4h) — neutral-default proven bit-identical; +9 tests green |
 | 7 | **CAPSTONE — held-out season validation**: predict already-finished 2026 stages as if unknown (train/test split by race or date), report how close (precision@k, Brier, calibration) on the held-out set | honest out-of-sample numbers; no train/test leakage |
 
 Each step: keep all existing tests green, add new tests, report harness deltas to
@@ -406,7 +406,11 @@ toward the hand-tuned prior). Validated **out-of-sample: fit on 2024+2025, test 
    the hand-tuned matrix (now a data-checked choice), fitter retained to revisit.
 3. **The ensemble is the one robust model win**: Top15 Brier 0.0902→0.0845 (~6%),
    the metric that matters most for Etapebonus (count-of-top-15), at a within-noise
-   P@5 cost. Strong candidate to enable by default.
+   P@5 cost. **SHIPPED as the `projectField` default (2026-06-26)** — every app
+   consumer (Optimal page, riders page, forward-value horizon, EMA calibration)
+   now blends analytic+sim 50/50. Deterministic (seeded sim) so the UI is stable;
+   `{ analytic: true }` is the escape hatch for tests/debug. Verified live: Optimal
+   page renders clean (Σ xG +1.30M, Etapebonus +43k), no console errors.
 4. Terrain-form and field-strength: within noise on precision (small Brier help).
    Kept wired (opt-in / always-on-but-harmless), no overfit risk.
 5. Shin de-vig (win market) ships in the odds path — favourite–longshot corrected;
@@ -414,6 +418,37 @@ toward the hand-tuned prior). Validated **out-of-sample: fit on 2024+2025, test 
 
 Net: structural model is near its data ceiling (~0.33 P@5 / ~0.085 Brier held-out);
 the durable gains are **more data + the ensemble's top-15 calibration**.
+
+## 4h. Step 6 RESULTS — weather + news Phase-2 modifiers (2026-06-26)
+
+Built the optional Phase-2 layer. `engine/modifiers.ts` translates the new
+optional `stage.weather` (`StageWeather`) and `rider.news` (`RiderNews`) fields
+into small multiplicative factors at four existing hooks:
+
+| Hook | Weather | News |
+|------|---------|------|
+| `effectiveSpread` | cross-winds/gusts widen the spread (echelon lottery) | — |
+| `riderDnfRisk` | rain/cold raise attrition | — |
+| `simulate` break rate | rain/gusts raise break-success | — |
+| `riderSkill` / `contentionStrength` | — | `formDelta` + motivation/intent nudge |
+| `breakSkill` | — | stated breakaway intent raises propensity |
+
+**The contract (the gate): neutral-default = bit-identical.** Every factor returns
+exactly 1 when no weather/news is present, so all of §4a–§4g's validated numbers
+are untouched unless the user supplies real data. Proven by a test asserting
+`projectField` output is identical with vs without the fields, plus direction
+tests (weather widens spread / raises DNF, +formDelta raises skill & xG, breakaway
+intent raises break propensity). **+9 tests (92 → 101), all green; typecheck clean.**
+
+Plumbing: two new import blocks (`WeatherBlock`, `NewsBlock`) parsed in
+`engine/importSchema.ts`, applied via `applyWeather` / `applyNews` in the store
+(news `status` maps onto the existing `injury` flag so all base-model injury logic
+is reused; soft fields live on `rider.news`). The How-it-works page gained both
+schemas **and a copy-paste daily-prompt template** for the Phase-2 chat bridge
+(odds required; weather/news optional — a results+odds-only day is unchanged).
+
+Not backtested (no historical weather/news corpus, as planned) — conservative,
+neutral-by-default, user-supplied. This completes every roadmap step (1–7).
 
 ## 5. Open questions for the user (review checkpoints)
 1. Confirm the **break-vs-bunch split** is worth the modelling weight — it's the

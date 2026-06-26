@@ -48,6 +48,22 @@ export interface Stage {
   verticalMeters?: number;
   /** PCS start-list quality score (field strength); scales favourite dominance */
   startlistQuality?: number;
+  /** optional Phase-2 weather (neutral when absent — no effect on predictions) */
+  weather?: StageWeather;
+}
+
+/**
+ * Optional per-stage weather. Every field is optional; an absent/empty object is
+ * a strict no-op (the modifier factors all return 1). Supplied by the Phase-2
+ * `weather` import block.
+ */
+export interface StageWeather {
+  windKph?: number; // sustained wind speed
+  windDir?: string; // e.g. "NW" (free text, informational)
+  gustRisk?: 'low' | 'med' | 'high'; // gust / echelon lottery risk
+  rainProb?: number; // 0..100 chance of rain
+  tempC?: number; // air temperature (cold raises attrition)
+  crosswindSections?: number; // number of exposed cross-wind sectors
 }
 
 export interface Rider {
@@ -69,6 +85,27 @@ export interface Rider {
   odds?: RiderOdds;
   /** manual popular-ownership guess (%) for differential mode, optional */
   ownershipPct?: number;
+  /** optional Phase-2 news nudges (neutral when absent); see RiderNews */
+  news?: RiderNews;
+}
+
+/**
+ * Optional per-rider soft news nudges (Phase-2 `news` block). All optional and
+ * neutral when absent. `status` maps onto the existing `injury` flag at import
+ * time; the remaining "soft" fields live here and feed a small skill multiplier
+ * so the validated base model is untouched unless real news is supplied.
+ */
+export interface RiderNews {
+  /** stated intent this stage, e.g. "breakaway" | "gc" | "sprint" | "rest" */
+  intent?: string;
+  /** team role, e.g. "leader" | "free" | "domestique" */
+  role?: string;
+  /** motivation context, e.g. "home roads" | "target stage" | "saving for block" */
+  motivation?: string;
+  /** signed form nudge in form-points (−30..+30), e.g. crash recovery −15 */
+  formDelta?: number;
+  /** free-text status note (informational; `status` in the block sets injury) */
+  note?: string;
 }
 
 export interface RiderOdds {
@@ -204,4 +241,20 @@ export interface StartlistBlock {
   }>;
 }
 
-export type ImportBlock = StageResultBlock | OddsBlock | StartlistBlock;
+/** Optional Phase-2 weather block — applies StageWeather to one stage. */
+export interface WeatherBlock extends StageWeather {
+  type: 'weather';
+  stage: number;
+}
+
+/** Optional Phase-2 news block — per-rider soft nudges + status. */
+export interface NewsBlock {
+  type: 'news';
+  stage?: number; // informational; news currently applies to the roster
+  items: Array<{
+    rider: string;
+    status?: InjuryFlag; // maps onto the rider's injury flag
+  } & RiderNews>;
+}
+
+export type ImportBlock = StageResultBlock | OddsBlock | StartlistBlock | WeatherBlock | NewsBlock;

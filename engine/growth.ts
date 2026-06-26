@@ -23,7 +23,7 @@ import {
   DNF_PENALTY,
 } from './rules';
 import { buildField } from './probability';
-import { simulateStage, buildEnsembleField, type SimConfig } from './simulate';
+import { simulateStage, buildEnsembleField, DEFAULT_ENSEMBLE_W, DEFAULT_SIM, type SimConfig } from './simulate';
 
 /** P(top-K) from a distribution (positions 1..K). */
 export function pTopK(dist: RiderDistribution, k: number): number {
@@ -192,25 +192,36 @@ export function projectRider(
 /**
  * Convenience: project the whole field for a stage in one call.
  *
- * `opts.simulate` swaps the finishing distributions from the analytic coherent
- * model to the Monte Carlo simulator. The backtest shows the sim gives the best
- * top-15 calibration and captures breakaway upside (cheap break riders get real
- * xG instead of ~0), at the cost of a little top-5 precision — so it is OPT-IN,
- * not the default. (Joint-sample Etapebonus was measured and is only ~0.7% better
- * than the Poisson-binomial used in the optimizer — Holdet's ≤2-per-team rule
- * decorrelates the roster — so the joint path is deliberately NOT wired in.)
+ * DEFAULT = the analytic+sim ENSEMBLE (convex blend, 50/50). The held-out
+ * backtest (docs §4g) made this the one robust model win: top-15 Brier 0.0902 →
+ * 0.0845 (~6% better) — the calibration that drives Etapebonus, the biggest DKK
+ * lever — at a within-noise top-5 cost. It is deterministic (seeded sim), so the
+ * UI is stable across renders. Every app consumer (Optimal page, riders page,
+ * the forward-value horizon, EMA calibration) now goes through this same blend.
+ *
+ * Escape hatches via `opts`:
+ *  - `analytic: true` → pure analytic coherent model (used by tests/debug).
+ *  - `simulate` → full Monte Carlo only (best break upside, looser top-5).
+ *  - `ensemble: { w, sim }` → tune the blend weight / sim config.
+ *
+ * (Joint-sample Etapebonus was measured and is only ~0.7% better than the
+ * Poisson-binomial used in the optimizer — Holdet's ≤2-per-team rule decorrelates
+ * the roster — so the joint path is deliberately NOT wired in.)
  */
 export function projectField(
   riders: Rider[],
   stage: Stage,
   cfg: EngineConfig = defaultConfig(),
-  opts?: { simulate?: SimConfig; ensemble?: { w?: number; sim?: SimConfig } },
+  opts?: { simulate?: SimConfig; ensemble?: { w?: number; sim?: SimConfig }; analytic?: boolean },
 ): RiderProjection[] {
-  const dists = opts?.ensemble
-    ? buildEnsembleField(riders, stage, cfg, opts.ensemble.w, opts.ensemble.sim)
+  const dists = opts?.analytic
+    ? buildField(riders, stage, cfg)
     : opts?.simulate
       ? simulateStage(riders, stage, cfg, opts.simulate)
-      : buildField(riders, stage, cfg);
+      : opts?.ensemble
+        ? buildEnsembleField(riders, stage, cfg, opts.ensemble.w, opts.ensemble.sim)
+        // Default: the ensemble blend (analytic + sim) with engine defaults.
+        : buildEnsembleField(riders, stage, cfg, DEFAULT_ENSEMBLE_W, DEFAULT_SIM);
   const byId = new Map(dists.map((d) => [d.riderId, d]));
   return riders.map((r) => projectRider(r, stage, byId.get(r.id)!, cfg));
 }

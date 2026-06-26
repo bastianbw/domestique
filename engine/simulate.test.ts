@@ -82,7 +82,7 @@ describe('projectField opt-in simulator path', () => {
 
   it('values a break specialist via the sim where the analytic model gives ~0', () => {
     const sim = { nSims: 4000, seed: 9 };
-    const analytic = projectField(field, hilly);
+    const analytic = projectField(field, hilly, undefined, { analytic: true });
     const simmed = projectField(field, hilly, undefined, { simulate: sim });
     const xgA = new Map(analytic.map((p) => [p.riderId, p.xG]));
     const xgS = new Map(simmed.map((p) => [p.riderId, p.xG]));

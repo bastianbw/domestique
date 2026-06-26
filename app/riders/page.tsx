@@ -1,12 +1,18 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { useHydrated } from '@/lib/useHydrated';
 import { StageBar } from '../components/StageBar';
-import { RoleIcon, Jersey, CaptainStar, BarMeter } from '../components/graphics';
+import { RoleIcon, Jersey, CaptainStar, BarMeter, ContribBar } from '../components/graphics';
 import { projectField } from '@/engine/growth';
-import type { Archetype } from '@/engine/types';
-import { growth, priceM, ARCHE_LABEL } from '@/lib/format';
+import type { Archetype, Rider, RiderProjection } from '@/engine/types';
+import { growth, priceM, pct, ARCHE_LABEL } from '@/lib/format';
+
+/** Did this rider's distribution come from the betting market or the model? */
+function riderHasOdds(r: Rider): boolean {
+  const o = r.odds;
+  return !!o && ((o.win ?? 0) > 1 || (o.top3 ?? 0) > 1 || (o.top5 ?? 0) > 1 || (o.top10 ?? 0) > 1);
+}
 
 type SortKey = 'xG' | 'perM' | 'xGfee' | 'price' | 'captainEV';
 
@@ -26,6 +32,7 @@ export default function RidersPage() {
   const [ownedOnly, setOwnedOnly] = useState(false);
   const [q, setQ] = useState('');
   const [maxPrice, setMaxPrice] = useState(20);
+  const [openId, setOpenId] = useState<string | null>(null);
 
   const stage = stages.find((s) => s.stage === selected)!;
 
@@ -124,14 +131,21 @@ export default function RidersPage() {
           </thead>
           <tbody>
             {filtered.map(({ r, p, perM, xGfee, owned: own }) => (
-              <tr key={r.id} className={own ? 'bg-gold/[0.04]' : ''}>
+              <Fragment key={r.id}>
+              <tr className={own ? 'bg-gold/[0.04]' : ''}>
                 <td>
-                  <div className="flex items-center gap-2.5">
+                  <button
+                    onClick={() => setOpenId(openId === r.id ? null : r.id)}
+                    title="Show xG breakdown"
+                    className="flex items-center gap-2.5 text-left"
+                  >
+                    <span className={`text-chalk-500 transition-transform ${openId === r.id ? 'rotate-90' : ''}`}>›</span>
                     <RoleIcon role={r.archetype} size={16} />
-                    <span className="font-medium text-chalk-100">{r.name}</span>
+                    <span className="font-medium text-chalk-100 hover:text-gold">{r.name}</span>
                     {r.jerseys?.map((j) => <Jersey key={j} kind={j} size={13} />)}
                     {r.injury !== 'fit' && <span className="chip bg-polka/15 j-polka capitalize">{r.injury}</span>}
-                  </div>
+                    {riderHasOdds(r) && <span className="chip bg-gold/15 text-gold">Market</span>}
+                  </button>
                 </td>
                 <td className="hidden text-chalk-300 md:table-cell">{r.team}</td>
                 <td className="mono tnum text-right text-chalk-200">{priceM(r.price)}</td>
@@ -159,6 +173,14 @@ export default function RidersPage() {
                   </button>
                 </td>
               </tr>
+              {openId === r.id && (
+                <tr className="bg-ink-900/50">
+                  <td colSpan={8} className="!py-0">
+                    <RiderDetail r={r} p={p} />
+                  </td>
+                </tr>
+              )}
+              </Fragment>
             ))}
           </tbody>
         </table>
@@ -167,6 +189,71 @@ export default function RidersPage() {
         <span className="mono">xG</span> = expected DKK growth this stage · <span className="mono">xG/M</span> = growth per million spent ·
         <span className="mono"> xG−fee</span> = after the 1% transfer fee (0 if already owned).
       </p>
+    </div>
+  );
+}
+
+function RiderDetail({ r, p }: { r: Rider; p: RiderProjection }) {
+  const fromMarket = riderHasOdds(r);
+  const probs: Array<{ label: string; v: number }> = [
+    { label: 'Win', v: p.pWin },
+    { label: 'Top 5', v: p.pTop5 },
+    { label: 'Top 15', v: p.pTop15 },
+  ];
+  const b = p.breakdown;
+  const parts: Array<{ label: string; v: number }> = [
+    { label: 'Stage placement', v: b.placement },
+    { label: 'Sprint / mountain pts', v: b.sprintMtn },
+    { label: 'GC bonus', v: b.gc },
+    { label: 'Jerseys', v: b.jerseys },
+    { label: 'Holdbonus', v: b.holdbonus },
+    { label: 'Late-arrival penalty', v: b.lateArrival },
+    { label: 'DNF risk', v: b.dnfRisk },
+    { label: 'TTT', v: b.ttt },
+  ].filter((x) => Math.abs(x.v) > 1);
+  const scale = Math.max(1, ...parts.map((x) => Math.abs(x.v)));
+
+  return (
+    <div className="grid gap-5 px-3 py-4 sm:grid-cols-2">
+      <div>
+        <div className="eyebrow mb-2 flex items-center gap-2">
+          Finish probabilities
+          <span className={`chip ${fromMarket ? 'bg-gold/15 text-gold' : 'bg-ink-700 text-chalk-300'}`}>
+            {fromMarket ? 'Market (odds)' : 'Model'}
+          </span>
+        </div>
+        <div className="space-y-2">
+          {probs.map((x) => (
+            <div key={x.label} className="flex items-center gap-3">
+              <span className="w-12 shrink-0 text-[12px] text-chalk-300">{x.label}</span>
+              <BarMeter value={x.v} max={1} tone="gold" className="flex-1" />
+              <span className="mono tnum w-12 shrink-0 text-right text-[12px] text-chalk-200">{pct(x.v)}</span>
+            </div>
+          ))}
+        </div>
+        <p className="mt-2.5 text-[11px] leading-relaxed text-chalk-500">
+          {fromMarket
+            ? 'Anchored to your pasted betting odds (Shin-de-vigged) — the strongest signal.'
+            : 'From the structural model + Monte-Carlo ensemble (rank × stage suitability × form, plus any weather/news nudges).'}
+        </p>
+      </div>
+
+      <div>
+        <div className="eyebrow mb-2">xG breakdown · <span className="mono j-green normal-case tracking-normal">{growth(p.xG)}</span></div>
+        <div className="space-y-2">
+          {parts.map((x) => (
+            <div key={x.label} className="flex items-center gap-3">
+              <span className="w-36 shrink-0 text-[12px] text-chalk-300">{x.label}</span>
+              <ContribBar value={x.v} scale={scale} />
+              <span className={`mono tnum w-12 shrink-0 text-right text-[12px] ${x.v < 0 ? 'j-polka' : 'text-chalk-200'}`}>{growth(x.v)}</span>
+            </div>
+          ))}
+          {parts.length === 0 && <p className="text-[12px] text-chalk-500">No material growth components this stage.</p>}
+        </div>
+        <p className="mt-2.5 text-[11px] leading-relaxed text-chalk-500">
+          Captain EV <span className="mono text-chalk-300">{growth(p.captainEV)}</span> — positive round growth counted twice.
+        </p>
+      </div>
     </div>
   );
 }

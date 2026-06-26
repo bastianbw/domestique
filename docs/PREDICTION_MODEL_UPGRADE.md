@@ -379,6 +379,42 @@ Left OFF by default because sim marginals trade ~0.01 P@5 for the top-15/break
 gains — a product call (see §5). `app/page.tsx:20` is the single call-site to
 toggle it live. 87 tests pass; `tsc` clean.
 
+## 4g. Steps A + 5 + 7 — learn-from-data, ensemble, Shin, held-out validation (2026-06-25)
+
+Expanded corpus to **2024+2025+2026 WT** (419 stage/result pages, **1,186 rider
+profiles**). Added: terrain-specific form, field-strength spread scaling, an
+analytic+sim **ensemble**, **Shin** win-market de-vig, and a **parameter fitter**
+that estimates the suitability matrix from train years (top-K propensity, blended
+toward the hand-tuned prior). Validated **out-of-sample: fit on 2024+2025, test on
+2026** (no leakage). `scripts/harness.ts` + `scripts/fit.bt.ts`. 92 tests pass.
+
+| config (held-out 2026, 91 stages) | P@5 | P@15 | Top15 Brier |
+|-----------------------------------|-----|------|-------------|
+| hand-tuned baseline | 0.327 | 0.384 | 0.0902 |
+| learned suitability β=1 | 0.312 | 0.372 | 0.0896 |
+| learned blend β=0.5 | **0.330** | 0.379 | 0.0892 |
+| blend + terrain form | 0.327 | 0.382 | 0.0890 |
+| blend + terrain + **ensemble** | 0.325 | 0.379 | **0.0845** |
+| hand-tuned + terrain + ensemble | 0.325 | **0.385** | 0.0850 |
+
+**Honest findings:**
+1. **The biggest win was data coverage** — full rider profiles lifted the held-out
+   baseline P@5 0.295→0.327 and Brier 0.095→0.090. "Collect more data" paid off,
+   via rider features not the learned matrix.
+2. **The data VALIDATES the hand-tuned suitability** — pure learned β=1 is slightly
+   *worse* (noisier head); the β=0.5 blend is +0.003 P@5 (within noise). So we keep
+   the hand-tuned matrix (now a data-checked choice), fitter retained to revisit.
+3. **The ensemble is the one robust model win**: Top15 Brier 0.0902→0.0845 (~6%),
+   the metric that matters most for Etapebonus (count-of-top-15), at a within-noise
+   P@5 cost. Strong candidate to enable by default.
+4. Terrain-form and field-strength: within noise on precision (small Brier help).
+   Kept wired (opt-in / always-on-but-harmless), no overfit risk.
+5. Shin de-vig (win market) ships in the odds path — favourite–longshot corrected;
+   no historical odds to backtest, shape-sanity tested.
+
+Net: structural model is near its data ceiling (~0.33 P@5 / ~0.085 Brier held-out);
+the durable gains are **more data + the ensemble's top-15 calibration**.
+
 ## 5. Open questions for the user (review checkpoints)
 1. Confirm the **break-vs-bunch split** is worth the modelling weight — it's the
    single biggest lever for the growth objective (cheap break riders winning) and

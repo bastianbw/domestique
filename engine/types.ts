@@ -46,6 +46,8 @@ export interface Stage {
   profileScore?: number;
   /** total climbing (m); with km gives "climbiness" (vertical-m per km) */
   verticalMeters?: number;
+  /** PCS start-list quality score (field strength); scales favourite dominance */
+  startlistQuality?: number;
 }
 
 export interface Rider {

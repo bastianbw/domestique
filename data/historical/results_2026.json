@@ -12,10 +12,7 @@
    "profileIcon": "p2",
    "profileScore": 135,
    "verticalMeters": 3400,
-   "startlistQuality": [
-    668,
-    662
-   ],
+   "startlistQuality": 668,
    "isOneDay": true,
    "ourType": "hilly",
    "results": [
@@ -1956,10 +1953,7 @@
    "profileIcon": "p1",
    "profileScore": 2,
    "verticalMeters": 422,
-   "startlistQuality": [
-    328,
-    322
-   ],
+   "startlistQuality": 328,
    "isOneDay": true,
    "ourType": "flat",
    "results": [
@@ -3669,10 +3663,7 @@
    "profileIcon": "p1",
    "profileScore": 8,
    "verticalMeters": 1001,
-   "startlistQuality": [
-    466,
-    466
-   ],
+   "startlistQuality": 466,
    "isOneDay": true,
    "ourType": "flat",
    "results": [
@@ -5602,10 +5593,7 @@
    "profileIcon": "p2",
    "profileScore": 45,
    "verticalMeters": 1438,
-   "startlistQuality": [
-    742,
-    742
-   ],
+   "startlistQuality": 742,
    "isOneDay": true,
    "ourType": "hilly",
    "results": [
@@ -7546,10 +7534,7 @@
    "profileIcon": "p2",
    "profileScore": 73,
    "verticalMeters": 1995,
-   "startlistQuality": [
-    526,
-    524
-   ],
+   "startlistQuality": 526,
    "isOneDay": true,
    "ourType": "hilly",
    "results": [
@@ -9413,10 +9398,7 @@
    "profileIcon": "p2",
    "profileScore": 139,
    "verticalMeters": 3467,
-   "startlistQuality": [
-    443,
-    433
-   ],
+   "startlistQuality": 443,
    "isOneDay": true,
    "ourType": "hilly",
    "results": [
@@ -11038,10 +11020,7 @@
    "profileIcon": "p2",
    "profileScore": 42,
    "verticalMeters": 1232,
-   "startlistQuality": [
-    790,
-    790
-   ],
+   "startlistQuality": 790,
    "isOneDay": true,
    "ourType": "hilly",
    "results": [
@@ -12982,10 +12961,7 @@
    "profileIcon": "p1",
    "profileScore": 20,
    "verticalMeters": 872,
-   "startlistQuality": [
-    955,
-    955
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "flat",
    "results": [
@@ -15025,10 +15001,7 @@
    "profileIcon": "p4",
    "profileScore": 108,
    "verticalMeters": 2348,
-   "startlistQuality": [
-    955,
-    953
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "summit",
    "results": [
@@ -17068,10 +17041,7 @@
    "profileIcon": "p2",
    "profileScore": 40,
    "verticalMeters": 1577,
-   "startlistQuality": [
-    955,
-    886
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -19056,10 +19026,7 @@
    "profileIcon": "p4",
    "profileScore": 89,
    "verticalMeters": 1600,
-   "startlistQuality": [
-    955,
-    884
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "summit",
    "results": [
@@ -21022,10 +20989,7 @@
    "profileIcon": "p2",
    "profileScore": 203,
    "verticalMeters": 3724,
-   "startlistQuality": [
-    955,
-    824
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -22955,10 +22919,7 @@
    "profileIcon": "p2",
    "profileScore": 14,
    "verticalMeters": 680,
-   "startlistQuality": [
-    955,
-    817
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -24844,10 +24805,7 @@
    "profileIcon": "p5",
    "profileScore": 368,
    "verticalMeters": 4467,
-   "startlistQuality": [
-    955,
-    817
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "high_mtn",
    "results": [
@@ -26722,10 +26680,7 @@
    "profileIcon": "p3",
    "profileScore": 152,
    "verticalMeters": 1804,
-   "startlistQuality": [
-    955,
-    817
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -28600,10 +28555,7 @@
    "profileIcon": "p5",
    "profileScore": 244,
    "verticalMeters": 2351,
-   "startlistQuality": [
-    955,
-    810
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "high_mtn",
    "results": [
@@ -30456,10 +30408,7 @@
    "profileIcon": "p1",
    "profileScore": 2,
    "verticalMeters": 105,
-   "startlistQuality": [
-    955,
-    810
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "hilly_itt",
    "results": [
@@ -32312,10 +32261,7 @@
    "profileIcon": "p2",
    "profileScore": 177,
    "verticalMeters": 2939,
-   "startlistQuality": [
-    955,
-    810
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -34168,10 +34114,7 @@
    "profileIcon": "p2",
    "profileScore": 89,
    "verticalMeters": 2046,
-   "startlistQuality": [
-    955,
-    797
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -35980,10 +35923,7 @@
    "profileIcon": "p2",
    "profileScore": 85,
    "verticalMeters": 1326,
-   "startlistQuality": [
-    955,
-    795
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -37759,10 +37699,7 @@
    "profileIcon": "p5",
    "profileScore": 381,
    "verticalMeters": 4209,
-   "startlistQuality": [
-    955,
-    795
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "high_mtn",
    "results": [
@@ -39538,10 +39475,7 @@
    "profileIcon": "p1",
    "profileScore": 7,
    "verticalMeters": 612,
-   "startlistQuality": [
-    955,
-    760
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "flat",
    "results": [
@@ -41306,10 +41240,7 @@
    "profileIcon": "p5",
    "profileScore": 334,
    "verticalMeters": 2928,
-   "startlistQuality": [
-    955,
-    753
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "high_mtn",
    "results": [
@@ -43063,10 +42994,7 @@
    "profileIcon": "p3",
    "profileScore": 181,
    "verticalMeters": 3257,
-   "startlistQuality": [
-    955,
-    753
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -44809,10 +44737,7 @@
    "profileIcon": "p2",
    "profileScore": 103,
    "verticalMeters": 1896,
-   "startlistQuality": [
-    955,
-    752
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -46544,10 +46469,7 @@
    "profileIcon": "p5",
    "profileScore": 396,
    "verticalMeters": 4888,
-   "startlistQuality": [
-    955,
-    749
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "high_mtn",
    "results": [
@@ -48279,10 +48201,7 @@
    "profileIcon": "p5",
    "profileScore": 379,
    "verticalMeters": 3751,
-   "startlistQuality": [
-    955,
-    729
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "high_mtn",
    "results": [
@@ -49970,10 +49889,7 @@
    "profileIcon": "p1",
    "profileScore": 28,
    "verticalMeters": 1709,
-   "startlistQuality": [
-    955,
-    728
-   ],
+   "startlistQuality": 955,
    "isOneDay": false,
    "ourType": "flat",
    "results": [
@@ -51661,10 +51577,7 @@
    "profileIcon": "p2",
    "profileScore": 90,
    "verticalMeters": 1642,
-   "startlistQuality": [
-    376,
-    374
-   ],
+   "startlistQuality": 376,
    "isOneDay": true,
    "ourType": "hilly",
    "results": [
@@ -53132,10 +53045,7 @@
    "profileIcon": "p3",
    "profileScore": 34,
    "verticalMeters": 225,
-   "startlistQuality": [
-    702,
-    695
-   ],
+   "startlistQuality": 702,
    "isOneDay": false,
    "ourType": "hilly_itt",
    "results": [
@@ -54845,10 +54755,7 @@
    "profileIcon": "p5",
    "profileScore": 224,
    "verticalMeters": 3191,
-   "startlistQuality": [
-    702,
-    687
-   ],
+   "startlistQuality": 702,
    "isOneDay": false,
    "ourType": "high_mtn",
    "results": [
@@ -56536,10 +56443,7 @@
    "profileIcon": "p3",
    "profileScore": 154,
    "verticalMeters": 2709,
-   "startlistQuality": [
-    702,
-    683
-   ],
+   "startlistQuality": 702,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -58161,10 +58065,7 @@
    "profileIcon": "p3",
    "profileScore": 207,
    "verticalMeters": 3119,
-   "startlistQuality": [
-    702,
-    625
-   ],
+   "startlistQuality": 702,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -59720,10 +59621,7 @@
    "profileIcon": "p4",
    "profileScore": 284,
    "verticalMeters": 4079,
-   "startlistQuality": [
-    702,
-    601
-   ],
+   "startlistQuality": 702,
    "isOneDay": false,
    "ourType": "summit",
    "results": [
@@ -61191,10 +61089,7 @@
    "profileIcon": "p4",
    "profileScore": 199,
    "verticalMeters": 3081,
-   "startlistQuality": [
-    702,
-    581
-   ],
+   "startlistQuality": 702,
    "isOneDay": false,
    "ourType": "summit",
    "results": [
@@ -62640,10 +62535,7 @@
    "profileIcon": "p3",
    "profileScore": 172,
    "verticalMeters": 2974,
-   "startlistQuality": [
-    727,
-    726
-   ],
+   "startlistQuality": 727,
    "isOneDay": true,
    "ourType": "hilly",
    "results": [
@@ -64584,10 +64476,7 @@
    "profileIcon": "p2",
    "profileScore": 199,
    "verticalMeters": 4101,
-   "startlistQuality": [
-    851,
-    840
-   ],
+   "startlistQuality": 851,
    "isOneDay": true,
    "ourType": "hilly",
    "results": [
@@ -66528,10 +66417,7 @@
    "profileIcon": "p2",
    "profileScore": 82,
    "verticalMeters": 2545,
-   "startlistQuality": [
-    1072,
-    1072
-   ],
+   "startlistQuality": 1072,
    "isOneDay": true,
    "ourType": "hilly",
    "results": [
@@ -68472,10 +68358,7 @@
    "profileIcon": "p2",
    "profileScore": 68,
    "verticalMeters": 1631,
-   "startlistQuality": [
-    739,
-    739
-   ],
+   "startlistQuality": 739,
    "isOneDay": true,
    "ourType": "hilly",
    "results": [
@@ -70416,10 +70299,7 @@
    "profileIcon": "p2",
    "profileScore": 73,
    "verticalMeters": 1779,
-   "startlistQuality": [
-    659,
-    659
-   ],
+   "startlistQuality": 659,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -72129,10 +72009,7 @@
    "profileIcon": "p1",
    "profileScore": 25,
    "verticalMeters": 1192,
-   "startlistQuality": [
-    659,
-    658
-   ],
+   "startlistQuality": 659,
    "isOneDay": false,
    "ourType": "flat",
    "results": [
@@ -73831,10 +73708,7 @@
    "profileIcon": "p2",
    "profileScore": 12,
    "verticalMeters": 212,
-   "startlistQuality": [
-    659,
-    658
-   ],
+   "startlistQuality": 659,
    "isOneDay": false,
    "ourType": "ttt",
    "results": [
@@ -75522,10 +75396,7 @@
    "profileIcon": "p3",
    "profileScore": 175,
    "verticalMeters": 2145,
-   "startlistQuality": [
-    659,
-    654
-   ],
+   "startlistQuality": 659,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -77213,10 +77084,7 @@
    "profileIcon": "p3",
    "profileScore": 178,
    "verticalMeters": 2724,
-   "startlistQuality": [
-    659,
-    547
-   ],
+   "startlistQuality": 659,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -78739,10 +78607,7 @@
    "profileIcon": "p2",
    "profileScore": 99,
    "verticalMeters": 2077,
-   "startlistQuality": [
-    659,
-    475
-   ],
+   "startlistQuality": 659,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -80177,10 +80042,7 @@
    "profileIcon": "p5",
    "profileScore": 60,
    "verticalMeters": 940,
-   "startlistQuality": [
-    659,
-    437
-   ],
+   "startlistQuality": 659,
    "isOneDay": false,
    "ourType": "high_mtn",
    "results": [
@@ -81538,10 +81400,7 @@
    "profileIcon": "p2",
    "profileScore": 157,
    "verticalMeters": 2479,
-   "startlistQuality": [
-    659,
-    425
-   ],
+   "startlistQuality": 659,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -82767,10 +82626,7 @@
    "profileIcon": "p1",
    "profileScore": 14,
    "verticalMeters": 1314,
-   "startlistQuality": [
-    794,
-    794
-   ],
+   "startlistQuality": 794,
    "isOneDay": true,
    "ourType": "flat",
    "results": [
@@ -84711,10 +84567,7 @@
    "profileIcon": "p2",
    "profileScore": 93,
    "verticalMeters": 2250,
-   "startlistQuality": [
-    767,
-    767
-   ],
+   "startlistQuality": 767,
    "isOneDay": true,
    "ourType": "hilly",
    "results": [
@@ -86655,10 +86508,7 @@
    "profileIcon": "p3",
    "profileScore": 182,
    "verticalMeters": 3567,
-   "startlistQuality": [
-    683,
-    683
-   ],
+   "startlistQuality": 683,
    "isOneDay": true,
    "ourType": "hilly",
    "results": [
@@ -88599,10 +88449,7 @@
    "profileIcon": "p1",
    "profileScore": 0,
    "verticalMeters": 8,
-   "startlistQuality": [
-    931,
-    931
-   ],
+   "startlistQuality": 931,
    "isOneDay": false,
    "ourType": "hilly_itt",
    "results": [
@@ -90455,10 +90302,7 @@
    "profileIcon": "p3",
    "profileScore": 125,
    "verticalMeters": 2208,
-   "startlistQuality": [
-    931,
-    926
-   ],
+   "startlistQuality": 931,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -92311,10 +92155,7 @@
    "profileIcon": "p1",
    "profileScore": 79,
    "verticalMeters": 2436,
-   "startlistQuality": [
-    931,
-    926
-   ],
+   "startlistQuality": 931,
    "isOneDay": false,
    "ourType": "flat",
    "results": [
@@ -94156,10 +93997,7 @@
    "profileIcon": "p2",
    "profileScore": 123,
    "verticalMeters": 2781,
-   "startlistQuality": [
-    931,
-    926
-   ],
+   "startlistQuality": 931,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -96001,10 +95839,7 @@
    "profileIcon": "p2",
    "profileScore": 272,
    "verticalMeters": 3845,
-   "startlistQuality": [
-    931,
-    914
-   ],
+   "startlistQuality": 931,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -97846,10 +97681,7 @@
    "profileIcon": "p3",
    "profileScore": 259,
    "verticalMeters": 4007,
-   "startlistQuality": [
-    931,
-    893
-   ],
+   "startlistQuality": 931,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -99658,10 +99490,7 @@
    "profileIcon": "p1",
    "profileScore": 25,
    "verticalMeters": 1135,
-   "startlistQuality": [
-    931,
-    888
-   ],
+   "startlistQuality": 931,
    "isOneDay": false,
    "ourType": "flat",
    "results": [
@@ -101426,10 +101255,7 @@
    "profileIcon": "p3",
    "profileScore": 234,
    "verticalMeters": 3202,
-   "startlistQuality": [
-    773,
-    773
-   ],
+   "startlistQuality": 773,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -103139,10 +102965,7 @@
    "profileIcon": "p2",
    "profileScore": 153,
    "verticalMeters": 3687,
-   "startlistQuality": [
-    773,
-    746
-   ],
+   "startlistQuality": 773,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -104797,10 +104620,7 @@
    "profileIcon": "p3",
    "profileScore": 32,
    "verticalMeters": 402,
-   "startlistQuality": [
-    773,
-    742
-   ],
+   "startlistQuality": 773,
    "isOneDay": false,
    "ourType": "ttt",
    "results": [
@@ -106422,10 +106242,7 @@
    "profileIcon": "p2",
    "profileScore": 54,
    "verticalMeters": 2111,
-   "startlistQuality": [
-    773,
-    740
-   ],
+   "startlistQuality": 773,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -108047,10 +107864,7 @@
    "profileIcon": "p1",
    "profileScore": 48,
    "verticalMeters": 2200,
-   "startlistQuality": [
-    773,
-    721
-   ],
+   "startlistQuality": 773,
    "isOneDay": false,
    "ourType": "flat",
    "results": [
@@ -109650,10 +109464,7 @@
    "profileIcon": "p5",
    "profileScore": 413,
    "verticalMeters": 3728,
-   "startlistQuality": [
-    773,
-    551
-   ],
+   "startlistQuality": 773,
    "isOneDay": false,
    "ourType": "high_mtn",
    "results": [
@@ -111077,10 +110888,7 @@
    "profileIcon": "p5",
    "profileScore": 389,
    "verticalMeters": 4051,
-   "startlistQuality": [
-    773,
-    501
-   ],
+   "startlistQuality": 773,
    "isOneDay": false,
    "ourType": "high_mtn",
    "results": [
@@ -112262,10 +112070,7 @@
    "profileIcon": "p4",
    "profileScore": 191,
    "verticalMeters": 2186,
-   "startlistQuality": [
-    447,
-    445
-   ],
+   "startlistQuality": 447,
    "isOneDay": false,
    "ourType": "summit",
    "results": [
@@ -113414,10 +113219,7 @@
    "profileIcon": "p2",
    "profileScore": 120,
    "verticalMeters": 2749,
-   "startlistQuality": [
-    447,
-    409
-   ],
+   "startlistQuality": 447,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -114533,10 +114335,7 @@
    "profileIcon": "p4",
    "profileScore": 101,
    "verticalMeters": 2270,
-   "startlistQuality": [
-    447,
-    371
-   ],
+   "startlistQuality": 447,
    "isOneDay": false,
    "ourType": "summit",
    "results": [
@@ -115608,10 +115407,7 @@
    "profileIcon": "p4",
    "profileScore": 237,
    "verticalMeters": 3583,
-   "startlistQuality": [
-    447,
-    368
-   ],
+   "startlistQuality": 447,
    "isOneDay": false,
    "ourType": "summit",
    "results": [
@@ -116650,10 +116446,7 @@
    "profileIcon": "p5",
    "profileScore": 225,
    "verticalMeters": 3487,
-   "startlistQuality": [
-    447,
-    363
-   ],
+   "startlistQuality": 447,
    "isOneDay": false,
    "ourType": "high_mtn",
    "results": [
@@ -117648,10 +117441,7 @@
    "profileIcon": "p2",
    "profileScore": 202,
    "verticalMeters": 2446,
-   "startlistQuality": [
-    584,
-    584
-   ],
+   "startlistQuality": 584,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -119207,10 +118997,7 @@
    "profileIcon": "p2",
    "profileScore": 118,
    "verticalMeters": 2460,
-   "startlistQuality": [
-    584,
-    577
-   ],
+   "startlistQuality": 584,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -120722,10 +120509,7 @@
    "profileIcon": "p2",
    "profileScore": 86,
    "verticalMeters": 2320,
-   "startlistQuality": [
-    584,
-    569
-   ],
+   "startlistQuality": 584,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -122204,10 +121988,7 @@
    "profileIcon": "p1",
    "profileScore": 10,
    "verticalMeters": 202,
-   "startlistQuality": [
-    584,
-    550
-   ],
+   "startlistQuality": 584,
    "isOneDay": false,
    "ourType": "hilly_itt",
    "results": [
@@ -123609,10 +123390,7 @@
    "profileIcon": "p5",
    "profileScore": 424,
    "verticalMeters": 4451,
-   "startlistQuality": [
-    584,
-    512
-   ],
+   "startlistQuality": 584,
    "isOneDay": false,
    "ourType": "high_mtn",
    "results": [
@@ -124981,10 +124759,7 @@
    "profileIcon": "p2",
    "profileScore": 35,
    "verticalMeters": 1107,
-   "startlistQuality": [
-    412,
-    412
-   ],
+   "startlistQuality": 412,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -126540,10 +126315,7 @@
    "profileIcon": "p2",
    "profileScore": 169,
    "verticalMeters": 2787,
-   "startlistQuality": [
-    412,
-    410
-   ],
+   "startlistQuality": 412,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -128077,10 +127849,7 @@
    "profileIcon": "p2",
    "profileScore": 80,
    "verticalMeters": 1870,
-   "startlistQuality": [
-    412,
-    403
-   ],
+   "startlistQuality": 412,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -129614,10 +129383,7 @@
    "profileIcon": "p3",
    "profileScore": 35,
    "verticalMeters": 1458,
-   "startlistQuality": [
-    412,
-    403
-   ],
+   "startlistQuality": 412,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -131129,10 +130895,7 @@
    "profileIcon": "p3",
    "profileScore": 115,
    "verticalMeters": 2992,
-   "startlistQuality": [
-    412,
-    349
-   ],
+   "startlistQuality": 412,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -132534,10 +132297,7 @@
    "profileIcon": "p3",
    "profileScore": 49,
    "verticalMeters": 1018,
-   "startlistQuality": [
-    528,
-    528
-   ],
+   "startlistQuality": 528,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -134159,10 +133919,7 @@
    "profileIcon": "p1",
    "profileScore": 1,
    "verticalMeters": 101,
-   "startlistQuality": [
-    528,
-    528
-   ],
+   "startlistQuality": 528,
    "isOneDay": false,
    "ourType": "hilly_itt",
    "results": [
@@ -135773,10 +135530,7 @@
    "profileIcon": "p5",
    "profileScore": 334,
    "verticalMeters": 2617,
-   "startlistQuality": [
-    528,
-    528
-   ],
+   "startlistQuality": 528,
    "isOneDay": false,
    "ourType": "high_mtn",
    "results": [
@@ -137387,10 +137141,7 @@
    "profileIcon": "p2",
    "profileScore": 74,
    "verticalMeters": 2360,
-   "startlistQuality": [
-    528,
-    528
-   ],
+   "startlistQuality": 528,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -139001,10 +138752,7 @@
    "profileIcon": "p1",
    "profileScore": 8,
    "verticalMeters": 867,
-   "startlistQuality": [
-    528,
-    526
-   ],
+   "startlistQuality": 528,
    "isOneDay": false,
    "ourType": "flat",
    "results": [
@@ -140593,10 +140341,7 @@
    "profileIcon": "p5",
    "profileScore": 170,
    "verticalMeters": 1646,
-   "startlistQuality": [
-    528,
-    526
-   ],
+   "startlistQuality": 528,
    "isOneDay": false,
    "ourType": "high_mtn",
    "results": [
@@ -142185,10 +141930,7 @@
    "profileIcon": "p1",
    "profileScore": 5,
    "verticalMeters": 587,
-   "startlistQuality": [
-    528,
-    524
-   ],
+   "startlistQuality": 528,
    "isOneDay": false,
    "ourType": "flat",
    "results": [
@@ -143766,10 +143508,7 @@
    "profileIcon": "p3",
    "profileScore": 88,
    "verticalMeters": 2150,
-   "startlistQuality": [
-    821,
-    821
-   ],
+   "startlistQuality": 821,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -145556,10 +145295,7 @@
    "profileIcon": "p3",
    "profileScore": 76,
    "verticalMeters": 1898,
-   "startlistQuality": [
-    821,
-    821
-   ],
+   "startlistQuality": 821,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -147346,10 +147082,7 @@
    "profileIcon": "p4",
    "profileScore": 78,
    "verticalMeters": 2279,
-   "startlistQuality": [
-    821,
-    810
-   ],
+   "startlistQuality": 821,
    "isOneDay": false,
    "ourType": "summit",
    "results": [
@@ -149114,10 +148847,7 @@
    "profileIcon": "p2",
    "profileScore": 97,
    "verticalMeters": 2844,
-   "startlistQuality": [
-    821,
-    771
-   ],
+   "startlistQuality": 821,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [
@@ -150838,10 +150568,7 @@
    "profileIcon": "p5",
    "profileScore": 389,
    "verticalMeters": 4390,
-   "startlistQuality": [
-    821,
-    760
-   ],
+   "startlistQuality": 821,
    "isOneDay": false,
    "ourType": "high_mtn",
    "results": [
@@ -152540,10 +152267,7 @@
    "profileIcon": "p5",
    "profileScore": 336,
    "verticalMeters": 3895,
-   "startlistQuality": [
-    821,
-    703
-   ],
+   "startlistQuality": 821,
    "isOneDay": false,
    "ourType": "high_mtn",
    "results": [
@@ -154165,10 +153889,7 @@
    "profileIcon": "p2",
    "profileScore": 184,
    "verticalMeters": 1617,
-   "startlistQuality": [
-    821,
-    691
-   ],
+   "startlistQuality": 821,
    "isOneDay": false,
    "ourType": "hilly",
    "results": [

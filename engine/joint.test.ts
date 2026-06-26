@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildCoherentField, riderSkill, buildField, climbiness, breakSkill } from './probability';
+import { buildCoherentField, riderSkill, buildField, climbiness, breakSkill, devigShin } from './probability';
 import { STAGES_2026 } from './stages';
 import type { Rider, Stage } from './types';
 
@@ -98,6 +98,20 @@ describe('coherent-joint field', () => {
     expect(breakSkill(attacker, hilly)).toBeGreaterThan(breakSkill(star, hilly));
     // but for the plain bunch result the star is still stronger
     expect(riderSkill(star, hilly)).toBeGreaterThan(riderSkill(attacker, hilly));
+  });
+
+  it('devigShin returns probabilities summing to 1 and corrects the longshot', () => {
+    const odds = [1.8, 3.5, 5, 9, 15]; // overround book, favourite at 1.8
+    const shin = devigShin(odds);
+    const sum = shin.reduce((a, b) => a + b, 0);
+    expect(sum).toBeCloseTo(1, 6);
+    // proportional de-vig for comparison
+    const implied = odds.map((o) => 1 / o);
+    const S = implied.reduce((a, b) => a + b, 0);
+    const prop = implied.map((x) => x / S);
+    // Shin shaves the longshot below its proportional share (favourite–longshot)
+    expect(shin[shin.length - 1]).toBeLessThan(prop[prop.length - 1]);
+    expect(shin[0]).toBeGreaterThan(prop[0]); // and lifts the favourite
   });
 
   it('buildField routes the no-odds field through the coherent model', () => {

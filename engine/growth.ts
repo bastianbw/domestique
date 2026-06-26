@@ -23,7 +23,7 @@ import {
   DNF_PENALTY,
 } from './rules';
 import { buildField } from './probability';
-import { simulateStage, type SimConfig } from './simulate';
+import { simulateStage, buildEnsembleField, type SimConfig } from './simulate';
 
 /** P(top-K) from a distribution (positions 1..K). */
 export function pTopK(dist: RiderDistribution, k: number): number {
@@ -204,11 +204,13 @@ export function projectField(
   riders: Rider[],
   stage: Stage,
   cfg: EngineConfig = defaultConfig(),
-  opts?: { simulate?: SimConfig },
+  opts?: { simulate?: SimConfig; ensemble?: { w?: number; sim?: SimConfig } },
 ): RiderProjection[] {
-  const dists = opts?.simulate
-    ? simulateStage(riders, stage, cfg, opts.simulate)
-    : buildField(riders, stage, cfg);
+  const dists = opts?.ensemble
+    ? buildEnsembleField(riders, stage, cfg, opts.ensemble.w, opts.ensemble.sim)
+    : opts?.simulate
+      ? simulateStage(riders, stage, cfg, opts.simulate)
+      : buildField(riders, stage, cfg);
   const byId = new Map(dists.map((d) => [d.riderId, d]));
   return riders.map((r) => projectRider(r, stage, byId.get(r.id)!, cfg));
 }

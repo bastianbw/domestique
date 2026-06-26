@@ -21,10 +21,11 @@ from procyclingstats import Rider
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 
+import glob
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HIST = os.path.join(ROOT, "data", "historical")
 CACHE = os.path.join(HIST, "_cache")
-RESULTS = os.path.join(HIST, "results_2026.json")
 OUT = os.path.join(HIST, "riders.json")
 
 
@@ -57,14 +58,16 @@ def safe(fn, default=None):
 
 
 def rider_urls() -> list[str]:
-    data = json.load(open(RESULTS, encoding="utf-8"))
+    """Union of rider URLs across every results_<year>.json corpus file."""
     urls, seen = [], set()
-    for s in data.get("stages", []):
-        for r in s.get("results", []):
-            u = r.get("riderUrl")
-            if u and u not in seen:
-                seen.add(u)
-                urls.append(u)
+    for path in sorted(glob.glob(os.path.join(HIST, "results_*.json"))):
+        data = json.load(open(path, encoding="utf-8"))
+        for s in data.get("stages", []):
+            for r in s.get("results", []):
+                u = r.get("riderUrl")
+                if u and u not in seen:
+                    seen.add(u)
+                    urls.append(u)
     return urls
 
 

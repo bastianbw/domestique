@@ -90,6 +90,36 @@ export function devigMarket(odds: Array<number | undefined>, slots: number): num
   return implied.map((p) => (p > 0 ? clamp01(p / divisor) : 0));
 }
 
+/**
+ * Shin (1992) de-vig for a WIN market. The proportional method scales implied
+ * probabilities equally; Shin instead estimates the effective share of insider
+ * money `z` and corrects the favourite–longshot bias (longshots are over-bet, so
+ * their true probability is below the implied). Returns true probabilities that
+ * sum to 1. Falls back to proportional when the book has no overround.
+ */
+export function devigShin(odds: Array<number | undefined>): number[] {
+  const p = odds.map((o) => impliedProb(o) ?? 0);
+  const S = p.reduce((a, b) => a + b, 0);
+  if (S <= 0) return p.map(() => 0);
+  if (S <= 1) return p.map((x) => x / S); // no vig → proportional
+
+  const piOf = (z: number) =>
+    p.map((x) => (x > 0 ? (Math.sqrt(z * z + 4 * (1 - z) * (x * x) / S) - z) / (2 * (1 - z)) : 0));
+
+  // Σπ decreases monotonically in z (at z=0 it is √S > 1); bisection to Σπ = 1.
+  let lo = 0;
+  let hi = 0.999;
+  for (let it = 0; it < 60; it++) {
+    const z = (lo + hi) / 2;
+    const sum = piOf(z).reduce((a, b) => a + b, 0);
+    if (sum > 1) lo = z;
+    else hi = z;
+  }
+  const pi = piOf((lo + hi) / 2);
+  const norm = pi.reduce((a, b) => a + b, 0) || 1;
+  return pi.map((x) => x / norm);
+}
+
 interface Anchor { k: number; q: number; }
 
 /**
@@ -320,10 +350,24 @@ export function breakSkill(
  * skill function: each rider's modal slot is their skill rank, with a Gaussian
  * spread. `rowIndex` maps rider id → matrix row.
  */
+/**
+ * Effective Gaussian spread for a stage: widens with field strength (a deep,
+ * high-quality start list is less predictable; a weak field sharpens). No
+ * start-list quality → the base spread, unchanged.
+ */
+export function effectiveSpread(stage: Stage, cfg: EngineConfig): number {
+  const q = stage.startlistQuality;
+  if (typeof q !== 'number' || !Number.isFinite(q) || q <= 0 || !cfg.fieldQualityRef) return cfg.jointSpread;
+  const rel = clamp01(q / cfg.fieldQualityRef); // 0 (weak) .. 1 (≥ ref strength)
+  const factor = 1 + cfg.fieldSpreadRange * (rel - 0.5) * 2; // 1±range
+  return Math.max(2, cfg.jointSpread * factor);
+}
+
 function sinkhornRows(
   starters: Rider[],
   skillOf: (r: Rider) => number,
   cfg: EngineConfig,
+  spread: number,
 ): { rows: number[][]; rowIndex: Map<string, number> } {
   const M = starters.length;
   const order = starters
@@ -332,7 +376,7 @@ function sinkhornRows(
   const muById = new Map<string, number>();
   order.forEach((o, i) => muById.set(o.r.id, i));
 
-  const sigma = Math.max(2, cfg.jointSpread);
+  const sigma = Math.max(2, spread);
   const twoSig2 = 2 * sigma * sigma;
   const rowIndex = new Map<string, number>();
   const rows: number[][] = starters.map((r, i) => {
@@ -369,7 +413,8 @@ export function buildCoherentField(
     return riders.map((r) => ({ riderId: r.id, probs: new Array(N).fill(0), pDNF: 0 }));
   }
 
-  const bunch = sinkhornRows(starters, (r) => riderSkill(r, stage, cfg), cfg);
+  const spread = effectiveSpread(stage, cfg);
+  const bunch = sinkhornRows(starters, (r) => riderSkill(r, stage, cfg), cfg, spread);
 
   return riders.map((r) => {
     if (r.injury === 'out' || !bunch.rowIndex.has(r.id)) {
@@ -412,7 +457,9 @@ export function buildField(
   for (const m of markets) {
     const col = starters.map((r) => r.odds?.[m.key]);
     if (!col.some((o) => o && o > 1)) continue;
-    const dv = devigMarket(col, m.k);
+    // Win market uses Shin de-vig (favourite–longshot correction); place markets
+    // (top-3/5/10) sum to k, where the proportional/divisor method is apt.
+    const dv = m.k === 1 ? devigShin(col) : devigMarket(col, m.k);
     const map: Record<string, number> = {};
     ids.forEach((id, i) => { if (dv[i] > 0) map[id] = dv[i]; });
     devigByMarket[m.k] = map;

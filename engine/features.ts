@@ -7,7 +7,7 @@
 //
 // See docs/PREDICTION_MODEL_UPGRADE.md §1.
 
-import type { Archetype } from './types';
+import type { Archetype, StageType } from './types';
 
 // ── Data contracts mirroring data/historical/*.json ──────────────────────────
 
@@ -141,13 +141,41 @@ export interface FormResult {
   rank?: number | null;
   /** race level proxy (PCS startlist-quality of the stage) */
   level?: number | null;
+  /** the past stage's type, for terrain-specific form weighting */
+  type?: StageType | null;
+}
+
+/**
+ * Terrain similarity 0..1 between two stage types — how transferable form on one
+ * is to the other. Same type = 1; neighbours on the flat→mountain axis decay;
+ * TT is its own axis. Used to weight a rider's recent results toward the kind of
+ * stage being predicted (a climber's recent mountain form counts most uphill).
+ */
+export function terrainSimilarity(a: StageType, b: StageType): number {
+  if (a === b) return 1;
+  const axis: Record<StageType, number> = {
+    flat: 0, hilly: 1, summit: 2, high_mtn: 2.2, ttt: NaN, hilly_itt: NaN,
+  };
+  const ia = axis[a];
+  const ib = axis[b];
+  if (Number.isNaN(ia) || Number.isNaN(ib)) {
+    // time-trial types only transfer to themselves (handled above) / weakly else
+    return a === 'ttt' || b === 'ttt' || a === 'hilly_itt' || b === 'hilly_itt' ? 0.25 : 0.4;
+  }
+  return clamp(1 - Math.abs(ia - ib) / 2.5, 0.2, 1);
 }
 
 /**
  * Recency- and level-weighted mean finishing quality over the trailing window
- * before `asOf` (ISO date). Returns 0..100. Falls back when no recent results.
+ * before `asOf` (ISO date). Returns 0..100. When `targetType` is given, results
+ * are additionally weighted by terrain similarity → terrain-specific form.
  */
-export function computeForm(results: FormResult[], asOf: string, fallback = 45): number {
+export function computeForm(
+  results: FormResult[],
+  asOf: string,
+  fallback = 45,
+  targetType?: StageType,
+): number {
   const asOfMs = Date.parse(asOf);
   if (!Number.isFinite(asOfMs)) return fallback;
   let wsum = 0;
@@ -160,7 +188,8 @@ export function computeForm(results: FormResult[], asOf: string, fallback = 45):
     if (ageDays > FORM_WINDOW_DAYS) continue;
     const recency = Math.pow(0.5, ageDays / FORM_HALFLIFE_DAYS);
     const level = r.level && r.level > 0 ? clamp(r.level / 1000, 0.3, 1) : 0.5;
-    const w = recency * level;
+    const terrain = targetType && r.type ? terrainSimilarity(r.type, targetType) : 1;
+    const w = recency * level * terrain;
     wsum += w;
     vsum += w * positionQuality(r.rank);
   }

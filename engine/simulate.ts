@@ -16,7 +16,7 @@
 
 import type { Rider, Stage, RiderDistribution } from './types';
 import { EngineConfig, defaultConfig } from './config';
-import { riderSkill, breakSkill, riderDnfRisk } from './probability';
+import { riderSkill, breakSkill, riderDnfRisk, buildCoherentField } from './probability';
 
 /** Small fast seeded PRNG (deterministic across platforms) → [0,1). */
 export function mulberry32(seed: number): () => number {
@@ -35,6 +35,9 @@ export interface SimConfig {
   seed: number;
 }
 export const DEFAULT_SIM: SimConfig = { nSims: 2000, seed: 0x5eed };
+
+/** Default ensemble weight on the analytic coherent model (rest → simulator). */
+export const DEFAULT_ENSEMBLE_W = 0.5;
 
 /**
  * Run the sims and invoke `onOrder(order)` once per sim with the classified
@@ -133,6 +136,29 @@ export function simulateStage(
   return riders.map(
     (r) => out.get(r.id) ?? { riderId: r.id, probs: new Array(N).fill(0), pDNF: 0 },
   );
+}
+
+/**
+ * Ensemble field: a convex blend of the analytic coherent model (sharpest top-5)
+ * and the Monte Carlo simulator (best top-15 calibration + breakaway upside).
+ * Both are coherent, so the blend is too. `w` = weight on the analytic model.
+ */
+export function buildEnsembleField(
+  riders: Rider[],
+  stage: Stage,
+  cfg: EngineConfig = defaultConfig(),
+  w: number = DEFAULT_ENSEMBLE_W,
+  sim: SimConfig = DEFAULT_SIM,
+): RiderDistribution[] {
+  const a = buildCoherentField(riders, stage, cfg);
+  const s = simulateStage(riders, stage, cfg, sim);
+  const sById = new Map(s.map((d) => [d.riderId, d]));
+  return a.map((da) => {
+    const ds = sById.get(da.riderId);
+    const probs = da.probs.map((p, i) => w * p + (1 - w) * (ds?.probs[i] ?? 0));
+    const pDNF = w * da.pDNF + (1 - w) * (ds?.pDNF ?? da.pDNF);
+    return { riderId: da.riderId, probs, pDNF };
+  });
 }
 
 // ── Joint samples (for correlated team EV: Etapebonus / Holdbonus / captain) ──

@@ -118,6 +118,15 @@ export const SKILL_FORM_FLOOR = 0.6;
  * climbers/GC and drop sprinters. `climbinessGain` scales the per-archetype
  * response (0 disables); the matrix below is the response slope at full mountain.
  */
+/**
+ * Field-strength scaling: a deep, high-quality field (many capable riders) is
+ * less predictable, so the coherent model widens its spread; a weak field
+ * (one star vs the rest) sharpens it. `fieldQualityRef` ≈ a strong WorldTour
+ * start-list-quality score. Calibration lever (precision is spread-invariant).
+ */
+export const FIELD_QUALITY_REF = 1300;
+export const FIELD_SPREAD_RANGE = 0.5; // ± fraction of jointSpread across field strengths
+
 export const CLIMBINESS_GAIN = 1.5;
 export const CLIMBINESS_RESPONSE: Record<Archetype, number> = {
   climber: 0.6, gc: 0.5, puncheur: 0.1, breakaway: 0.3,
@@ -152,6 +161,8 @@ export interface EngineConfig {
   ownershipLeverage: number;
   jointSpread: number;
   skillFormFloor: number;
+  fieldQualityRef: number;
+  fieldSpreadRange: number;
   climbinessGain: number;
   climbinessResponse: Record<Archetype, number>;
   breakawayWinRate: Record<StageType, number>;
@@ -173,6 +184,8 @@ export function defaultConfig(): EngineConfig {
     ownershipLeverage: OWNERSHIP_LEVERAGE,
     jointSpread: JOINT_SPREAD,
     skillFormFloor: SKILL_FORM_FLOOR,
+    fieldQualityRef: FIELD_QUALITY_REF,
+    fieldSpreadRange: FIELD_SPREAD_RANGE,
     climbinessGain: CLIMBINESS_GAIN,
     climbinessResponse: { ...CLIMBINESS_RESPONSE },
     breakawayWinRate: { ...BREAKAWAY_WIN_RATE },

@@ -31,7 +31,6 @@ UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HIST = os.path.join(ROOT, "data", "historical")
 CACHE = os.path.join(HIST, "_cache")
-OUT = os.path.join(HIST, "results_2026.json")
 
 
 def get_html(rel: str, throttle: float) -> str:
@@ -56,9 +55,9 @@ def norm(name: str) -> str:
     return "".join(c for c in n if unicodedata.category(c) != "Mn")
 
 
-def calendar_races(calendar_url: str, throttle: float) -> list[str]:
+def calendar_races(calendar_url: str, year: int, throttle: float) -> list[str]:
     html = get_html(calendar_url, throttle)
-    slugs = re.findall(r'href="(?:\.\./)?(race/[a-z0-9\-]+)/2026', html)
+    slugs = re.findall(rf'href="(?:\.\./)?(race/[a-z0-9\-]+)/{year}', html)
     # stable de-dupe, drop obviously non-race anchors
     seen, out = set(), []
     for s in slugs:
@@ -69,18 +68,18 @@ def calendar_races(calendar_url: str, throttle: float) -> list[str]:
     return out
 
 
-def stage_paths(slug: str, throttle: float) -> list[str]:
+def stage_paths(slug: str, year: int, throttle: float) -> list[str]:
     """Return the result page paths for a race: stage-N pages, or a single
     one-day /result. Detected from the race overview HTML."""
-    ov = get_html(f"{slug}/2026/overview", throttle)
+    ov = get_html(f"{slug}/{year}/overview", throttle)
     stages = sorted(
-        set(re.findall(rf"{re.escape(slug)}/2026/(stage-\d+)", ov)),
+        set(re.findall(rf"{re.escape(slug)}/{year}/(stage-\d+)", ov)),
         key=lambda s: int(s.split("-")[1]),
     )
     if stages:
-        return [f"{slug}/2026/{s}" for s in stages]
+        return [f"{slug}/{year}/{s}" for s in stages]
     # one-day race
-    return [f"{slug}/2026/result"]
+    return [f"{slug}/{year}/result"]
 
 
 def safe(fn, default=None):
@@ -88,6 +87,13 @@ def safe(fn, default=None):
         return fn()
     except Exception:
         return default
+
+
+def scalar(x):
+    """PCS sometimes returns a list (e.g. startlist quality). Take first number."""
+    if isinstance(x, (list, tuple)):
+        return x[0] if x else None
+    return x
 
 
 def our_type(stage_type: str, profile_icon: str) -> str:
@@ -144,7 +150,7 @@ def scrape_stage(race: str, rel: str, throttle: float) -> Optional[dict]:
         "profileIcon": profile_icon,
         "profileScore": safe(s.profile_score),
         "verticalMeters": safe(s.vertical_meters),
-        "startlistQuality": safe(s.race_startlist_quality_score),
+        "startlistQuality": scalar(safe(s.race_startlist_quality_score)),
         "isOneDay": bool(safe(s.is_one_day_race, stage_no == 0)),
         "ourType": our_type(stage_type, profile_icon),
         "results": rows,
@@ -153,29 +159,33 @@ def scrape_stage(race: str, rel: str, throttle: float) -> Optional[dict]:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--calendar", default="races.php?year=2026",
-                    help="PCS calendar query to enumerate races")
+    ap.add_argument("--year", type=int, default=2026)
+    ap.add_argument("--calendar", default=None,
+                    help="PCS calendar query (default: races.php?year=<year>)")
     ap.add_argument("--max-races", type=int, default=0, help="limit for smoke tests")
     ap.add_argument("--throttle", type=float, default=1.0,
                     help="seconds to sleep on cache MISS")
     args = ap.parse_args()
+    year = args.year
+    calendar = args.calendar or f"races.php?year={year}"
+    out = os.path.join(HIST, f"results_{year}.json")
 
     os.makedirs(HIST, exist_ok=True)
     existing: dict[str, dict] = {}
-    if os.path.exists(OUT):
-        for s in json.load(open(OUT, encoding="utf-8")).get("stages", []):
+    if os.path.exists(out):
+        for s in json.load(open(out, encoding="utf-8")).get("stages", []):
             existing[s["url"]] = s
 
-    races = calendar_races(args.calendar, args.throttle)
+    races = calendar_races(calendar, year, args.throttle)
     if args.max_races:
         races = races[: args.max_races]
-    print(f"calendar: {len(races)} races", file=sys.stderr)
+    print(f"[{year}] calendar: {len(races)} races", file=sys.stderr)
 
     stages = dict(existing)
     for i, slug in enumerate(races, 1):
         race_name = slug.split("/", 1)[1]
         try:
-            paths = stage_paths(slug, args.throttle)
+            paths = stage_paths(slug, year, args.throttle)
         except Exception as e:
             print(f"  [{i}/{len(races)}] {race_name}: overview FAILED {e!r}", file=sys.stderr)
             continue
@@ -192,17 +202,16 @@ def main():
                 print(f"      {rel}: FAILED {e!r}", file=sys.stderr)
         print(f"  [{i}/{len(races)}] {race_name}: {len(paths)} pages, +{added} new",
               file=sys.stderr)
-        # checkpoint after every race so a block/crash keeps progress
-        dump(stages)
+        dump(stages, year, out)  # checkpoint after every race
 
-    dump(stages)
-    print(f"DONE: {len(stages)} stage/result pages -> {OUT}", file=sys.stderr)
+    dump(stages, year, out)
+    print(f"DONE: {len(stages)} stage/result pages -> {out}", file=sys.stderr)
 
 
-def dump(stages: dict):
-    payload = {"season": 2026, "source": "procyclingstats",
+def dump(stages: dict, year: int, out: str):
+    payload = {"season": year, "source": "procyclingstats",
                "stages": sorted(stages.values(), key=lambda s: (s["race"], s["stage"]))}
-    with open(OUT, "w", encoding="utf-8") as f:
+    with open(out, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=1)
 
 

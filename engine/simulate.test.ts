@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { simulateStage, mulberry32, simulateJoint, jointEtapebonus } from './simulate';
+import { simulateStage, mulberry32, simulateJoint, jointEtapebonus, buildEnsembleField } from './simulate';
+import { effectiveSpread } from './probability';
 import { projectField } from './growth';
 import { etapebonus } from './rules';
+import { defaultConfig } from './config';
 import type { Rider, Stage } from './types';
 
 function rider(p: Partial<Rider> & { id: string; archetype: Rider['archetype'] }): Rider {
@@ -85,6 +87,26 @@ describe('projectField opt-in simulator path', () => {
     const xgA = new Map(analytic.map((p) => [p.riderId, p.xG]));
     const xgS = new Map(simmed.map((p) => [p.riderId, p.xG]));
     expect(xgS.get('attacker')!).toBeGreaterThan(xgA.get('attacker')!);
+  });
+
+  it('ensemble blends analytic and sim and stays coherent', () => {
+    const dists = buildEnsembleField(field, hilly, undefined, 0.5, { nSims: 2000, seed: 3 });
+    const sumWin = dists.reduce((a, d) => a + d.probs[0], 0);
+    expect(sumWin).toBeGreaterThan(0.9);
+    expect(sumWin).toBeLessThan(1.05);
+    // attacker gets some win mass via the sim half on a break-friendly stage
+    expect(dists.find((d) => d.riderId === 'attacker')!.probs[0]).toBeGreaterThan(0);
+  });
+
+  it('effectiveSpread widens with field strength and is safe on bad input', () => {
+    const cfg = defaultConfig();
+    const weak: Stage = { ...flat, startlistQuality: 200 };
+    const strong: Stage = { ...flat, startlistQuality: 1600 };
+    expect(effectiveSpread(strong, cfg)).toBeGreaterThan(effectiveSpread(weak, cfg));
+    expect(effectiveSpread(flat, cfg)).toBe(cfg.jointSpread); // no quality → base
+    // array / NaN input must not produce NaN (the bug that broke the fitter)
+    const bad = { ...flat, startlistQuality: [668, 662] as unknown as number };
+    expect(Number.isFinite(effectiveSpread(bad, cfg))).toBe(true);
   });
 
   it('jointEtapebonus matches manual count on a tiny deterministic field', () => {

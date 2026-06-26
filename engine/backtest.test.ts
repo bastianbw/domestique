@@ -6,6 +6,7 @@ import {
   baselinePcsRank,
   strengthFromRank,
   breakawayTendency,
+  terrainSimilarity,
 } from './features';
 import {
   scoreStage,
@@ -70,6 +71,26 @@ describe('form', () => {
 
   it('falls back when no results', () => {
     expect(computeForm([], '2026-06-20')).toBe(45);
+  });
+
+  it('terrain-specific form weights similar terrain higher', () => {
+    // a rider with a recent strong MOUNTAIN result and a weak FLAT result:
+    const results = [
+      { date: '2026-06-10', rank: 1, level: 800, type: 'high_mtn' as const },
+      { date: '2026-06-11', rank: 60, level: 800, type: 'flat' as const },
+    ];
+    const formForMtn = computeForm(results, '2026-06-20', 45, 'summit');
+    const formForFlat = computeForm(results, '2026-06-20', 45, 'flat');
+    // uphill the mountain win dominates; on the flat the poor flat result weighs more
+    expect(formForMtn).toBeGreaterThan(formForFlat);
+  });
+});
+
+describe('terrainSimilarity', () => {
+  it('is 1 for same type and decays with distance on the climb axis', () => {
+    expect(terrainSimilarity('summit', 'summit')).toBe(1);
+    expect(terrainSimilarity('summit', 'high_mtn')).toBeGreaterThan(terrainSimilarity('summit', 'flat'));
+    expect(terrainSimilarity('flat', 'high_mtn')).toBeLessThan(0.6);
   });
 });
 

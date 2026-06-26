@@ -28,11 +28,12 @@ describe('devigMarket', () => {
 describe('odds-ladder distribution', () => {
   const flat = getStage(7)!;
 
-  it('pins pWin to the de-vigged win odds', () => {
-    // 12 riders, uniform win odds 12.0 → implied 1/12 each, S = 1.0, divisor 1.12.
+  it('pins pWin to the Shin de-vigged win odds', () => {
+    // 12 riders, uniform win odds 12.0 → implied 1/12 each, S = 1.0 (no overround),
+    // so Shin returns the exact implied 1/12 (no vig to remove).
     const field = Array.from({ length: 12 }, (_, i) => rider(`r${i}`, { win: 12.0 }));
     const dists = buildField(field, flat);
-    const expected = (1 / 12) / 1.12;
+    const expected = 1 / 12;
     for (const d of dists) expect(d.probs[0]).toBeCloseTo(expected, 4);
   });
 

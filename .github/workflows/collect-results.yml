@@ -57,11 +57,38 @@ jobs:
         run: |
           python scripts/collect_stage.py --year 2026 --stage "${{ steps.stage.outputs.stage }}" --out data
 
+      - name: Collect next-stage weather forecast (best-effort)
+        if: steps.stage.outputs.stage != ''
+        continue-on-error: true
+        run: |
+          NEXT=$(( ${{ steps.stage.outputs.stage }} + 1 ))
+          if [ "$NEXT" -le 21 ]; then
+            python scripts/collect_weather.py --stage "$NEXT" --out data || true
+          fi
+
+      - name: Bundle latest.json (today's result + tomorrow's weather)
+        if: steps.stage.outputs.stage != ''
+        run: |
+          python - <<'PY'
+          import json, os
+          stage = int("${{ steps.stage.outputs.stage }}")
+          blocks = []
+          rp = f"data/stage-{stage}.json"
+          if os.path.exists(rp):
+              blocks.append(json.load(open(rp, encoding="utf-8")))
+          wp = f"data/weather-stage-{stage+1}.json"
+          if os.path.exists(wp):
+              blocks.append(json.load(open(wp, encoding="utf-8")))
+          if blocks:
+              json.dump(blocks, open("data/latest.json", "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+              print(f"bundled {len(blocks)} block(s) into latest.json")
+          PY
+
       - name: Commit data
         if: steps.stage.outputs.stage != ''
         run: |
           git config user.name  "domestique-bot"
           git config user.email "actions@github.com"
           git add data/
-          git commit -m "results: stage ${{ steps.stage.outputs.stage }}" || echo "no changes"
+          git commit -m "results: stage ${{ steps.stage.outputs.stage }} (+ weather)" || echo "no changes"
           git push

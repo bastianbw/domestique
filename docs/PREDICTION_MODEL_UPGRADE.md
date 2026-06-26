@@ -450,6 +450,17 @@ schemas **and a copy-paste daily-prompt template** for the Phase-2 chat bridge
 Not backtested (no historical weather/news corpus, as planned) — conservative,
 neutral-by-default, user-supplied. This completes every roadmap step (1–7).
 
+**Weather auto-collection (post-roadmap, 2026-06-26).** `scripts/collect_weather.py`
+fetches the finish-line forecast for a stage from Open-Meteo (free, no key —
+geocodes the baked finish town, pulls that date's daily max wind/gust/rain/temp,
+emits a `weather` block). The nightly Action (`collect-results.yml`) now also grabs
+the NEXT stage's forecast and publishes `latest.json` as an ARRAY
+`[stageResult, weather]`; `importRaw` accepts an array (validates each block via the
+new `validateBlock`) so one auto-fetch applies today's result + tomorrow's weather.
+Beyond Open-Meteo's ~16-day horizon the script emits nothing (graceful). Verified:
+live forecast for an in-window stage produced a valid block; array import applied
+both blocks in the running app; +6 import tests (101 → 107), build green.
+
 ## 5. Open questions for the user (review checkpoints)
 1. Confirm the **break-vs-bunch split** is worth the modelling weight — it's the
    single biggest lever for the growth objective (cheap break riders winning) and

@@ -96,7 +96,9 @@ function AutoFetchSection() {
         Paste the raw URL your collector publishes to (e.g.{' '}
         <code className="mono">https://raw.githubusercontent.com/USER/domestique-data/main/latest.json</code>,
         or a per-stage URL containing <code className="mono">{'{stage}'}</code>). Then press Fetch — it imports
-        exactly like a pasted block. Leave blank to use manual paste only.
+        exactly like a pasted block. The nightly collector now publishes an <span className="text-sky-300">array</span>{' '}
+        bundling today’s result + tomorrow’s <span className="text-sky-300">weather</span> forecast (Open-Meteo), and both
+        are applied in one fetch. Leave blank to use manual paste only.
       </p>
       <div className="flex flex-wrap gap-2">
         <input className="input min-w-[260px] flex-1" placeholder="https://raw.githubusercontent.com/…/latest.json"

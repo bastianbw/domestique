@@ -96,13 +96,20 @@ export interface ParseResult<T> {
 
 /** Parse a raw pasted string into a validated import block. */
 export function parseImportBlock(raw: string): ParseResult<ImportBlock> {
-  const errors: string[] = [];
   let json: any;
   try {
     json = JSON.parse(raw);
   } catch (e) {
     return { ok: false, errors: ['Not valid JSON. Paste one block, e.g. {"type":"stageResult",...}'] };
   }
+  return validateBlock(json);
+}
+
+/**
+ * Validate an already-parsed block object (used both for a single pasted block
+ * and for each element of an array — the collector publishes `[result, weather]`).
+ */
+export function validateBlock(json: any): ParseResult<ImportBlock> {
   if (!json || typeof json !== 'object') {
     return { ok: false, errors: ['Block must be a JSON object.'] };
   }

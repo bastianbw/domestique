@@ -18,7 +18,7 @@ import {
   computeStageGrowth, applyToTeam, rollPrice,
 } from '@/engine/resultLogger';
 import { calibrate, CalibrationReport } from '@/engine/calibration';
-import { matchRider, parseImportBlock } from '@/engine/importSchema';
+import { matchRider, parseImportBlock, validateBlock } from '@/engine/importSchema';
 
 export interface Snapshot {
   id: string;
@@ -156,28 +156,39 @@ export const useStore = create<AppState>()(
         set({ riders, currentTeamIds: [], captainId: undefined }),
 
       importRaw: (raw) => {
+        // Apply one validated block, dispatching by type.
+        const dispatch = (block: ImportBlock): { ok: boolean; messages: string[] } => {
+          if (block.type === 'stageResult') return { ok: true, messages: get().logResult(block).messages };
+          if (block.type === 'odds') return applyOdds(block, get, set);
+          if (block.type === 'startlist') return applyStartlist(block, set);
+          if (block.type === 'weather') return applyWeather(block, get, set);
+          if (block.type === 'news') return applyNews(block, get, set);
+          return { ok: false, messages: ['Unhandled block type.'] };
+        };
+
+        // Accept either one block or an ARRAY of blocks (the auto-collector
+        // publishes `[stageResult, weather]` in a single latest.json).
+        let json: any;
+        try { json = JSON.parse(raw); } catch {
+          return { ok: false, messages: ['Not valid JSON. Paste one block, or an array of blocks.'] };
+        }
+        if (Array.isArray(json)) {
+          if (json.length === 0) return { ok: false, messages: ['Empty array — nothing to import.'] };
+          const messages: string[] = [];
+          let anyOk = false;
+          json.forEach((item, i) => {
+            const parsed = validateBlock(item);
+            if (!parsed.ok || !parsed.block) { messages.push(`Block ${i + 1}: ${parsed.errors.join(' ')}`); return; }
+            const r = dispatch(parsed.block);
+            anyOk = anyOk || r.ok;
+            messages.push(...r.messages);
+          });
+          return { ok: anyOk, messages };
+        }
+
         const parsed = parseImportBlock(raw);
-        if (!parsed.ok || !parsed.block) {
-          return { ok: false, messages: parsed.errors };
-        }
-        const block = parsed.block;
-        if (block.type === 'stageResult') {
-          const { messages, report } = get().logResult(block);
-          return { ok: true, messages };
-        }
-        if (block.type === 'odds') {
-          return applyOdds(block, get, set);
-        }
-        if (block.type === 'startlist') {
-          return applyStartlist(block, set);
-        }
-        if (block.type === 'weather') {
-          return applyWeather(block, get, set);
-        }
-        if (block.type === 'news') {
-          return applyNews(block, get, set);
-        }
-        return { ok: false, messages: ['Unhandled block type.'] };
+        if (!parsed.ok || !parsed.block) return { ok: false, messages: parsed.errors };
+        return dispatch(parsed.block);
       },
 
       logResult: (block) => {

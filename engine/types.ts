@@ -90,6 +90,14 @@ export interface Rider {
   oddsByStage?: Record<number, RiderOdds>;
   /** manual popular-ownership guess (%) for differential mode, optional */
   ownershipPct?: number;
+  /**
+   * Optional per-rider terrain affinity: a multiplicative skill adjustment for a
+   * given stage type, learned from the rider's OWN history (empirical-Bayes
+   * shrunk toward 1). Personalises within an archetype — e.g. a sprinter who
+   * climbs unusually well. Neutral (absent → ×1), so the validated archetype
+   * model is the prior and behaviour is unchanged until the data supplies it.
+   */
+  terrainAffinity?: Partial<Record<StageType, number>>;
   /** optional Phase-2 news nudges (neutral when absent); see RiderNews */
   news?: RiderNews;
 }

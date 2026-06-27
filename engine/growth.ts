@@ -22,7 +22,7 @@ import {
   JERSEY_PAYOUT,
   DNF_PENALTY,
 } from './rules';
-import { buildField } from './probability';
+import { buildField, calibrateDistribution } from './probability';
 import { simulateStage, buildEnsembleField, DEFAULT_ENSEMBLE_W, DEFAULT_SIM, type SimConfig } from './simulate';
 
 /** P(top-K) from a distribution (positions 1..K). */
@@ -241,6 +241,8 @@ export function projectField(
         : fieldHasOdds(riders, stage.stage)
           ? buildField(riders, stage, cfg)
           : buildEnsembleField(riders, stage, cfg, DEFAULT_ENSEMBLE_W, DEFAULT_SIM);
-  const byId = new Map(dists.map((d) => [d.riderId, d]));
+  // Post-hoc probability calibration (γ=1 → identity).
+  const cal = dists.map((d) => calibrateDistribution(d, cfg.calibrationGamma));
+  const byId = new Map(cal.map((d) => [d.riderId, d]));
   return riders.map((r) => projectRider(r, stage, byId.get(r.id)!, cfg));
 }

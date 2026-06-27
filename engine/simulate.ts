@@ -17,7 +17,10 @@
 import type { Rider, Stage, RiderDistribution } from './types';
 import { EngineConfig, defaultConfig } from './config';
 import { riderSkill, breakSkill, riderDnfRisk, buildCoherentField } from './probability';
-import { weatherBreakFactor } from './modifiers';
+import { weatherBreakFactor, weatherEchelonProb } from './modifiers';
+
+/** Stage types where echelons realistically form (exposed, raced for position). */
+const ECHELON_TYPES = new Set<Stage['type']>(['flat', 'hilly']);
 
 /** Small fast seeded PRNG (deterministic across platforms) → [0,1). */
 export function mulberry32(seed: number): () => number {
@@ -29,6 +32,11 @@ export function mulberry32(seed: number): () => number {
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+/** team strength (0..100) → 0..1, robust to bad data. */
+function clampStr(x: number): number {
+  return Number.isFinite(x) ? Math.max(0, Math.min(1, x / 100)) : 0.5;
 }
 
 export interface SimConfig {
@@ -58,17 +66,48 @@ function forEachSimOrder(
   const pDNF = starters.map((r) => riderDnfRisk(r, stage, cfg));
   // Optional weather nudges the break-success rate (×1 when no weather supplied).
   const pBreak = Math.min(0.6, (cfg.breakawayWinRate?.[stage.type] ?? 0) * weatherBreakFactor(stage));
+  // Crosswind echelon split (per-race scenario, weather-gated, 0 when none).
+  const pEcho = ECHELON_TYPES.has(stage.type) ? weatherEchelonProb(stage) : 0;
+  const teamStr = starters.map((r) => clampStr(r.teamStrength));
+  // Index riders by team so a shared per-team shock can move teammates together.
+  const teamOf = starters.map((r) => r.team);
+  const teamList = [...new Set(teamOf)];
+  const teamRow = new Map(teamList.map((t, i) => [t, i] as const));
 
   const rng = mulberry32(sim.seed);
   const exp = () => -Math.log(rng() || 1e-12); // Exp(1)
+  const gauss = () => { // Box–Muller, reuses the same stream
+    const u = rng() || 1e-12;
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rng());
+  };
 
   const idx = new Array<number>(M);
   const key = new Float64Array(M);
 
   for (let s = 0; s < sim.nSims; s++) {
     const isBreak = pBreak > 0 && rng() < pBreak;
+    const isEcho = !isBreak && pEcho > 0 && rng() < pEcho;
 
-    if (!isBreak) {
+    if (isEcho) {
+      // Echelon scenario: the bunch splits and whole TEAMS make or miss the
+      // front group together (a shared per-team shock), so teammates' top-15
+      // outcomes are positively correlated — the real Etapebonus risk on
+      // crosswind days. The front group then sprints for the win; the dropped
+      // group fills in entirely behind it.
+      const teamShock = teamList.map(() => gauss());
+      const frontN = Math.max(1, Math.round(M * (0.35 + rng() * 0.35)));
+      const frontScore = new Float64Array(M);
+      for (let i = 0; i < M; i++) {
+        frontScore[i] = 1.5 * teamStr[i] + 1.2 * teamShock[teamRow.get(teamOf[i])!] + gauss();
+      }
+      for (let i = 0; i < M; i++) idx[i] = i;
+      idx.sort((a, b) => frontScore[b] - frontScore[a]); // best-positioned first
+      const front = idx.slice(0, frontN);
+      const back = idx.slice(frontN);
+      front.sort((a, b) => exp() / bunchSkill[a] - exp() / bunchSkill[b]);
+      back.sort((a, b) => exp() / bunchSkill[a] - exp() / bunchSkill[b]);
+      for (let i = 0; i < M; i++) idx[i] = i < front.length ? front[i] : back[i - front.length];
+    } else if (!isBreak) {
       // Bunch scenario: one Plackett–Luce order over terrain skill.
       for (let i = 0; i < M; i++) {
         idx[i] = i;

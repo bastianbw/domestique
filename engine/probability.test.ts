@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildField, devigMarket } from './probability';
+import { buildField, devigMarket, calibrateDistribution } from './probability';
 import type { Rider, RiderOdds } from './types';
 import { getStage } from './stages';
 
@@ -54,6 +54,28 @@ describe('odds-ladder distribution', () => {
     const pTop15 = fav.probs.slice(0, 15).reduce((a, b) => a + b, 0);
     expect(pTop5).toBeGreaterThanOrEqual(pWin);
     expect(pTop15).toBeGreaterThanOrEqual(pTop5);
+  });
+});
+
+describe('calibrateDistribution', () => {
+  const dist = { riderId: 'x', probs: [0.4, 0.2, 0.1, 0.05, 0.03], pDNF: 0.22 };
+  const sum = (a: number[]) => a.reduce((x, y) => x + y, 0);
+
+  it('γ=1 is identity', () => {
+    expect(calibrateDistribution(dist, 1)).toBe(dist);
+  });
+
+  it('γ<1 flattens the head and preserves finishing + DNF mass', () => {
+    const c = calibrateDistribution(dist, 0.85);
+    expect(c.probs[0]).toBeLessThan(dist.probs[0]);      // peak pulled down
+    expect(c.pDNF).toBeCloseTo(dist.pDNF, 10);           // DNF untouched
+    expect(sum(c.probs)).toBeCloseTo(sum(dist.probs), 10); // finishing mass kept
+  });
+
+  it('γ>1 sharpens the head', () => {
+    const c = calibrateDistribution(dist, 1.3);
+    expect(c.probs[0]).toBeGreaterThan(dist.probs[0]);
+    expect(sum(c.probs)).toBeCloseTo(sum(dist.probs), 10);
   });
 });
 

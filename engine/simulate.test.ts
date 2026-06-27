@@ -77,6 +77,59 @@ describe('simulateStage', () => {
   });
 });
 
+describe('crosswind echelons (correlated team risk)', () => {
+  // 20 teams of 2 equal-strength riders (40-strong field, so top-15 is selective).
+  // Teammates share nothing but the echelon shock — a clean covariance signal.
+  const echField: Rider[] = [];
+  for (let t = 0; t < 20; t++) {
+    const ts = 55 + (t % 8) * 3;
+    echField.push(rider({ id: `t${t}a`, archetype: 'rouleur', team: `team${t}`, teamStrength: ts, pcsRank: 25 + t }));
+    echField.push(rider({ id: `t${t}b`, archetype: 'rouleur', team: `team${t}`, teamStrength: ts, pcsRank: 26 + t }));
+  }
+  const calm: Stage = { ...flat, weather: undefined };
+  const windy: Stage = { ...flat, weather: { crosswindSections: 5, gustRisk: 'high', windKph: 55 } };
+
+  /** Covariance of two riders both finishing top-15 across the sim samples. */
+  function pairTop15Cov(stage: Stage, idA: string, idB: string): number {
+    const { samples } = simulateJoint(echField, stage, undefined, { nSims: 6000, seed: 11 });
+    const a = samples.starterIds.indexOf(idA);
+    const b = samples.starterIds.indexOf(idB);
+    let ea = 0, eb = 0, eab = 0;
+    for (const top of samples.top15) {
+      const set = new Set(top);
+      const ina = set.has(a) ? 1 : 0;
+      const inb = set.has(b) ? 1 : 0;
+      ea += ina; eb += inb; eab += ina * inb;
+    }
+    const n = samples.nSims;
+    return eab / n - (ea / n) * (eb / n);
+  }
+
+  it('teammates are more positively correlated on a crosswind day than a calm one', () => {
+    const calmCov = pairTop15Cov(calm, 't3a', 't3b');
+    const windyCov = pairTop15Cov(windy, 't3a', 't3b');
+    expect(windyCov).toBeGreaterThan(calmCov + 0.01);
+  });
+
+  it('is a strict no-op without weather (neutral default preserved)', () => {
+    const a = simulateStage(echField, calm, undefined, { nSims: 1500, seed: 5 });
+    const b = simulateStage(echField, { ...flat }, undefined, { nSims: 1500, seed: 5 });
+    expect(a.map((d) => d.probs[0])).toEqual(b.map((d) => d.probs[0]));
+  });
+
+  it('does not fire on a summit finish (echelons need exposed terrain)', () => {
+    const windySummit: Stage = { ...summit, weather: windy.weather };
+    const plainSummit: Stage = { ...summit };
+    const a = simulateStage(echField, windySummit, undefined, { nSims: 1500, seed: 6 });
+    const b = simulateStage(echField, plainSummit, undefined, { nSims: 1500, seed: 6 });
+    // weather still affects spread/DNF, but the echelon SCENARIO must not trigger,
+    // so the win marginals stay very close (no team-split reshuffle of the head).
+    const wa = a.find((d) => d.riderId === 't0a')!.probs[0];
+    const wb = b.find((d) => d.riderId === 't0a')!.probs[0];
+    expect(Math.abs(wa - wb)).toBeLessThan(0.02);
+  });
+});
+
 describe('projectField opt-in simulator path', () => {
   const hilly: Stage = { ...flat, type: 'hilly' };
 

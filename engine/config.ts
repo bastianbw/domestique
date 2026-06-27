@@ -157,6 +157,17 @@ export const BREAKAWAY_WIN_RATE: Record<StageType, number> = {
 /** Differential mode: how strongly to lean away from heavily-owned riders. */
 export const OWNERSHIP_LEVERAGE = 0.15;
 
+/**
+ * Post-hoc probability calibration: a temperature on each rider's finishing
+ * curve (probs ∝ probs^γ, renormalised to the finishing mass). γ<1 flattens an
+ * over-confident model; γ>1 sharpens. Fit on held-out data to minimise top-k
+ * Brier. 1.0 = identity (no calibration). Fitted to 0.85 on the 2024-26 corpus:
+ * the structural model is mildly over-confident in the mid-head (predicts ~15%
+ * top-5 for riders who hit ~8%), and γ=0.85 minimises top-5 Brier + placement
+ * MAE. γ does NOT change discrimination (P@k), only probability calibration.
+ */
+export const CALIBRATION_GAMMA = 0.85;
+
 export interface EngineConfig {
   suitability: SuitabilityMatrix;
   sprintPointWeight: Record<Archetype, number>;
@@ -177,6 +188,7 @@ export interface EngineConfig {
   climbinessGain: number;
   climbinessResponse: Record<Archetype, number>;
   breakawayWinRate: Record<StageType, number>;
+  calibrationGamma: number;
 }
 
 export function defaultConfig(): EngineConfig {
@@ -201,5 +213,6 @@ export function defaultConfig(): EngineConfig {
     climbinessGain: CLIMBINESS_GAIN,
     climbinessResponse: { ...CLIMBINESS_RESPONSE },
     breakawayWinRate: { ...BREAKAWAY_WIN_RATE },
+    calibrationGamma: CALIBRATION_GAMMA,
   };
 }

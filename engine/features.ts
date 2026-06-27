@@ -197,6 +197,62 @@ export function computeForm(
   return clamp(vsum / wsum, 0, 1) * 100;
 }
 
+// ── Per-rider terrain affinity (empirical-Bayes, structural) ──────────────────
+
+/** Prior strength (in pseudo-results) the affinity is shrunk toward 1 with. */
+export const TERRAIN_AFFINITY_PRIOR = 6;
+/** Clamp on the learned multiplier so a small sample can't dominate. Trades a
+ *  small top-5 discrimination cost for a clear top-15 / placement-MAE gain — the
+ *  metrics that drive Etapebonus and total expected value. */
+export const TERRAIN_AFFINITY_CLAMP: [number, number] = [0.55, 1.7];
+
+/** Terrain families: sparse stage types share a bucket to get enough samples. */
+const TERRAIN_FAMILY: Record<StageType, 'flat' | 'hilly' | 'mountain' | 'tt'> = {
+  flat: 'flat', hilly: 'hilly', summit: 'mountain', high_mtn: 'mountain',
+  ttt: 'tt', hilly_itt: 'tt',
+};
+
+export interface TerrainResult { type?: StageType | null; rank?: number | null }
+
+/**
+ * Learn a per-stage-type skill multiplier from a rider's OWN past results: how
+ * much better/worse they finish on each terrain family vs their overall level,
+ * empirical-Bayes shrunk toward 1 by sample count. Returns a multiplier per
+ * StageType (neutral families omitted). Personalises within an archetype — a
+ * sprinter who climbs well lifts on mountains; a pure sprinter sinks.
+ */
+export function computeTerrainAffinity(results: TerrainResult[]): Partial<Record<StageType, number>> {
+  const valid = results.filter((r) => r.type && r.rank != null && r.rank >= 1) as Array<{ type: StageType; rank: number }>;
+  if (valid.length < TERRAIN_AFFINITY_PRIOR) return {}; // too thin → trust the archetype prior
+
+  const overall = valid.reduce((a, r) => a + positionQuality(r.rank), 0) / valid.length;
+  if (overall <= 1e-6) return {};
+
+  const byFam = new Map<string, { sum: number; n: number }>();
+  for (const r of valid) {
+    const fam = TERRAIN_FAMILY[r.type];
+    const acc = byFam.get(fam) ?? { sum: 0, n: 0 };
+    acc.sum += positionQuality(r.rank);
+    acc.n += 1;
+    byFam.set(fam, acc);
+  }
+
+  const famMult = new Map<string, number>();
+  for (const [fam, { sum, n }] of byFam) {
+    const mean = sum / n;
+    // shrink the family mean toward the rider's overall level, then ratio it.
+    const shrunk = (n * mean + TERRAIN_AFFINITY_PRIOR * overall) / (n + TERRAIN_AFFINITY_PRIOR);
+    famMult.set(fam, clamp(shrunk / overall, TERRAIN_AFFINITY_CLAMP[0], TERRAIN_AFFINITY_CLAMP[1]));
+  }
+
+  const out: Partial<Record<StageType, number>> = {};
+  for (const [type, fam] of Object.entries(TERRAIN_FAMILY) as Array<[StageType, string]>) {
+    const m = famMult.get(fam);
+    if (m !== undefined && Math.abs(m - 1) > 1e-3) out[type] = m;
+  }
+  return out;
+}
+
 // ── Breakaway tendency (data-driven, from breakaway-kms) ──────────────────────
 
 /** Mean breakaway-kms across finished results → a 0..100 tendency. */

@@ -29,6 +29,24 @@ export function weatherSpreadFactor(stage: Stage): number {
   return clamp(f, 1, 1.5);
 }
 
+/**
+ * Probability the bunch SPLITS into echelons on an exposed day (0 when no
+ * weather). Unlike `weatherSpreadFactor` (which widens each rider's marginal
+ * independently), this drives a per-race scenario in the simulator where whole
+ * TEAMS make or miss the front split together — the correlation that actually
+ * decides Etapebonus on crosswind days. Caller gates it to exposed stage types.
+ */
+export function weatherEchelonProb(stage: Stage): number {
+  const w = stage.weather;
+  if (!w) return 0;
+  let p = 0;
+  if (typeof w.crosswindSections === 'number') p += 0.12 * clamp(w.crosswindSections, 0, 5);
+  if (typeof w.windKph === 'number') p += 0.012 * clamp(w.windKph - 30, 0, 40); // only real wind
+  if (w.gustRisk === 'med') p += 0.1;
+  else if (w.gustRisk === 'high') p += 0.22;
+  return clamp(p, 0, 0.6);
+}
+
 /** Rain + cold raise abandonment/attrition risk. 1.0 when no weather. */
 export function weatherDnfFactor(stage: Stage): number {
   const w = stage.weather;

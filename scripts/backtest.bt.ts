@@ -12,13 +12,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import type { Rider, Stage, StageType } from '../engine/types';
-import { buildField } from '../engine/probability';
+import { buildField, calibrateDistribution } from '../engine/probability';
 import { simulateStage, simulateJoint, jointEtapebonus, mulberry32 } from '../engine/simulate';
 import { expectedEtapebonus } from '../engine/optimizer';
 import { etapebonus } from '../engine/rules';
 import {
   classifyArchetype,
   computeForm,
+  computeTerrainAffinity,
   baselinePcsRank,
   strengthFromRank,
   breakawayTendency,
@@ -45,7 +46,7 @@ const N = 176; // model field size; baselines use the same slot count
 const SEASON = 2026;
 const MIN_FINISHERS = 30;
 
-interface TimelineEntry { date: string; rank: number; level: number; breakKm: number }
+interface TimelineEntry { date: string; rank: number; level: number; breakKm: number; type: StageType }
 
 function loadCorpus() {
   const results = JSON.parse(fs.readFileSync(RESULTS, 'utf-8')) as { stages: StageRow2026[] };
@@ -62,7 +63,7 @@ function loadCorpus() {
       const url = row.riderUrl;
       if (!url || row.rank == null || row.rank < 1) continue;
       const arr = timeline.get(url) ?? [];
-      arr.push({ date: s.date, rank: row.rank, level, breakKm: row.breakawayKms ?? 0 });
+      arr.push({ date: s.date, rank: row.rank, level, breakKm: row.breakawayKms ?? 0, type: s.ourType });
       timeline.set(url, arr);
     }
   }
@@ -91,8 +92,15 @@ function buildRoster(
 
     const tl = (row.riderUrl ? timeline.get(row.riderUrl) : undefined) ?? [];
     const past = asOf ? tl.filter((e) => e.date < asOf) : [];
-    const form = computeForm(past, asOf || '2026-12-31');
+    // Terrain-SPECIFIC form: weight recent results toward this stage's terrain.
+    // (env toggles let the backtest A/B each feature in isolation.)
+    const useTForm = process.env.TFORM !== '0';
+    const useAff = process.env.AFF !== '0';
+    const form = computeForm(past, asOf || '2026-12-31', 45, useTForm ? s.ourType : undefined);
     const brk = breakawayTendency(past.map((e) => e.breakKm));
+    const terrainAffinity = useAff
+      ? computeTerrainAffinity(past.map((e) => ({ type: e.type, rank: e.rank })))
+      : undefined;
 
     roster.push({
       id,
@@ -105,6 +113,7 @@ function buildRoster(
       teamStrength: 50, // filled below from team aggregate
       injury: 'fit',
       breakawayTendency: brk,
+      terrainAffinity,
     });
     actuals.push({ riderId: id, rank: row.rank });
   }
@@ -138,8 +147,10 @@ function toStage(s: StageRow2026): Stage {
   };
 }
 
+import { defaultConfig } from '../engine/config';
+const GAMMA = Number(process.env.GAMMA ?? String(defaultConfig().calibrationGamma)) || 1;
 function modelDistMap(roster: Rider[], stage: Stage): Map<string, number[]> {
-  const dists = buildField(roster, stage);
+  const dists = buildField(roster, stage).map((d) => calibrateDistribution(d, GAMMA));
   return new Map(dists.map((d) => [d.riderId, d.probs]));
 }
 

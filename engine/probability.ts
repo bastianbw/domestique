@@ -21,6 +21,15 @@ export function oddsForStage(rider: Rider, stageNo: number): RiderOdds | undefin
   return rider.oddsByStage?.[stageNo];
 }
 
+/**
+ * Per-rider terrain affinity multiplier for a stage (×1 when none supplied).
+ * Personalises the archetype suitability with the rider's own terrain history.
+ */
+export function terrainAffinityFactor(rider: Rider, stage: Stage): number {
+  const a = rider.terrainAffinity?.[stage.type];
+  return typeof a === 'number' && Number.isFinite(a) && a > 0 ? a : 1;
+}
+
 /** Convert a single decimal odd to an implied probability. */
 export function impliedProb(decimalOdd?: number): number | undefined {
   if (!decimalOdd || decimalOdd <= 1) return undefined;
@@ -56,8 +65,9 @@ export function contentionStrength(
   const teamScore = clamp01(rider.teamStrength / 100);
 
   const w = cfg.signalWeights;
+  // Terrain affinity scales the suitability term (the terrain-specific part).
   let strength =
-    w.suitability * suit +
+    w.suitability * suit * terrainAffinityFactor(rider, stage) +
     w.form * formScore +
     w.pcsRank * rankScore +
     w.teamStrength * teamScore;
@@ -305,7 +315,8 @@ export function riderSkill(
   const suit = cfg.suitability[stage.type][rider.archetype];
   const rankStrength = strengthFromRank(rider.pcsRank) / 100; // rank 1 ≈ 1.0
   const formFactor = cfg.skillFormFloor + (1 - cfg.skillFormFloor) * clamp01(rider.form / 100);
-  let skill = rankStrength * suit * formFactor;
+  // Personalise the archetype suitability with the rider's own terrain history.
+  let skill = rankStrength * suit * formFactor * terrainAffinityFactor(rider, stage);
 
   // Continuous climbiness refines the coarse stage type (e.g. a "hilly" stage
   // with mountain-level vertical lifts climbers and drops sprinters).
@@ -526,6 +537,21 @@ export function buildField(
     // Full-coverage fast path: identical to the pure odds-anchored distribution.
     return wOdds >= 0.999 ? oddsDist : blendDistributions(oddsDist, struct, wOdds);
   });
+}
+
+/**
+ * Temperature-calibrate one distribution: sharpen (γ>1) or flatten (γ<1) the
+ * finishing curve, renormalised to the SAME finishing mass (DNF preserved). γ=1
+ * is identity. Fit γ offline to minimise held-out top-k Brier — corrects the
+ * model's mild head over-confidence without touching the structural ordering.
+ */
+export function calibrateDistribution(dist: RiderDistribution, gamma: number): RiderDistribution {
+  if (gamma === 1 || !Number.isFinite(gamma) || gamma <= 0) return dist;
+  const finishMass = dist.probs.reduce((a, b) => a + b, 0);
+  if (finishMass <= 0) return dist;
+  const raised = dist.probs.map((p) => (p > 0 ? Math.pow(p, gamma) : 0));
+  const s = raised.reduce((a, b) => a + b, 0) || 1;
+  return { riderId: dist.riderId, probs: raised.map((p) => (p / s) * finishMass), pDNF: dist.pDNF };
 }
 
 /** Convex blend of two distributions: w·a + (1−w)·b (mass-preserving). */

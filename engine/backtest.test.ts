@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   classifyArchetype,
   computeForm,
+  computeTerrainAffinity,
   positionQuality,
   baselinePcsRank,
   strengthFromRank,
@@ -15,6 +16,35 @@ import {
   uniformDist,
   rankOnlyDist,
 } from './backtest';
+
+describe('computeTerrainAffinity', () => {
+  it('returns neutral (empty) when the sample is too thin', () => {
+    const aff = computeTerrainAffinity([{ type: 'summit', rank: 1 }, { type: 'flat', rank: 40 }]);
+    expect(aff).toEqual({});
+  });
+
+  it('lifts the terrain a rider over-performs on and sinks the rest', () => {
+    // A rider who wins in the mountains but pack-fills on the flat.
+    const results = [
+      ...Array.from({ length: 8 }, () => ({ type: 'summit' as const, rank: 2 })),
+      ...Array.from({ length: 8 }, () => ({ type: 'high_mtn' as const, rank: 3 })),
+      ...Array.from({ length: 8 }, () => ({ type: 'flat' as const, rank: 80 })),
+    ];
+    const aff = computeTerrainAffinity(results);
+    expect(aff.summit!).toBeGreaterThan(1);
+    expect(aff.high_mtn!).toBeGreaterThan(1);
+    expect(aff.flat!).toBeLessThan(1);
+    // summit and high_mtn share the "mountain" family → same multiplier.
+    expect(aff.summit!).toBeCloseTo(aff.high_mtn!, 6);
+  });
+
+  it('stays within the configured clamp', () => {
+    const results = Array.from({ length: 40 }, () => ({ type: 'summit' as const, rank: 1 }));
+    const aff = computeTerrainAffinity(results);
+    // a pure-mountain winner with no other terrain has overall ≈ family → ~1.
+    expect(aff.summit ?? 1).toBeLessThanOrEqual(1.7 + 1e-9);
+  });
+});
 
 describe('classifyArchetype', () => {
   it('classifies a GC rider from a real specialty vector (Pogačar)', () => {

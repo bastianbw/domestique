@@ -9,7 +9,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type {
   Rider, RiderOdds, Stage, RiskPreset, TeamType,
-  StageResultBlock, OddsBlock, StartlistBlock, WeatherBlock, NewsBlock, ImportBlock, Archetype,
+  StageResultBlock, OddsBlock, StartlistBlock, WeatherBlock, NewsBlock, FeaturesBlock, ImportBlock, Archetype,
 } from '@/engine/types';
 import { STAGES_2026, LAST_STAGE } from '@/engine/stages';
 import { defaultConfig, EngineConfig } from '@/engine/config';
@@ -163,6 +163,7 @@ export const useStore = create<AppState>()(
           if (block.type === 'startlist') return applyStartlist(block, set);
           if (block.type === 'weather') return applyWeather(block, get, set);
           if (block.type === 'news') return applyNews(block, get, set);
+          if (block.type === 'features') return applyFeatures(block, get, set);
           return { ok: false, messages: ['Unhandled block type.'] };
         };
 
@@ -427,6 +428,42 @@ function applyOdds(
     ].slice(0, 50),
   });
   const messages = [`Applied odds for ${block.odds.length - unmatched.length} riders on stage ${block.stage}.`];
+  if (unmatched.length) messages.push(`⚠ Unmatched: ${unmatched.join(', ')}`);
+  return { ok: true, messages };
+}
+
+function applyFeatures(
+  block: FeaturesBlock,
+  get: () => AppState,
+  set: (p: Partial<AppState>) => void,
+): { ok: boolean; messages: string[] } {
+  const st = get();
+  const unmatched: string[] = [];
+  const riders = st.riders.map((r) => ({ ...r }));
+  let applied = 0;
+  for (const row of block.riders) {
+    const m = matchRider(row.rider, riders);
+    if (!m.riderId) { unmatched.push(row.rider); continue; }
+    const idx = riders.findIndex((r) => r.id === m.riderId);
+    // Patch only the fields the PCS feature block actually carries.
+    const patch: Partial<Rider> = {};
+    if (row.archetype) patch.archetype = row.archetype;
+    if (typeof row.pcsRank === 'number') patch.pcsRank = row.pcsRank;
+    if (typeof row.form === 'number') patch.form = row.form;
+    if (typeof row.teamStrength === 'number') patch.teamStrength = row.teamStrength;
+    if (typeof row.breakawayTendency === 'number') patch.breakawayTendency = row.breakawayTendency;
+    if (row.terrainAffinity && typeof row.terrainAffinity === 'object') patch.terrainAffinity = row.terrainAffinity;
+    riders[idx] = { ...riders[idx], ...patch };
+    applied++;
+  }
+  set({
+    riders,
+    importLog: [
+      { at: Date.now(), kind: 'features' as const, stage: undefined, summary: `PCS features for ${applied} riders${block.asOf ? ` (as of ${block.asOf})` : ''}`, unmatched },
+      ...st.importLog,
+    ].slice(0, 50),
+  });
+  const messages = [`Applied PCS features to ${applied} riders.`];
   if (unmatched.length) messages.push(`⚠ Unmatched: ${unmatched.join(', ')}`);
   return { ok: true, messages };
 }

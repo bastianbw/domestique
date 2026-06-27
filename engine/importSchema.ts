@@ -10,6 +10,7 @@ import type {
   StartlistBlock,
   WeatherBlock,
   NewsBlock,
+  FeaturesBlock,
   Rider,
 } from './types';
 
@@ -124,8 +125,10 @@ export function validateBlock(json: any): ParseResult<ImportBlock> {
       return validateWeather(json);
     case 'news':
       return validateNews(json);
+    case 'features':
+      return validateFeatures(json);
     default:
-      return { ok: false, errors: [`Unknown block type "${json.type}". Expected stageResult | odds | startlist | weather | news.`] };
+      return { ok: false, errors: [`Unknown block type "${json.type}". Expected stageResult | odds | startlist | weather | news | features.`] };
   }
 }
 
@@ -172,6 +175,16 @@ function validateNews(json: any): ParseResult<NewsBlock> {
   });
   if (errors.length) return { ok: false, errors };
   return { ok: true, block: json as NewsBlock, errors: [] };
+}
+
+function validateFeatures(json: any): ParseResult<FeaturesBlock> {
+  const errors: string[] = [];
+  if (!Array.isArray(json.riders)) errors.push('features block needs a "riders" array.');
+  else json.riders.forEach((r: any, i: number) => {
+    if (typeof r.rider !== 'string') errors.push(`riders[${i}] missing "rider".`);
+  });
+  if (errors.length) return { ok: false, errors };
+  return { ok: true, block: json as FeaturesBlock, errors: [] };
 }
 
 /**

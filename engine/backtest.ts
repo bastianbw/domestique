@@ -168,6 +168,41 @@ export function reliabilityTop5(
   return out;
 }
 
+// ── Correlation (predicted vs actual points) ─────────────────────────────────
+
+/** Pearson correlation of two equal-length series (0 when degenerate). */
+export function pearson(xs: number[], ys: number[]): number {
+  const n = Math.min(xs.length, ys.length);
+  if (n < 2) return 0;
+  let mx = 0, my = 0;
+  for (let i = 0; i < n; i++) { mx += xs[i]; my += ys[i]; }
+  mx /= n; my /= n;
+  let sxy = 0, sxx = 0, syy = 0;
+  for (let i = 0; i < n; i++) {
+    const dx = xs[i] - mx, dy = ys[i] - my;
+    sxy += dx * dy; sxx += dx * dx; syy += dy * dy;
+  }
+  const d = Math.sqrt(sxx * syy);
+  return d > 0 ? sxy / d : 0;
+}
+
+/** Spearman rank correlation (Pearson on fractional ranks; ties averaged). */
+export function spearman(xs: number[], ys: number[]): number {
+  const rank = (v: number[]): number[] => {
+    const idx = v.map((x, i) => [x, i] as const).sort((a, b) => a[0] - b[0]);
+    const r = new Array<number>(v.length);
+    for (let i = 0; i < idx.length;) {
+      let j = i;
+      while (j + 1 < idx.length && idx[j + 1][0] === idx[i][0]) j++;
+      const avg = (i + j) / 2;
+      for (let k = i; k <= j; k++) r[idx[k][1]] = avg;
+      i = j + 1;
+    }
+    return r;
+  };
+  return pearson(rank(xs), rank(ys));
+}
+
 // ── Baseline distributions (the bar every model change must clear) ────────────
 
 /**

@@ -270,4 +270,27 @@ export interface NewsBlock {
   } & RiderNews>;
 }
 
-export type ImportBlock = StageResultBlock | OddsBlock | StartlistBlock | WeatherBlock | NewsBlock;
+/**
+ * PCS-derived rider features (the data layer that lifts the live app to the
+ * backtested accuracy). Patches existing riders by name with history-learned
+ * fields — terrain affinity, rank, archetype, form, breakaway tendency — so a
+ * pasted/generated block from the ProCyclingStats corpus drives the model the
+ * same way the offline backtest does. Every field optional → patch, not replace.
+ */
+export interface FeaturesBlock {
+  type: 'features';
+  /** ISO date the features were computed as-of (informational). */
+  asOf?: string;
+  riders: Array<{
+    rider: string;
+    archetype?: Archetype;
+    pcsRank?: number;
+    form?: number;
+    teamStrength?: number;
+    breakawayTendency?: number;
+    terrainAffinity?: Partial<Record<StageType, number>>;
+  }>;
+}
+
+export type ImportBlock =
+  StageResultBlock | OddsBlock | StartlistBlock | WeatherBlock | NewsBlock | FeaturesBlock;

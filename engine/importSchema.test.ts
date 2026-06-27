@@ -22,6 +22,18 @@ describe('validateBlock — block types', () => {
     expect(r.ok).toBe(false);
     expect(r.errors[0]).toMatch(/weather \| news/);
   });
+
+  it('accepts a PCS features block and rejects one without riders', () => {
+    const ok = validateBlock({
+      type: 'features',
+      asOf: '2026-07-01',
+      riders: [{ rider: 'Tadej Pogacar', pcsRank: 1, terrainAffinity: { summit: 1.3 } }],
+    });
+    expect(ok.ok).toBe(true);
+    expect(ok.block?.type).toBe('features');
+    expect(validateBlock({ type: 'features' }).ok).toBe(false);
+    expect(validateBlock({ type: 'features', riders: [{ pcsRank: 1 }] }).ok).toBe(false);
+  });
 });
 
 describe('parseImportBlock + array elements', () => {

@@ -15,7 +15,7 @@ import type { Rider, Stage, StageType } from '../engine/types';
 import { buildField, calibrateDistribution } from '../engine/probability';
 import { simulateStage, simulateJoint, jointEtapebonus, mulberry32 } from '../engine/simulate';
 import { expectedEtapebonus } from '../engine/optimizer';
-import { etapebonus } from '../engine/rules';
+import { etapebonus, placementGrowth } from '../engine/rules';
 import {
   classifyArchetype,
   computeForm,
@@ -31,6 +31,8 @@ import {
   aggregateScores,
   reliabilityTop5,
   precisionAtK,
+  pearson,
+  spearman,
   uniformDist,
   rankOnlyDist,
   type ActualFinish,
@@ -251,6 +253,11 @@ describe.skipIf(!haveData)('2026 structural backtest', () => {
     const simBunchPrec: Prec[] = [];
     const byType = new Map<string, StageScore[]>();
     const reliability: Array<{ pTop5: number; actualTop5: boolean }> = [];
+    // Predicted vs actual placement "points" per rider — comparable to the
+    // "correlation between predicted and actual points" fantasy tools quote.
+    const predPts: number[] = [];
+    const actPts: number[] = [];
+    const looseHit: number[] = [];
     let usedStages = 0;
     let skipped = 0;
 
@@ -276,6 +283,10 @@ describe.skipIf(!haveData)('2026 structural backtest', () => {
       const top15 = new Set(actuals.filter((a) => (a.rank ?? 999) <= 15).map((a) => a.riderId));
       const mPrec = accPrec(model, top5, top15);
       modelPrec.push(mPrec);
+      // Looser "top-performer" hit-rate: of the model's top-8 picks (a fantasy
+      // team's worth), the fraction that finish in the top 30 (= had a real day).
+      const top30 = new Set(actuals.filter((a) => (a.rank ?? 999) <= 30).map((a) => a.riderId));
+      looseHit.push(precisionAtK(rankedByHead(model, 8), top30, 8));
       uniPrec.push(randomPrec(roster.length));
       rankPrec.push(accPrec(rk, top5, top15));
 
@@ -297,6 +308,12 @@ describe.skipIf(!haveData)('2026 structural backtest', () => {
       for (const [id, probs] of model) {
         const p5 = probs.slice(0, 5).reduce((a, b) => a + b, 0);
         reliability.push({ pTop5: p5, actualTop5: (rankById.get(id) ?? 999) <= 5 });
+        // predicted expected placement points vs the realised placement points
+        let pred = 0;
+        for (let i = 0; i < 15 && i < probs.length; i++) pred += probs[i] * placementGrowth(i + 1);
+        const rk = rankById.get(id) ?? 999;
+        predPts.push(pred);
+        actPts.push(rk >= 1 && rk <= 15 ? placementGrowth(rk) : 0);
       }
       usedStages++;
     }
@@ -335,6 +352,16 @@ describe.skipIf(!haveData)('2026 structural backtest', () => {
       const a = aggregateScores(arr);
       lines.push(`  ${t.padEnd(10)} NLL ${a.nll.toFixed(3)}  Top5 ${a.brierTop5.toFixed(4)}  stages=${a.stages}  n=${a.n}`);
     }
+    lines.push('');
+    // Correlation predicted vs actual points (full field, and involved riders).
+    const involved = predPts.map((_, i) => i).filter((i) => actPts[i] > 0 || predPts[i] > 5000);
+    const ip = involved.map((i) => predPts[i]);
+    const ia = involved.map((i) => actPts[i]);
+    const looseAvg = looseHit.length ? looseHit.reduce((a, b) => a + b, 0) / looseHit.length : 0;
+    lines.push(`--- "top-performer" hit-rate: model's top-8 picks finishing top-30: ${(looseAvg * 100).toFixed(0)}% ---`);
+    lines.push('--- predicted vs actual placement points (correlation) ---');
+    lines.push(`  full field     Pearson ${pearson(predPts, actPts).toFixed(3)}  Spearman ${spearman(predPts, actPts).toFixed(3)}  (n=${predPts.length})`);
+    lines.push(`  involved only  Pearson ${pearson(ip, ia).toFixed(3)}  Spearman ${spearman(ip, ia).toFixed(3)}  (n=${ip.length})`);
     lines.push('');
     lines.push('--- reliability: predicted pTop5 vs empirical (model) ---');
     for (const b of reliabilityTop5(reliability)) {

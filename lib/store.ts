@@ -453,6 +453,8 @@ function applyFeatures(
     if (typeof row.teamStrength === 'number') patch.teamStrength = row.teamStrength;
     if (typeof row.breakawayTendency === 'number') patch.breakawayTendency = row.breakawayTendency;
     if (row.terrainAffinity && typeof row.terrainAffinity === 'object') patch.terrainAffinity = row.terrainAffinity;
+    if (typeof row.price === 'number' && row.price > 0) patch.price = row.price;
+    if (typeof row.ownershipPct === 'number') patch.ownershipPct = row.ownershipPct;
     riders[idx] = { ...riders[idx], ...patch };
     applied++;
   }

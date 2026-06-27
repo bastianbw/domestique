@@ -289,6 +289,10 @@ export interface FeaturesBlock {
     teamStrength?: number;
     breakawayTendency?: number;
     terrainAffinity?: Partial<Record<StageType, number>>;
+    /** Holdet price in DKK (from the fantasy API) — patches the rider's price. */
+    price?: number;
+    /** Holdet ownership/popularity % (from the fantasy API) — for differential. */
+    ownershipPct?: number;
   }>;
 }
 

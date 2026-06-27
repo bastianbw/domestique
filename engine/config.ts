@@ -168,6 +168,21 @@ export const OWNERSHIP_LEVERAGE = 0.15;
  */
 export const CALIBRATION_GAMMA = 0.85;
 
+/**
+ * Ensemble blend weight on the ANALYTIC coherent model PER stage type (the
+ * simulator gets the remaining 1−w). Learned on held-out data: the analytic
+ * model has the sharpest head on bunch finishes (flat/ITT), while the simulator
+ * captures breakaway upside + top-15 calibration on break-friendly terrain
+ * (hilly/mountain) — so the more accurate component weighs more on each profile.
+ */
+// Fitted on 2023-25 → held-out 2026 (grid-min top-15 Brier): the simulator is
+// the more accurate component on almost every profile, so it carries most weight
+// (analytic floored at 0.15 to smooth Monte-Carlo noise; flat keeps more analytic
+// for sprint-head sharpness; TTT is team-strength driven so the blend barely matters).
+export const ENSEMBLE_ANALYTIC_WEIGHT: Record<StageType, number> = {
+  flat: 0.3, hilly: 0.15, summit: 0.15, high_mtn: 0.15, ttt: 0.5, hilly_itt: 0.2,
+};
+
 export interface EngineConfig {
   suitability: SuitabilityMatrix;
   sprintPointWeight: Record<Archetype, number>;
@@ -189,6 +204,7 @@ export interface EngineConfig {
   climbinessResponse: Record<Archetype, number>;
   breakawayWinRate: Record<StageType, number>;
   calibrationGamma: number;
+  ensembleAnalyticWeight: Record<StageType, number>;
 }
 
 export function defaultConfig(): EngineConfig {
@@ -214,5 +230,6 @@ export function defaultConfig(): EngineConfig {
     climbinessResponse: { ...CLIMBINESS_RESPONSE },
     breakawayWinRate: { ...BREAKAWAY_WIN_RATE },
     calibrationGamma: CALIBRATION_GAMMA,
+    ensembleAnalyticWeight: { ...ENSEMBLE_ANALYTIC_WEIGHT },
   };
 }

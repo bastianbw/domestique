@@ -61,6 +61,45 @@ function withSuitability(base: EngineConfig, suit: SuitabilityMatrix): EngineCon
   return { ...base, suitability: JSON.parse(JSON.stringify(suit)) };
 }
 
+/**
+ * Fit the analytic/sim ensemble weight PER stage type on the train years by
+ * grid-search minimising top-15 Brier, so the more accurate component weighs
+ * more on each terrain. Returns an analytic-weight map (sim weight = 1 − w).
+ */
+function fitEnsembleWeights(
+  trainStages: (StageRow2026 & { year: number })[],
+  c: Corpus,
+  cfg: EngineConfig,
+): Record<string, number> {
+  const types = ['flat', 'hilly', 'summit', 'high_mtn', 'hilly_itt'] as const;
+  const grid = [0, 0.15, 0.3, 0.4, 0.5, 0.6, 0.7, 0.85, 1];
+  const byType: Record<string, (StageRow2026 & { year: number })[]> = {};
+  for (const s of trainStages) {
+    if (!usableStage(s)) continue;
+    (byType[s.ourType] ??= []).push(s);
+  }
+  const out: Record<string, number> = {};
+  for (const t of types) {
+    const stages = byType[t] ?? [];
+    if (stages.length < 4) { out[t] = 0.5; continue; } // too few → neutral
+    let bestW = 0.5; let bestBrier = Infinity;
+    for (const w of grid) {
+      const scores: StageScore[] = [];
+      for (const s of stages) {
+        const { roster, actuals } = buildRoster(s, c, { terrainForm: true, terrainAffinity: true });
+        if (roster.length < 30) continue;
+        const dists = buildEnsembleField(roster, toStage(s), cfg, w)
+          .map((d) => calibrateDistribution(d, cfg.calibrationGamma));
+        scores.push(scoreStage(new Map(dists.map((d) => [d.riderId, d.probs])), actuals));
+      }
+      const b = aggregateScores(scores).brierTop15;
+      if (b < bestBrier) { bestBrier = b; bestW = w; }
+    }
+    out[t] = bestW;
+  }
+  return out;
+}
+
 describe.skipIf(!have)('learn-from-data fit + held-out 2026 validation', () => {
   it('estimates suitability on 2024+2025 and validates feature stack on 2026', () => {
     const years = corpusYears();
@@ -81,13 +120,21 @@ describe.skipIf(!have)('learn-from-data fit + held-out 2026 validation', () => {
     const blend = withSuitability(base, blendSuit);
 
     const g = base.calibrationGamma;
+    // Learn the per-stage-type ensemble weights on the TRAIN years only.
+    const trainStages = c.stages.filter((s) => trainYears.has(s.year));
+    const fittedW = fitEnsembleWeights(trainStages, c, blend);
+    const blendFitted: EngineConfig = {
+      ...blend,
+      ensembleAnalyticWeight: { ...blend.ensembleAnalyticWeight, ...fittedW },
+    };
+
     const rows: Array<[string, Eval]> = [
       ['hand-tuned (baseline)', evalConfig(test, c, base, {})],
       ['learned blend β=0.5', evalConfig(test, c, blend, {})],
-      ['+ terrain form', evalConfig(test, c, blend, { terrainForm: true })],
-      ['+ terrain affinity', evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true })],
-      ['+ ensemble', evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, ensemble: true })],
+      ['+ terrain form+affinity', evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true })],
+      ['+ ensemble (shipped wts)', evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, ensemble: true })],
       [`+ calibration γ=${g} (SHIPPING)`, evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, ensemble: true, gamma: g })],
+      ['(info) grid-refit ens. wts', evalConfig(test, c, blendFitted, { terrainForm: true, terrainAffinity: true, ensemble: true, gamma: g })],
     ];
 
     const lines: string[] = [];
@@ -96,6 +143,8 @@ describe.skipIf(!have)('learn-from-data fit + held-out 2026 validation', () => {
     for (const [label, e] of rows) {
       lines.push(`  ${label.padEnd(24)}  P@5 ${e.p5.toFixed(3)}  P@15 ${e.p15.toFixed(3)}  Top15Brier ${e.brier15.toFixed(4)}`);
     }
+    lines.push('');
+    lines.push(`--- fitted ensemble analytic-weights (sim = 1−w): ${JSON.stringify(fittedW)} ---`);
     lines.push('');
     lines.push('--- learned suitability matrix (per type, normalised) ---');
     for (const t of Object.keys(learnedSuit) as Array<keyof SuitabilityMatrix>) {

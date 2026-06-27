@@ -23,7 +23,7 @@ import {
   DNF_PENALTY,
 } from './rules';
 import { buildField, calibrateDistribution } from './probability';
-import { simulateStage, buildEnsembleField, DEFAULT_ENSEMBLE_W, DEFAULT_SIM, type SimConfig } from './simulate';
+import { simulateStage, buildEnsembleField, DEFAULT_SIM, type SimConfig } from './simulate';
 
 /** P(top-K) from a distribution (positions 1..K). */
 export function pTopK(dist: RiderDistribution, k: number): number {
@@ -237,10 +237,11 @@ export function projectField(
       ? simulateStage(riders, stage, cfg, opts.simulate)
       : opts?.ensemble
         ? buildEnsembleField(riders, stage, cfg, opts.ensemble.w, opts.ensemble.sim)
-        // Odds-aware default: market when THIS STAGE has odds, else the ensemble.
+        // Odds-aware default: market when THIS STAGE has odds, else the ensemble
+        // (per-stage-type learned analytic/sim blend from cfg).
         : fieldHasOdds(riders, stage.stage)
           ? buildField(riders, stage, cfg)
-          : buildEnsembleField(riders, stage, cfg, DEFAULT_ENSEMBLE_W, DEFAULT_SIM);
+          : buildEnsembleField(riders, stage, cfg, undefined, DEFAULT_SIM);
   // Post-hoc probability calibration (γ=1 → identity).
   const cal = dists.map((d) => calibrateDistribution(d, cfg.calibrationGamma));
   const byId = new Map(cal.map((d) => [d.riderId, d]));

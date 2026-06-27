@@ -182,15 +182,18 @@ export function simulateStage(
 /**
  * Ensemble field: a convex blend of the analytic coherent model (sharpest top-5)
  * and the Monte Carlo simulator (best top-15 calibration + breakaway upside).
- * Both are coherent, so the blend is too. `w` = weight on the analytic model.
+ * Both are coherent, so the blend is too. `w` = weight on the analytic model;
+ * when omitted, the per-stage-type learned weight (`cfg.ensembleAnalyticWeight`)
+ * is used so the more accurate component weighs more on each terrain.
  */
 export function buildEnsembleField(
   riders: Rider[],
   stage: Stage,
   cfg: EngineConfig = defaultConfig(),
-  w: number = DEFAULT_ENSEMBLE_W,
+  w?: number,
   sim: SimConfig = DEFAULT_SIM,
 ): RiderDistribution[] {
+  if (w === undefined) w = cfg.ensembleAnalyticWeight?.[stage.type] ?? DEFAULT_ENSEMBLE_W;
   const a = buildCoherentField(riders, stage, cfg);
   const s = simulateStage(riders, stage, cfg, sim);
   const sById = new Map(s.map((d) => [d.riderId, d]));

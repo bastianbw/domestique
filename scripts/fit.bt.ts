@@ -9,7 +9,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { defaultConfig, type EngineConfig, type SuitabilityMatrix } from '../engine/config';
-import { buildField } from '../engine/probability';
+import { buildField, calibrateDistribution } from '../engine/probability';
 import { buildEnsembleField } from '../engine/simulate';
 import { precisionAtK, scoreStage, aggregateScores, type StageScore } from '../engine/backtest';
 import {
@@ -33,16 +33,18 @@ function evalConfig(
   testStages: (StageRow2026 & { year: number })[],
   c: Corpus,
   cfg: EngineConfig,
-  opts: { terrainForm?: boolean; ensemble?: boolean },
+  opts: { terrainForm?: boolean; terrainAffinity?: boolean; ensemble?: boolean; gamma?: number },
 ): Eval {
   let p5 = 0, p15 = 0, n = 0;
   const scores: StageScore[] = [];
+  const gamma = opts.gamma ?? 1;
   for (const s of testStages) {
     if (!usableStage(s)) continue;
-    const { roster, actuals } = buildRoster(s, c, { terrainForm: opts.terrainForm });
+    const { roster, actuals } = buildRoster(s, c, { terrainForm: opts.terrainForm, terrainAffinity: opts.terrainAffinity });
     if (roster.length < 30) continue;
     const stage = toStage(s);
-    const dists = opts.ensemble ? buildEnsembleField(roster, stage, cfg) : buildField(roster, stage, cfg);
+    const raw = opts.ensemble ? buildEnsembleField(roster, stage, cfg) : buildField(roster, stage, cfg);
+    const dists = raw.map((d) => calibrateDistribution(d, gamma));
     const map = new Map(dists.map((d) => [d.riderId, d.probs]));
     const top5 = new Set(actuals.filter((a) => (a.rank ?? 999) <= 5).map((a) => a.riderId));
     const top15 = new Set(actuals.filter((a) => (a.rank ?? 999) <= 15).map((a) => a.riderId));
@@ -78,13 +80,14 @@ describe.skipIf(!have)('learn-from-data fit + held-out 2026 validation', () => {
     const learned = withSuitability(base, learnedSuit);
     const blend = withSuitability(base, blendSuit);
 
+    const g = base.calibrationGamma;
     const rows: Array<[string, Eval]> = [
       ['hand-tuned (baseline)', evalConfig(test, c, base, {})],
-      ['learned suitability β=1', evalConfig(test, c, learned, {})],
       ['learned blend β=0.5', evalConfig(test, c, blend, {})],
-      ['blend + terrain form', evalConfig(test, c, blend, { terrainForm: true })],
-      ['blend + terrain + ensemble', evalConfig(test, c, blend, { terrainForm: true, ensemble: true })],
-      ['hand-tuned + terrain + ensemble', evalConfig(test, c, base, { terrainForm: true, ensemble: true })],
+      ['+ terrain form', evalConfig(test, c, blend, { terrainForm: true })],
+      ['+ terrain affinity', evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true })],
+      ['+ ensemble', evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, ensemble: true })],
+      [`+ calibration γ=${g} (SHIPPING)`, evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, ensemble: true, gamma: g })],
     ];
 
     const lines: string[] = [];

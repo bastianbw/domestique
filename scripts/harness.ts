@@ -11,6 +11,7 @@ import type { SuitabilityMatrix } from '../engine/config';
 import {
   classifyArchetype,
   computeForm,
+  computeTerrainAffinity,
   baselinePcsRank,
   strengthFromRank,
   breakawayTendency,
@@ -69,7 +70,7 @@ export function dataAvailable(): boolean {
   return fs.existsSync(path.join(HIST, 'riders.json')) && corpusYears().length > 0;
 }
 
-export interface RosterOpts { terrainForm?: boolean }
+export interface RosterOpts { terrainForm?: boolean; terrainAffinity?: boolean }
 
 export function buildRoster(
   s: StageRow2026 & { year: number },
@@ -94,10 +95,14 @@ export function buildRoster(
     const past = tl.filter((e) => e.date < asOf);
     const form = computeForm(past, asOf, 45, opts.terrainForm ? (s.ourType as StageType) : undefined);
     const brk = breakawayTendency(past.map((e) => e.breakKm));
+    const terrainAffinity = opts.terrainAffinity
+      ? computeTerrainAffinity(past.map((e) => ({ type: e.type, rank: e.rank })))
+      : undefined;
 
     roster.push({
       id, name: row.rider, team: row.team ?? 'UNK', archetype,
       price: 1, form, pcsRank, teamStrength: 50, injury: 'fit', breakawayTendency: brk,
+      terrainAffinity,
     });
     actuals.push({ riderId: id, rank: row.rank });
   }

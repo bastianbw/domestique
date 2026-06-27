@@ -13,3 +13,8 @@ public/data/
 # datasets data/historical/*.json are kept (commit them for reproducibility).
 data/historical/_cache/
 data/historical/*.log
+
+# python bytecode
+scripts/__pycache__/
+__pycache__/
+*.pyc

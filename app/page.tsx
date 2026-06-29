@@ -127,16 +127,19 @@ export default function OptimalPage() {
       {/* control bar */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <label className="card flex flex-col gap-1 p-4">
-          <span className="eyebrow">Bank (kr)</span>
+          <span className="eyebrow">Buying power (kr)</span>
+          {/* Edit TOTAL buying power (cash + team value), not raw cash — entering a
+              full budget while owning a team used to double-count. Cash is derived. */}
           <input
             type="number"
             className="input mono mt-0.5 w-full"
-            value={s.bank}
-            onChange={(e) => s.setBank(Number(e.target.value))}
+            value={buyingPower}
+            onChange={(e) => s.setBank(Math.max(0, Number(e.target.value) - ownedValue))}
           />
           <span className="text-[12px] text-chalk-500">
-            Buying power <span className="mono text-chalk-300">{(buyingPower / 1_000_000).toFixed(1)}M</span>
-            {ownedValue > 0 ? ` (bank + ${(ownedValue / 1_000_000).toFixed(1)}M team)` : ''}
+            {ownedValue > 0
+              ? <>cash <span className="mono text-chalk-300">{(s.bank / 1_000_000).toFixed(1)}M</span> + <span className="mono text-chalk-300">{(ownedValue / 1_000_000).toFixed(1)}M</span> in your team</>
+              : 'cash available for your 8 riders'}
           </span>
         </label>
 

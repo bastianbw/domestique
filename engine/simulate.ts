@@ -16,8 +16,10 @@
 
 import type { Rider, Stage, RiderDistribution } from './types';
 import { EngineConfig, defaultConfig } from './config';
-import { riderSkill, breakSkill, riderDnfRisk, buildCoherentField } from './probability';
+import { riderSkill, breakSkill, riderDnfRisk, buildCoherentField, buildDistributionFromAnchors } from './probability';
+import { strengthFromRank } from './features';
 import { weatherBreakFactor, weatherEchelonProb } from './modifiers';
+import type { StackModel } from './config';
 
 /** Stage types where echelons realistically form (exposed, raced for position). */
 const ECHELON_TYPES = new Set<Stage['type']>(['flat', 'hilly']);
@@ -202,6 +204,63 @@ export function buildEnsembleField(
     const probs = da.probs.map((p, i) => w * p + (1 - w) * (ds?.probs[i] ?? 0));
     const pDNF = w * da.pDNF + (1 - w) * (ds?.pDNF ?? da.pDNF);
     return { riderId: da.riderId, probs, pDNF };
+  });
+}
+
+// ── Logistic stacking meta-model (#1) ────────────────────────────────────────
+// Combine the base signals (analytic coherent + Monte-Carlo sim) per rider with
+// learned per-MARKET weights: a logistic regression maps each model's predicted
+// P(top-k) — plus the rider's rank strength — to one CALIBRATED P(top-k). The
+// calibrated anchors (win / top5 / top15) then reconstruct a coherent finishing
+// curve via the same machinery the odds path uses. So the signals are weighted by
+// their out-of-sample accuracy (per market), not a fixed blend.
+
+const clip01 = (p: number) => Math.max(1e-4, Math.min(1 - 1e-4, p));
+const logit = (p: number) => Math.log(clip01(p) / (1 - clip01(p)));
+const sigmoid = (z: number) => 1 / (1 + Math.exp(-z));
+const cumTopK = (probs: number[], k: number) => {
+  let s = 0;
+  for (let i = 0; i < k && i < probs.length; i++) s += probs[i];
+  return s;
+};
+
+/**
+ * Stacked field: per rider, blend the analytic + sim P(top-k) through the fitted
+ * per-market logistic model, then rebuild the distribution from the calibrated
+ * anchors. Falls back to a 50/50 ensemble shape only as the anchor reconstruction
+ * baseline. `model` keys are the markets to anchor (1, 5, 15).
+ */
+export function buildStackedField(
+  riders: Rider[],
+  stage: Stage,
+  cfg: EngineConfig,
+  model: StackModel,
+  sim: SimConfig = DEFAULT_SIM,
+): RiderDistribution[] {
+  const N = cfg.fieldSize;
+  const a = buildCoherentField(riders, stage, cfg);
+  const s = simulateStage(riders, stage, cfg, sim);
+  const aById = new Map(a.map((d) => [d.riderId, d]));
+  const sById = new Map(s.map((d) => [d.riderId, d]));
+  const markets = Object.keys(model).map(Number).sort((x, y) => x - y);
+
+  return riders.map((r) => {
+    const da = aById.get(r.id);
+    const ds = sById.get(r.id);
+    if (!da || !ds) return { riderId: r.id, probs: new Array<number>(N).fill(0), pDNF: 0 };
+    const rankStrength = strengthFromRank(r.pcsRank) / 100;
+    const pDNF = (da.pDNF + ds.pDNF) / 2;
+    const anchors = markets.map((k) => {
+      const w = model[k];
+      const z = w.b0
+        + w.ana * logit(cumTopK(da.probs, k))
+        + w.sim * logit(cumTopK(ds.probs, k))
+        + w.rank * rankStrength;
+      // sigmoid(z) is the calibrated unconditional P(top-k); the anchor builder
+      // clamps it under the finishing mass and folds DNF in separately.
+      return { k, q: sigmoid(z) };
+    });
+    return buildDistributionFromAnchors(r.id, anchors, pDNF, rankStrength, N);
   });
 }
 

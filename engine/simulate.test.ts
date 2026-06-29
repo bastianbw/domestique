@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { simulateStage, mulberry32, simulateJoint, jointEtapebonus, buildEnsembleField } from './simulate';
+import { simulateStage, mulberry32, simulateJoint, jointEtapebonus, buildEnsembleField, buildStackedField } from './simulate';
+import type { StackModel } from './config';
 import { effectiveSpread } from './probability';
 import { projectField } from './growth';
 import { etapebonus } from './rules';
@@ -74,6 +75,34 @@ describe('simulateStage', () => {
     const winS = ds.find((x) => x.riderId === 'attacker')!.probs[0];
     expect(winH).toBeGreaterThan(winS);
     expect(winH).toBeGreaterThan(0); // gets real win mass from break scenarios
+  });
+});
+
+describe('buildStackedField (logistic stacking meta-model)', () => {
+  // A plausible fitted model (rank-dominated head, sim-weighted top-15).
+  const model: StackModel = {
+    1: { b0: -3.6, ana: 0.09, sim: 0.09, rank: 1.37 },
+    5: { b0: -2.3, ana: 0.15, sim: 0.22, rank: 1.70 },
+    15: { b0: -0.6, ana: 0.14, sim: 0.42, rank: 0.18 },
+  };
+
+  it('produces coherent, monotone distributions (win ≤ top5 ≤ top15 ≤ finish mass)', () => {
+    const d = buildStackedField(field, flat, defaultConfig(), model, { nSims: 1500, seed: 3 });
+    for (const x of d) {
+      const mass = x.probs.reduce((a, b) => a + b, 0);
+      expect(mass).toBeLessThanOrEqual(1 - x.pDNF + 1e-6);
+      const pWin = x.probs[0];
+      const pTop5 = x.probs.slice(0, 5).reduce((a, b) => a + b, 0);
+      const pTop15 = x.probs.slice(0, 15).reduce((a, b) => a + b, 0);
+      expect(pTop5).toBeGreaterThanOrEqual(pWin - 1e-9);
+      expect(pTop15).toBeGreaterThanOrEqual(pTop5 - 1e-9);
+    }
+  });
+
+  it('ranks a strong rider above a weak one', () => {
+    const d = buildStackedField(field, flat, defaultConfig(), model, { nSims: 2000, seed: 1 });
+    const byId = new Map(d.map((x) => [x.riderId, x.probs.slice(0, 15).reduce((a, b) => a + b, 0)]));
+    expect(byId.get('gcA')!).toBeGreaterThan(byId.get('dom')!);
   });
 });
 

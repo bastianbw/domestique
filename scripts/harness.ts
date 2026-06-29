@@ -197,3 +197,56 @@ export function estimateSuitability(
 function clamp01(x: number): number {
   return Math.max(0, Math.min(1, x));
 }
+
+/**
+ * L2-regularised logistic regression via batch gradient descent. `rows` carry a
+ * feature vector `x` (WITHOUT the intercept term) and a binary label `y`; returns
+ * weights `[b0, w1, w2, …]` (intercept first). Standardises features internally
+ * for stable steps, then folds the scaling back into the returned weights.
+ */
+export function fitLogistic(
+  rows: Array<{ x: number[]; y: number }>,
+  l2 = 1.0,
+  iters = 400,
+  lr = 0.3,
+): number[] {
+  const n = rows.length;
+  const d = n ? rows[0].x.length : 0;
+  if (!n || !d) return new Array(d + 1).fill(0);
+
+  // standardise each feature (mean 0, sd 1) for conditioning
+  const mean = new Array(d).fill(0);
+  const sd = new Array(d).fill(0);
+  for (const r of rows) for (let j = 0; j < d; j++) mean[j] += r.x[j];
+  for (let j = 0; j < d; j++) mean[j] /= n;
+  for (const r of rows) for (let j = 0; j < d; j++) sd[j] += (r.x[j] - mean[j]) ** 2;
+  for (let j = 0; j < d; j++) sd[j] = Math.sqrt(sd[j] / n) || 1;
+  const X = rows.map((r) => r.x.map((v, j) => (v - mean[j]) / sd[j]));
+
+  const w = new Array(d).fill(0); // standardised-space weights
+  let b = 0;
+  for (let it = 0; it < iters; it++) {
+    const gw = new Array(d).fill(0);
+    let gb = 0;
+    for (let i = 0; i < n; i++) {
+      let z = b;
+      for (let j = 0; j < d; j++) z += w[j] * X[i][j];
+      const p = 1 / (1 + Math.exp(-z));
+      const e = p - rows[i].y;
+      gb += e;
+      for (let j = 0; j < d; j++) gw[j] += e * X[i][j];
+    }
+    b -= lr * (gb / n);
+    for (let j = 0; j < d; j++) w[j] -= lr * (gw[j] / n + (l2 / n) * w[j]);
+  }
+
+  // unfold standardisation: z = b + Σ w_j (x_j − mean_j)/sd_j
+  const out = new Array(d + 1).fill(0);
+  let b0 = b;
+  for (let j = 0; j < d; j++) {
+    out[j + 1] = w[j] / sd[j];
+    b0 -= (w[j] * mean[j]) / sd[j];
+  }
+  out[0] = b0;
+  return out;
+}

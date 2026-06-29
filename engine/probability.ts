@@ -141,7 +141,7 @@ export function devigShin(odds: Array<number | undefined>): number[] {
   return pi.map((x) => x / norm);
 }
 
-interface Anchor { k: number; q: number; }
+export interface Anchor { k: number; q: number; }
 
 /**
  * Build a finishing distribution that HITS the de-vigged odds at each market
@@ -149,7 +149,7 @@ interface Anchor { k: number; q: number; }
  * pWin ≈ the de-vigged win odds and the placement expectation is calibrated to
  * the market rather than to a single hand-tuned decay parameter.
  */
-function buildDistributionFromAnchors(
+export function buildDistributionFromAnchors(
   riderId: string,
   rawAnchors: Anchor[],
   pDNF: number,

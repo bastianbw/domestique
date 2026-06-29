@@ -8,15 +8,48 @@
 // Run: npx vitest run --config vitest.backtest.config.ts scripts/fit.bt.ts
 
 import { describe, it, expect } from 'vitest';
-import { defaultConfig, type EngineConfig, type SuitabilityMatrix } from '../engine/config';
-import { buildField, calibrateDistribution } from '../engine/probability';
-import { buildEnsembleField } from '../engine/simulate';
+import { defaultConfig, type EngineConfig, type SuitabilityMatrix, type StackModel } from '../engine/config';
+import { buildField, calibrateDistribution, buildCoherentField } from '../engine/probability';
+import { buildEnsembleField, buildStackedField, simulateStage } from '../engine/simulate';
 import { precisionAtK, scoreStage, aggregateScores, type StageScore } from '../engine/backtest';
 import {
   HIST, dataAvailable, corpusYears, loadCorpus, buildRoster, toStage, usableStage,
-  estimateSuitability, type Corpus,
+  estimateSuitability, fitLogistic, type Corpus,
 } from './harness';
-import type { StageRow2026 } from '../engine/features';
+import { strengthFromRank, type StageRow2026 } from '../engine/features';
+
+const STACK_MARKETS = [1, 5, 15];
+const sLogit = (p: number) => { const c = Math.max(1e-4, Math.min(1 - 1e-4, p)); return Math.log(c / (1 - c)); };
+const sCum = (probs: number[], k: number) => { let s = 0; for (let i = 0; i < k && i < probs.length; i++) s += probs[i]; return s; };
+
+/** Train the per-market logistic stacking meta-model on the train years. */
+function fitStackModel(trainStages: (StageRow2026 & { year: number })[], c: Corpus, cfg: EngineConfig): StackModel {
+  const rowsByK: Record<number, Array<{ x: number[]; y: number }>> = { 1: [], 5: [], 15: [] };
+  for (const s of trainStages) {
+    if (!usableStage(s)) continue;
+    const { roster, actuals } = buildRoster(s, c, { terrainForm: true, terrainAffinity: true });
+    if (roster.length < 30) continue;
+    const stage = toStage(s);
+    const a = new Map(buildCoherentField(roster, stage, cfg).map((d) => [d.riderId, d.probs]));
+    const sm = new Map(simulateStage(roster, stage, cfg, { nSims: 2000, seed: 0x5eed }).map((d) => [d.riderId, d.probs]));
+    const rankById = new Map(actuals.map((x) => [x.riderId, x.rank ?? 999]));
+    for (const r of roster) {
+      const ap = a.get(r.id); const sp = sm.get(r.id);
+      if (!ap || !sp) continue;
+      const rankStrength = strengthFromRank(r.pcsRank) / 100;
+      const rk = rankById.get(r.id) ?? 999;
+      for (const k of STACK_MARKETS) {
+        rowsByK[k].push({ x: [sLogit(sCum(ap, k)), sLogit(sCum(sp, k)), rankStrength], y: rk <= k ? 1 : 0 });
+      }
+    }
+  }
+  const model: StackModel = {};
+  for (const k of STACK_MARKETS) {
+    const w = fitLogistic(rowsByK[k], 1.0);
+    model[k] = { b0: w[0], ana: w[1], sim: w[2], rank: w[3] };
+  }
+  return model;
+}
 
 const have = dataAvailable();
 
@@ -33,7 +66,7 @@ function evalConfig(
   testStages: (StageRow2026 & { year: number })[],
   c: Corpus,
   cfg: EngineConfig,
-  opts: { terrainForm?: boolean; terrainAffinity?: boolean; ensemble?: boolean; gamma?: number },
+  opts: { terrainForm?: boolean; terrainAffinity?: boolean; ensemble?: boolean; gamma?: number; stack?: StackModel },
 ): Eval {
   let p5 = 0, p15 = 0, n = 0;
   const scores: StageScore[] = [];
@@ -43,7 +76,9 @@ function evalConfig(
     const { roster, actuals } = buildRoster(s, c, { terrainForm: opts.terrainForm, terrainAffinity: opts.terrainAffinity });
     if (roster.length < 30) continue;
     const stage = toStage(s);
-    const raw = opts.ensemble ? buildEnsembleField(roster, stage, cfg) : buildField(roster, stage, cfg);
+    const raw = opts.stack
+      ? buildStackedField(roster, stage, cfg, opts.stack)
+      : opts.ensemble ? buildEnsembleField(roster, stage, cfg) : buildField(roster, stage, cfg);
     const dists = raw.map((d) => calibrateDistribution(d, gamma));
     const map = new Map(dists.map((d) => [d.riderId, d.probs]));
     const top5 = new Set(actuals.filter((a) => (a.rank ?? 999) <= 5).map((a) => a.riderId));
@@ -127,14 +162,16 @@ describe.skipIf(!have)('learn-from-data fit + held-out 2026 validation', () => {
       ...blend,
       ensembleAnalyticWeight: { ...blend.ensembleAnalyticWeight, ...fittedW },
     };
+    // Train the logistic stacking meta-model on the train years only.
+    const stack = fitStackModel(trainStages, c, blend);
 
     const rows: Array<[string, Eval]> = [
       ['hand-tuned (baseline)', evalConfig(test, c, base, {})],
       ['learned blend β=0.5', evalConfig(test, c, blend, {})],
       ['+ terrain form+affinity', evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true })],
       ['+ ensemble (shipped wts)', evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, ensemble: true })],
-      [`+ calibration γ=${g} (SHIPPING)`, evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, ensemble: true, gamma: g })],
-      ['(info) grid-refit ens. wts', evalConfig(test, c, blendFitted, { terrainForm: true, terrainAffinity: true, ensemble: true, gamma: g })],
+      [`+ calibration γ=${g} (prev ship)`, evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, ensemble: true, gamma: g })],
+      [`+ logistic stack (SHIPPING)`, evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, gamma: g, stack })],
     ];
 
     const lines: string[] = [];
@@ -145,6 +182,7 @@ describe.skipIf(!have)('learn-from-data fit + held-out 2026 validation', () => {
     }
     lines.push('');
     lines.push(`--- fitted ensemble analytic-weights (sim = 1−w): ${JSON.stringify(fittedW)} ---`);
+    lines.push(`--- fitted STACK_MODEL (paste into config): ${JSON.stringify(stack)} ---`);
     lines.push('');
     lines.push('--- learned suitability matrix (per type, normalised) ---');
     for (const t of Object.keys(learnedSuit) as Array<keyof SuitabilityMatrix>) {

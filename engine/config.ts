@@ -183,6 +183,16 @@ export const ENSEMBLE_ANALYTIC_WEIGHT: Record<StageType, number> = {
   flat: 0.3, hilly: 0.15, summit: 0.15, high_mtn: 0.15, ttt: 0.5, hilly_itt: 0.2,
 };
 
+/**
+ * Per-market logistic stacking weights. The meta-model combines each base
+ * signal's predicted P(top-k) (analytic + simulator) plus the rider's rank
+ * strength into one CALIBRATED P(top-k) — learned per market, so the signals are
+ * weighted by their out-of-sample accuracy rather than a fixed blend.
+ */
+export interface StackWeights { b0: number; ana: number; sim: number; rank: number }
+/** Keyed by market k (1=win, 5=top5, 15=top15). */
+export type StackModel = Record<number, StackWeights>;
+
 export interface EngineConfig {
   suitability: SuitabilityMatrix;
   sprintPointWeight: Record<Archetype, number>;
@@ -205,6 +215,8 @@ export interface EngineConfig {
   breakawayWinRate: Record<StageType, number>;
   calibrationGamma: number;
   ensembleAnalyticWeight: Record<StageType, number>;
+  /** Optional logistic stacking meta-model (no-odds path). Absent → linear ensemble. */
+  stackModel?: StackModel;
 }
 
 export function defaultConfig(): EngineConfig {

@@ -16,7 +16,7 @@
 
 import type { Rider, Stage, RiderDistribution } from './types';
 import { EngineConfig, defaultConfig } from './config';
-import { riderSkill, breakSkill, riderDnfRisk, buildCoherentField, buildDistributionFromAnchors } from './probability';
+import { riderSkill, breakSkill, riderDnfRisk, buildCoherentField } from './probability';
 import { strengthFromRank } from './features';
 import { weatherBreakFactor, weatherEchelonProb } from './modifiers';
 import type { StackModel } from './config';
@@ -210,10 +210,12 @@ export function buildEnsembleField(
 // ── Logistic stacking meta-model (#1) ────────────────────────────────────────
 // Combine the base signals (analytic coherent + Monte-Carlo sim) per rider with
 // learned per-MARKET weights: a logistic regression maps each model's predicted
-// P(top-k) — plus the rider's rank strength — to one CALIBRATED P(top-k). The
-// calibrated anchors (win / top5 / top15) then reconstruct a coherent finishing
-// curve via the same machinery the odds path uses. So the signals are weighted by
-// their out-of-sample accuracy (per market), not a fixed blend.
+// P(top-k) — plus the rider's rank strength — to one CALIBRATED P(top-k). Rather
+// than rebuild the curve from those anchors (which discards the simulator's
+// well-calibrated shape), we RE-SCALE the per-terrain ensemble curve segment by
+// segment so its cumulative top-k hits the calibrated anchors while the shape
+// WITHIN each segment is preserved. So the signals are weighted by their
+// out-of-sample accuracy (per market) AND the rich base shape is kept.
 
 const clip01 = (p: number) => Math.max(1e-4, Math.min(1 - 1e-4, p));
 const logit = (p: number) => Math.log(clip01(p) / (1 - clip01(p)));
@@ -225,11 +227,38 @@ const cumTopK = (probs: number[], k: number) => {
 };
 
 /**
- * Stacked field: per rider, blend the analytic + sim P(top-k) through the fitted
- * per-market logistic model, then rebuild the distribution from the calibrated
- * anchors. Falls back to a 50/50 ensemble shape only as the anchor reconstruction
- * baseline. `model` keys are the markets to anchor (1, 5, 15).
+ * Re-scale a base distribution so its cumulative P(top-k) equals each anchor's
+ * target, keeping the base shape within every segment. `anchors` are sorted
+ * {k, q} cumulative targets (q already monotone & ≤ finishMass).
  */
+function rescaleToAnchors(base: number[], anchors: Array<{ k: number; q: number }>, finishMass: number): number[] {
+  const N = base.length;
+  const out = new Array<number>(N).fill(0);
+  // boundaries: [lastK, k) segments, then [lastK, N) carries the rest.
+  let lastK = 0;
+  let lastQ = 0;
+  const segs: Array<{ lo: number; hi: number; mass: number }> = [];
+  for (const { k, q } of anchors) {
+    segs.push({ lo: lastK, hi: Math.min(k, N), mass: Math.max(0, q - lastQ) });
+    lastK = Math.min(k, N);
+    lastQ = q;
+  }
+  segs.push({ lo: lastK, hi: N, mass: Math.max(0, finishMass - lastQ) });
+
+  for (const { lo, hi, mass } of segs) {
+    if (hi <= lo || mass <= 0) continue;
+    let baseSum = 0;
+    for (let i = lo; i < hi; i++) baseSum += base[i];
+    if (baseSum > 1e-12) {
+      for (let i = lo; i < hi; i++) out[i] = base[i] * (mass / baseSum);
+    } else {
+      const each = mass / (hi - lo); // base had no mass here → spread evenly
+      for (let i = lo; i < hi; i++) out[i] = each;
+    }
+  }
+  return out;
+}
+
 export function buildStackedField(
   riders: Rider[],
   stage: Stage,
@@ -243,24 +272,32 @@ export function buildStackedField(
   const aById = new Map(a.map((d) => [d.riderId, d]));
   const sById = new Map(s.map((d) => [d.riderId, d]));
   const markets = Object.keys(model).map(Number).sort((x, y) => x - y);
+  const wA = cfg.ensembleAnalyticWeight?.[stage.type] ?? DEFAULT_ENSEMBLE_W;
 
   return riders.map((r) => {
     const da = aById.get(r.id);
     const ds = sById.get(r.id);
     if (!da || !ds) return { riderId: r.id, probs: new Array<number>(N).fill(0), pDNF: 0 };
     const rankStrength = strengthFromRank(r.pcsRank) / 100;
-    const pDNF = (da.pDNF + ds.pDNF) / 2;
+    // Base shape = the per-terrain ensemble curve (already sums to finishMass).
+    const base = da.probs.map((p, i) => wA * p + (1 - wA) * ds.probs[i]);
+    const pDNF = wA * da.pDNF + (1 - wA) * ds.pDNF;
+    const finishMass = 1 - pDNF;
+
+    // Calibrated cumulative anchors from the meta-model; clamp monotone ≤ mass.
+    let prev = 0;
     const anchors = markets.map((k) => {
       const w = model[k];
       const z = w.b0
         + w.ana * logit(cumTopK(da.probs, k))
         + w.sim * logit(cumTopK(ds.probs, k))
         + w.rank * rankStrength;
-      // sigmoid(z) is the calibrated unconditional P(top-k); the anchor builder
-      // clamps it under the finishing mass and folds DNF in separately.
-      return { k, q: sigmoid(z) };
+      const q = Math.max(prev, Math.min(finishMass, sigmoid(z)));
+      prev = q;
+      return { k, q };
     });
-    return buildDistributionFromAnchors(r.id, anchors, pDNF, rankStrength, N);
+
+    return { riderId: r.id, probs: rescaleToAnchors(base, anchors, finishMass), pDNF };
   });
 }
 

@@ -170,8 +170,9 @@ describe.skipIf(!have)('learn-from-data fit + held-out 2026 validation', () => {
       ['learned blend β=0.5', evalConfig(test, c, blend, {})],
       ['+ terrain form+affinity', evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true })],
       ['+ ensemble (shipped wts)', evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, ensemble: true })],
-      [`+ calibration γ=${g} (prev ship)`, evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, ensemble: true, gamma: g })],
-      [`+ logistic stack (SHIPPING)`, evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, gamma: g, stack })],
+      [`+ calibration γ=${g} (SHIPPING)`, evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, ensemble: true, gamma: g })],
+      [`(info) logistic stack γ=${g}`, evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, gamma: g, stack })],
+      [`(info) logistic stack γ=1`, evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, stack })],
     ];
 
     const lines: string[] = [];

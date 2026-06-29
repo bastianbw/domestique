@@ -349,18 +349,18 @@ export default function OptimalPage() {
         {/* risk presets */}
         <div className="card p-4">
           <h2 className="text-base font-semibold text-chalk-100">Risk presets</h2>
-          <p className="mt-0.5 text-[12px] text-chalk-500">Net after fees by profile — tap to switch.</p>
+          <p className="mt-0.5 text-[12px] text-chalk-500">Expected value through the block — balanced is the max; safe trades a little for a steadier, lower-churn team, aggressive for upside.</p>
           <div className="mt-3 grid grid-cols-3 gap-2">
             {RISKS.map((r) => {
               const t = presets[r];
-              const max = Math.max(1, ...RISKS.map((x) => presets[x]?.expectedGrowthAfterFees ?? 0));
+              const max = Math.max(1, ...RISKS.map((x) => presets[x]?.expectedValue ?? 0));
               return (
                 <button key={r} onClick={() => s.setRisk(r)}
                   className={`rounded-xl border p-3 text-left transition-colors ${
                     s.risk === r ? 'border-gold/50 bg-gold/5' : 'border-ink-600/60 hover:bg-ink-700/40'}`}>
                   <div className="text-[11px] font-semibold uppercase tracking-wide text-chalk-500 capitalize">{r}</div>
-                  <div className="mono tnum mt-1 text-base font-semibold j-green">{growth(t?.expectedGrowthAfterFees ?? 0)}</div>
-                  <BarMeter value={Math.max(0, t?.expectedGrowthAfterFees ?? 0)} max={max} tone="gold" className="mt-2" />
+                  <div className="mono tnum mt-1 text-base font-semibold j-green">{growth(t?.expectedValue ?? 0)}</div>
+                  <BarMeter value={Math.max(0, t?.expectedValue ?? 0)} max={max} tone="gold" className="mt-2" />
                   <div className="mt-2 text-[11px] text-chalk-500">cap · {riderById.get(t?.captainId ?? '')?.name?.split(' ').slice(-1)[0]}</div>
                 </button>
               );

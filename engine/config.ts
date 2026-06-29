@@ -89,24 +89,24 @@ export const BASE_DNF_RISK: Record<Archetype, number> = {
 export const FIELD_SIZE = 176; // ~22 teams × 8
 
 /**
- * Risk presets reshape the objective. Weights are in DKK per expected unit, so
- * they sit on the SAME scale as rider xG and actually move the selected team:
- *  - safe: reward Σ P(top15) (consistency → chase Etapebonus tiers, esp. 8-in-top15=400k)
- *  - aggressive: reward Σ P(win) (ceiling/variance → stage-win & breakaway upside)
- *  - balanced/full-EV: neutral, pure expected net growth
+ * Risk presets are a MEAN–VARIANCE reshape of the SAME expected-value objective,
+ * so balanced is always the expected-return maximum and the others trade EV for
+ * a different risk profile:
+ *  - balanced: pure max expected value (no penalty/tilt) → highest expected return.
+ *  - safe: EV − varPenalty·σ(team) − churnPenalty·fees → steadier + cheaper, so a
+ *    little below balanced on EV but lower variance and fewer transfers.
+ *  - aggressive: EV + ceiling tilt (P(win) + breakaway upside) → higher ceiling,
+ *    a little below balanced on EV.
  */
 export const RISK_TUNING: Record<RiskPreset, {
-  top15Weight: number; // DKK added per expected rider in the top-15 (consistency/floor)
-  winWeight: number; // DKK added per expected stage win (ceiling)
+  varPenalty: number; // DKK penalty per DKK of team stage-growth std-dev (lower = steadier)
+  churnPenalty: number; // extra multiple on transfer fees (favours keeping riders)
+  winWeight: number; // DKK added per expected stage win (ceiling tilt)
   breakawayWeight: number; // DKK added per unit breakaway tendency (lottery upside)
 }> = {
-  // Safe chases the Etapebonus floor (esp. 400k for 8-in-top15) via consistent
-  // finishers. Aggressive chases ceilings — stage wins AND high-variance
-  // breakaway riders that Safe deliberately avoids — so the two diverge even
-  // though P(win) and P(top15) are correlated for the favourites.
-  safe: { top15Weight: 160_000, winWeight: 0, breakawayWeight: 0 },
-  balanced: { top15Weight: 0, winWeight: 0, breakawayWeight: 0 },
-  aggressive: { top15Weight: 0, winWeight: 900_000, breakawayWeight: 220_000 },
+  safe: { varPenalty: 0.45, churnPenalty: 1.5, winWeight: 0, breakawayWeight: 0 },
+  balanced: { varPenalty: 0, churnPenalty: 0, winWeight: 0, breakawayWeight: 0 },
+  aggressive: { varPenalty: 0, churnPenalty: 0, winWeight: 900_000, breakawayWeight: 220_000 },
 };
 
 /** Horizon planning: discount factor per stage into the future. */

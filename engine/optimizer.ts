@@ -115,16 +115,20 @@ export function scoreTeam(ctx: ScoreContext, riderIds: string[]): OptimizedTeam 
   const expectedGrowthAfterFees =
     expectedGrowth + captainBonus + expectedEtape - transferFees;
 
-  // ── Objective with risk reshaping ──
-  // Score on forward-looking selection value (+ immediate captain/Etapebonus,
-  // − fees). Risk weights are DKK-scaled (see config) so they genuinely shift
-  // the team: 'safe' tilts toward consistent top-15 riders, 'aggressive' toward
-  // winners. Objective is pure expected growth (Max EV) — no differential mode.
-  let score = selectionValue + captainBonus + expectedEtape - transferFees;
+  // ── Mean-variance objective ──
+  // expectedValue is the pure forward EV every preset shares; 'balanced' maximises
+  // exactly this (so it is always the expected-return leader). 'safe' subtracts a
+  // variance penalty + extra fee weight (steadier, fewer transfers); 'aggressive'
+  // adds a ceiling tilt (P(win) + breakaway upside). Both trade EV for risk shape.
+  const expectedValue = selectionValue + captainBonus + expectedEtape - transferFees;
 
-  if (risk.top15Weight) {
-    const sumTop15 = projs.reduce((a, p) => a + p.pTop15, 0);
-    score += risk.top15Weight * sumTop15;
+  let score = expectedValue;
+  if (risk.varPenalty) {
+    const teamStd = Math.sqrt(projs.reduce((a, p) => a + (p.gVar ?? 0), 0));
+    score -= risk.varPenalty * teamStd;
+  }
+  if (risk.churnPenalty) {
+    score -= risk.churnPenalty * transferFees; // favour keeping riders
   }
   if (risk.winWeight) {
     const sumWin = projs.reduce((a, p) => a + p.pWin, 0);
@@ -141,6 +145,7 @@ export function scoreTeam(ctx: ScoreContext, riderIds: string[]): OptimizedTeam 
     captainId,
     expectedGrowth,
     expectedGrowthAfterFees,
+    expectedValue,
     captainBonus,
     expectedEtapebonus: expectedEtape,
     expectedHoldbonus: expectedHold,

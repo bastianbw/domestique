@@ -146,6 +146,8 @@ export interface RiderProjection {
   pTop15: number;
   /** expected growth if this rider is captained (their positive growth counted twice) */
   captainEV: number;
+  /** variance of this rider's stage placement+DNF growth (for the mean-variance risk model) */
+  gVar: number;
   /** breakdown for transparency */
   breakdown: GrowthBreakdown;
 }
@@ -216,6 +218,9 @@ export interface OptimizedTeam {
   captainId: string;
   expectedGrowth: number; // sum of rider xG (no fees)
   expectedGrowthAfterFees: number;
+  /** pure forward expected value (the quantity 'balanced' maximises; risk-neutral,
+   *  no variance/ceiling/churn terms) — the apples-to-apples number across presets */
+  expectedValue: number;
   captainBonus: number;
   expectedEtapebonus: number;
   expectedHoldbonus: number;

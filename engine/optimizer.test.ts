@@ -17,10 +17,11 @@ function rider(id: string, team: string, price: number, partial: Partial<Rider> 
   };
 }
 
-function proj(id: string, xG: number, pTop15 = 0.3, pTop5 = 0.1, pWin = 0.02): RiderProjection {
+function proj(id: string, xG: number, pTop15 = 0.3, pTop5 = 0.1, pWin = 0.02, gVar = xG * xG): RiderProjection {
   return {
     riderId: id, xG, pWin, pTop5, pTop15,
     captainEV: xG + Math.max(0, xG),
+    gVar,
     breakdown: { ...ZERO_BREAKDOWN, placement: xG },
   };
 }
@@ -73,6 +74,16 @@ describe('optimizer', () => {
     expect(Object.values(counts).every((c) => c <= 2)).toBe(true);
     // Team A had the best riders → cap should force exactly 2 of them.
     expect(counts['A']).toBe(2);
+  });
+
+  it('balanced is the expected-value maximum; safe/aggressive trade EV for risk shape', () => {
+    const inp = baseInput();
+    const balanced = optimize({ ...inp, risk: 'balanced' });
+    const safe = optimize({ ...inp, risk: 'safe' });
+    const aggressive = optimize({ ...inp, risk: 'aggressive' });
+    // Balanced maximises pure expected value, so it leads (allow tiny local-search slack).
+    expect(balanced.expectedValue).toBeGreaterThanOrEqual(safe.expectedValue - 1);
+    expect(balanced.expectedValue).toBeGreaterThanOrEqual(aggressive.expectedValue - 1);
   });
 
   it('scores Etapebonus jointly when sim samples are supplied', () => {
@@ -144,26 +155,26 @@ describe('optimizer', () => {
   });
 });
 
-describe('risk presets actually change the team (regression)', () => {
-  // Build a field where "consistent" riders (high P(top15), modest xG) and
-  // "boom" riders (high P(win), spiky xG) are distinct, so Safe and Aggressive
-  // should diverge. 5 teams so the 2-per-team rule leaves room.
+describe('risk presets actually change the team (mean-variance)', () => {
+  // "steady" riders: same EV but LOW variance; "boom" riders: same EV but HIGH
+  // variance + high P(win). Safe (variance penalty) should prefer steady;
+  // Aggressive (win/ceiling tilt) should prefer boom. 6 teams leave room.
   function riskField() {
     const riders: Rider[] = [];
     const projections: RiderProjection[] = [];
     const teams = ['A', 'B', 'C', 'D', 'E', 'F'];
     for (const t of teams) {
-      // consistent: high top15, low win
+      // steady: low variance, low win
       riders.push(rider(`${t}c`, t, 5_000_000));
-      projections.push(proj(`${t}c`, 90_000, /*top15*/ 0.85, /*top5*/ 0.2, /*win*/ 0.01));
-      // boom: lower top15, high win + higher xG ceiling
+      projections.push(proj(`${t}c`, 100_000, /*top15*/ 0.85, /*top5*/ 0.2, /*win*/ 0.02, /*gVar*/ 1e9));
+      // boom: high variance, high win, same EV
       riders.push(rider(`${t}b`, t, 5_000_000));
-      projections.push(proj(`${t}b`, 110_000, /*top15*/ 0.35, /*top5*/ 0.25, /*win*/ 0.18));
+      projections.push(proj(`${t}b`, 100_000, /*top15*/ 0.4, /*top5*/ 0.3, /*win*/ 0.25, /*gVar*/ 4e10));
     }
     return { riders, projections };
   }
 
-  it('Safe favours consistent (top-15) riders; Aggressive favours boom (win) riders', () => {
+  it('Safe favours low-variance riders; Aggressive favours high-win riders', () => {
     const { riders, projections } = riskField();
     const mk = (risk: 'safe' | 'balanced' | 'aggressive') =>
       optimize(baseInput({ riders, projections, risk }));
@@ -171,12 +182,11 @@ describe('risk presets actually change the team (regression)', () => {
     const safe = mk('safe');
     const aggressive = mk('aggressive');
 
-    const consistentCount = (ids: string[]) => ids.filter((id) => id.endsWith('c')).length;
+    const steadyCount = (ids: string[]) => ids.filter((id) => id.endsWith('c')).length;
     const boomCount = (ids: string[]) => ids.filter((id) => id.endsWith('b')).length;
 
-    expect(consistentCount(safe.riderIds)).toBeGreaterThan(consistentCount(aggressive.riderIds));
+    expect(steadyCount(safe.riderIds)).toBeGreaterThan(steadyCount(aggressive.riderIds));
     expect(boomCount(aggressive.riderIds)).toBeGreaterThan(boomCount(safe.riderIds));
-    // and the selected teams must not be identical
     expect(safe.riderIds.slice().sort().join()).not.toBe(aggressive.riderIds.slice().sort().join());
   });
 });

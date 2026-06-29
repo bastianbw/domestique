@@ -178,6 +178,19 @@ export function projectRider(
   // positive part again). So captainEV = xG + max(0, xG).
   const captainEV = xG + Math.max(0, xG);
 
+  // Variance of the rider's stage growth (placement payouts + the DNF penalty) —
+  // the dominant variable part — for the mean-variance risk model. E[g²]−E[g]².
+  let eg = 0;
+  let eg2 = 0;
+  for (let i = 0; i < 15 && i < dist.probs.length; i++) {
+    const g = placementGrowth(i + 1);
+    eg += dist.probs[i] * g;
+    eg2 += dist.probs[i] * g * g;
+  }
+  eg += dist.pDNF * DNF_PENALTY;
+  eg2 += dist.pDNF * DNF_PENALTY * DNF_PENALTY;
+  const gVar = Math.max(0, eg2 - eg * eg);
+
   return {
     riderId: rider.id,
     xG,
@@ -185,6 +198,7 @@ export function projectRider(
     pTop5: pTopK(dist, 5),
     pTop15: pTopK(dist, 15),
     captainEV,
+    gVar,
     breakdown,
   };
 }

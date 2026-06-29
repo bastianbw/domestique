@@ -4,8 +4,9 @@ import { useStore, effectiveContracts } from '@/lib/store';
 import { useHydrated } from '@/lib/useHydrated';
 import { StageBar } from './components/StageBar';
 import { RoleIcon, Jersey, CaptainStar, BarMeter, ContribBar, PelotonBanner } from './components/graphics';
-import { projectField } from '@/engine/growth';
+import { projectField, fieldHasOdds } from '@/engine/growth';
 import { optimize } from '@/engine/optimizer';
+import { simulateJoint } from '@/engine/simulate';
 import { forwardValues } from '@/engine/horizon';
 import type { OptimizerInput, RiskPreset, OptimizedTeam } from '@/engine/types';
 import { kr, growth, priceM, ARCHE_LABEL } from '@/lib/format';
@@ -39,6 +40,15 @@ export default function OptimalPage() {
   // Fees only bite once the race has started (initial squad / stage-1 are free).
   const chargeFees = s.loggedStages.length > 0;
 
+  // Joint Monte-Carlo samples for a correlated Etapebonus (no-odds stages only —
+  // when odds drive the marginals the sim samples wouldn't match them).
+  const jointSamples = useMemo(
+    () => (hydrated && !fieldHasOdds(s.riders, s.selectedStage)
+      ? simulateJoint(s.riders, stage, s.config).samples
+      : undefined),
+    [hydrated, s.riders, stage, s.config, s.selectedStage],
+  );
+
   const baseInput = useMemo<OptimizerInput>(() => ({
     stage,
     riders: s.riders,
@@ -50,7 +60,8 @@ export default function OptimalPage() {
     risk: s.risk,
     forwardValueById: forward?.values,
     chargeFees,
-  }), [stage, s.riders, projections, buyingPower, s.currentTeamIds, s.teamType, s.contractsRemaining, s.risk, forward, chargeFees]);
+    jointSamples,
+  }), [stage, s.riders, projections, buyingPower, s.currentTeamIds, s.teamType, s.contractsRemaining, s.risk, forward, chargeFees, jointSamples]);
 
   const recommended = useMemo(() => (hydrated ? optimize(baseInput) : null), [hydrated, baseInput]);
 

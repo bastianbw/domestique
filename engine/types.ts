@@ -165,6 +165,22 @@ export type RiskPreset = 'safe' | 'balanced' | 'aggressive';
 
 export type TeamType = 'guld' | 'basis';
 
+/**
+ * Per-simulation joint samples from the Monte-Carlo stage simulator, used to
+ * score a team's Etapebonus on the EXACT same realisations (so teammate
+ * correlation + break/echelon scenarios are respected, not assumed independent).
+ */
+export interface JointSamples {
+  /** starter ids, indexing the per-sim arrays below */
+  starterIds: string[];
+  /** number of sims */
+  nSims: number;
+  /** top15[s] = starter indices finishing in the top 15 in sim s */
+  top15: number[][];
+  /** winner[s] = starter index of the winner in sim s (−1 if none classified) */
+  winner: number[];
+}
+
 export interface OptimizerInput {
   stage: Stage;
   riders: Rider[];
@@ -186,6 +202,13 @@ export interface OptimizerInput {
    * initial squad and any stage-1 changes are free). Defaults to true.
    */
   chargeFees?: boolean;
+  /**
+   * Optional Monte-Carlo joint samples for the stage. When present, Etapebonus is
+   * scored JOINTLY on these realisations (teammate correlation respected) instead
+   * of the Poisson-binomial independence approximation. Only meaningful when the
+   * projections come from the simulator path (no odds).
+   */
+  jointSamples?: JointSamples;
 }
 
 export interface OptimizedTeam {

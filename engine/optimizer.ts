@@ -11,6 +11,7 @@ import type {
 } from './types';
 import { etapebonus, transferFee } from './rules';
 import { defaultConfig } from './config';
+import { jointEtapebonus } from './simulate';
 
 const TEAM_SIZE = 8;
 const MAX_PER_TEAM = 2;
@@ -40,13 +41,19 @@ interface ScoreContext {
   input: OptimizerInput;
   projById: Map<string, RiderProjection>;
   riderById: Map<string, Rider>;
+  /** rider id → joint-sample starter index (when jointSamples supplied). */
+  sampleIdxById?: Map<string, number>;
 }
 
 function buildContext(input: OptimizerInput): ScoreContext {
+  const sampleIdxById = input.jointSamples
+    ? new Map(input.jointSamples.starterIds.map((id, i) => [id, i] as const))
+    : undefined;
   return {
     input,
     projById: new Map(input.projections.map((p) => [p.riderId, p])),
     riderById: new Map(input.riders.map((r) => [r.id, r])),
+    sampleIdxById,
   };
 }
 
@@ -77,7 +84,21 @@ export function scoreTeam(ctx: ScoreContext, riderIds: string[]): OptimizedTeam 
   }
   const captainBonus = Math.max(0, bestXg);
 
-  const expectedEtape = expectedEtapebonus(projs.map((p) => p.pTop15));
+  // Etapebonus: joint over the sim realisations when samples are supplied (so
+  // teammate correlation + break/echelon scenarios count), else the
+  // Poisson-binomial independence approximation on the marginals.
+  const samples = input.jointSamples;
+  let expectedEtape: number;
+  if (samples && samples.nSims > 0 && ctx.sampleIdxById) {
+    const teamIdx = new Set<number>();
+    for (const id of riderIds) {
+      const i = ctx.sampleIdxById.get(id);
+      if (i !== undefined) teamIdx.add(i);
+    }
+    expectedEtape = jointEtapebonus(teamIdx, samples, etapebonus);
+  } else {
+    expectedEtape = expectedEtapebonus(projs.map((p) => p.pTop15));
+  }
   const expectedHold = projs.reduce((a, p) => a + p.breakdown.holdbonus, 0);
 
   // Transfer fees: 1% of price for any rider NOT already owned — but only once

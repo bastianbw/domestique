@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { optimize, expectedEtapebonus, scoreTeam } from './optimizer';
-import type { Rider, RiderProjection, OptimizerInput, GrowthBreakdown } from './types';
+import type { Rider, RiderProjection, OptimizerInput, GrowthBreakdown, JointSamples } from './types';
 import { getStage } from './stages';
+import { etapebonus } from './rules';
 
 const ZERO_BREAKDOWN: GrowthBreakdown = {
   placement: 0, sprintMtn: 0, gc: 0, jerseys: 0,
@@ -72,6 +73,25 @@ describe('optimizer', () => {
     expect(Object.values(counts).every((c) => c <= 2)).toBe(true);
     // Team A had the best riders → cap should force exactly 2 of them.
     expect(counts['A']).toBe(2);
+  });
+
+  it('scores Etapebonus jointly when sim samples are supplied', () => {
+    const { riders } = makeField();
+    const starterIds = riders.map((r) => r.id);
+    // A FIXED top-15 every sim (first 15 starters) → joint Etapebonus is exactly
+    // etapebonus(count of chosen riders in that set); the Poisson-binomial path
+    // would instead give a smeared, non-tier value.
+    const top15idx = starterIds.map((_, i) => i).slice(0, 15);
+    const nSims = 50;
+    const samples: JointSamples = {
+      starterIds, nSims,
+      top15: Array.from({ length: nSims }, () => [...top15idx]),
+      winner: new Array(nSims).fill(0),
+    };
+    const t = optimize(baseInput({ jointSamples: samples }));
+    const inSet = new Set(top15idx);
+    const chosenInTop15 = t.riderIds.filter((id) => inSet.has(starterIds.indexOf(id))).length;
+    expect(t.expectedEtapebonus).toBeCloseTo(etapebonus(chosenInTop15), 6);
   });
 
   it('respects the budget', () => {

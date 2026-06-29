@@ -14,7 +14,7 @@
 // scenario the front of the field is drawn from a breakaway pool (by breakSkill)
 // and ordered for the win by terrain skill; the bunch fills in behind.
 
-import type { Rider, Stage, RiderDistribution } from './types';
+import type { Rider, Stage, RiderDistribution, JointSamples } from './types';
 import { EngineConfig, defaultConfig } from './config';
 import { riderSkill, breakSkill, riderDnfRisk, buildCoherentField } from './probability';
 import { strengthFromRank } from './features';
@@ -302,17 +302,9 @@ export function buildStackedField(
 }
 
 // ── Joint samples (for correlated team EV: Etapebonus / Holdbonus / captain) ──
-
-export interface JointSamples {
-  /** starter ids, indexing the per-sim arrays below */
-  starterIds: string[];
-  /** number of sims */
-  nSims: number;
-  /** top15[s] = starter indices finishing in the top 15 in sim s */
-  top15: number[][];
-  /** winner[s] = starter index of the winner in sim s (−1 if none classified) */
-  winner: number[];
-}
+// JointSamples lives in ./types (so the optimizer can reference it without a
+// circular import); re-exported here for existing call sites.
+export type { JointSamples };
 
 /**
  * Simulate a stage and return BOTH the marginals and the per-sim joint samples

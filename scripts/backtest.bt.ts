@@ -15,6 +15,7 @@ import type { Rider, Stage, StageType } from '../engine/types';
 import { buildField, calibrateDistribution } from '../engine/probability';
 import { simulateStage, simulateJoint, jointEtapebonus, mulberry32 } from '../engine/simulate';
 import { expectedEtapebonus } from '../engine/optimizer';
+import { projectField } from '../engine/growth';
 import { etapebonus, placementGrowth } from '../engine/rules';
 import {
   classifyArchetype,
@@ -383,6 +384,7 @@ describe.skipIf(!haveData)('2026 structural backtest', () => {
     let simMae = 0;
     let pbSimMae = 0;
     let pbAnaMae = 0;
+    let pbShipMae = 0;
     let n = 0;
 
     for (const s of stages) {
@@ -397,6 +399,8 @@ describe.skipIf(!haveData)('2026 structural backtest', () => {
       const idxById = new Map(samples.starterIds.map((id, i) => [id, i] as const));
       const simTop15 = new Map(simDists.map((d) => [d.riderId, d.probs.slice(0, 15).reduce((a, b) => a + b, 0)]));
       const anaTop15 = new Map(buildField(roster, stage).map((d) => [d.riderId, d.probs.slice(0, 15).reduce((a, b) => a + b, 0)]));
+      // Shipped marginals: the odds-aware default (here no odds → ensemble + γ).
+      const shipTop15 = new Map(projectField(roster, stage).map((p) => [p.riderId, p.pTop15]));
       const realTop15 = new Set(actuals.filter((a) => (a.rank ?? 999) <= 15).map((a) => a.riderId));
 
       const rng = mulberry32(s.stage * 1000 + 7);
@@ -407,6 +411,7 @@ describe.skipIf(!haveData)('2026 structural backtest', () => {
         simMae += Math.abs(jointEtapebonus(teamIdx, samples, etapebonus) - realized);
         pbSimMae += Math.abs(expectedEtapebonus(team.map((r) => simTop15.get(r.id) ?? 0)) - realized);
         pbAnaMae += Math.abs(expectedEtapebonus(team.map((r) => anaTop15.get(r.id) ?? 0)) - realized);
+        pbShipMae += Math.abs(expectedEtapebonus(team.map((r) => shipTop15.get(r.id) ?? 0)) - realized);
         n++;
       }
     }
@@ -416,6 +421,7 @@ describe.skipIf(!haveData)('2026 structural backtest', () => {
       '',
       `=== Etapebonus prediction MAE (DKK) over ${n} sampled legal teams ===`,
       `  sim-joint              ${Math.round(simMae / n).toLocaleString()}`,
+      `  PB on shipped marg.    ${Math.round(pbShipMae / n).toLocaleString()}`,
       `  PB on sim marginals    ${Math.round(pbSimMae / n).toLocaleString()}`,
       `  PB on analytic marg.   ${Math.round(pbAnaMae / n).toLocaleString()}`,
     ].join('\n'));

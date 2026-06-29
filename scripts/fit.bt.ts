@@ -14,7 +14,7 @@ import { buildEnsembleField, buildStackedField, simulateStage } from '../engine/
 import { precisionAtK, scoreStage, aggregateScores, type StageScore } from '../engine/backtest';
 import {
   HIST, dataAvailable, corpusYears, loadCorpus, buildRoster, toStage, usableStage,
-  estimateSuitability, fitLogistic, type Corpus,
+  estimateSuitability, fitLogistic, computeEloAsOf, type Corpus,
 } from './harness';
 import { strengthFromRank, type StageRow2026 } from '../engine/features';
 
@@ -66,14 +66,14 @@ function evalConfig(
   testStages: (StageRow2026 & { year: number })[],
   c: Corpus,
   cfg: EngineConfig,
-  opts: { terrainForm?: boolean; terrainAffinity?: boolean; ensemble?: boolean; gamma?: number; stack?: StackModel },
+  opts: { terrainForm?: boolean; terrainAffinity?: boolean; ensemble?: boolean; gamma?: number; stack?: StackModel; elo?: boolean },
 ): Eval {
   let p5 = 0, p15 = 0, n = 0;
   const scores: StageScore[] = [];
   const gamma = opts.gamma ?? 1;
   for (const s of testStages) {
     if (!usableStage(s)) continue;
-    const { roster, actuals } = buildRoster(s, c, { terrainForm: opts.terrainForm, terrainAffinity: opts.terrainAffinity });
+    const { roster, actuals } = buildRoster(s, c, { terrainForm: opts.terrainForm, terrainAffinity: opts.terrainAffinity, elo: opts.elo });
     if (roster.length < 30) continue;
     const stage = toStage(s);
     const raw = opts.stack
@@ -146,6 +146,7 @@ describe.skipIf(!have)('learn-from-data fit + held-out 2026 validation', () => {
       return;
     }
     const c = loadCorpus(years);
+    computeEloAsOf(c); // chronological as-of dynamic ratings (no leakage)
     const test = c.stages.filter((s) => s.year === testYear);
 
     const base = defaultConfig();
@@ -171,8 +172,8 @@ describe.skipIf(!have)('learn-from-data fit + held-out 2026 validation', () => {
       ['+ terrain form+affinity', evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true })],
       ['+ ensemble (shipped wts)', evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, ensemble: true })],
       [`+ calibration γ=${g} (SHIPPING)`, evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, ensemble: true, gamma: g })],
+      [`+ dynamic Elo rank`, evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, ensemble: true, gamma: g, elo: true })],
       [`(info) logistic stack γ=${g}`, evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, gamma: g, stack })],
-      [`(info) logistic stack γ=1`, evalConfig(test, c, blend, { terrainForm: true, terrainAffinity: true, stack })],
     ];
 
     const lines: string[] = [];

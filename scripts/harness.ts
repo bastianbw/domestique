@@ -20,6 +20,7 @@ import {
 } from '../engine/features';
 import type { ActualFinish } from '../engine/backtest';
 import type { Archetype } from '../engine/types';
+import { priorRating, ratingToRank, updateStage } from '../engine/elo';
 
 export const HIST = path.join(process.cwd(), 'data', 'historical');
 export const MIN_FINISHERS = 30;
@@ -29,6 +30,36 @@ export interface Corpus {
   stages: (StageRow2026 & { year: number })[];
   profile: Map<string, RiderProfile>;
   timeline: Map<string, TimelineEntry[]>;
+  /** as-of dynamic rating per (stage url → rider url), filled by computeEloAsOf. */
+  eloAsOf?: Map<string, Map<string, number>>;
+}
+
+/**
+ * Run the Elo through the corpus in date order and record, for each stage, every
+ * finisher's rating BEFORE that stage updated it (strictly as-of, no leakage).
+ */
+export function computeEloAsOf(c: Corpus): Map<string, Map<string, number>> {
+  const ratings = new Map<string, number>();
+  const asOf = new Map<string, Map<string, number>>();
+  const sorted = [...c.stages].filter((s) => s.date).sort((a, b) => (a.date! < b.date! ? -1 : 1));
+  for (const s of sorted) {
+    const order = s.results
+      .filter((r) => r.rank != null && r.rank >= 1 && r.riderUrl)
+      .sort((a, b) => a.rank! - b.rank!)
+      .map((r) => r.riderUrl!);
+    for (const url of order) {
+      if (!ratings.has(url)) {
+        const prof = c.profile.get(url);
+        ratings.set(url, priorRating(prof ? baselinePcsRank(prof.seasonHistory, s.year) : 900));
+      }
+    }
+    const snap = new Map<string, number>();
+    for (const url of order) snap.set(url, ratings.get(url)!);
+    asOf.set(s.url, snap);
+    updateStage(ratings, order);
+  }
+  c.eloAsOf = asOf;
+  return asOf;
 }
 
 export function corpusYears(): number[] {
@@ -70,7 +101,7 @@ export function dataAvailable(): boolean {
   return fs.existsSync(path.join(HIST, 'riders.json')) && corpusYears().length > 0;
 }
 
-export interface RosterOpts { terrainForm?: boolean; terrainAffinity?: boolean }
+export interface RosterOpts { terrainForm?: boolean; terrainAffinity?: boolean; elo?: boolean }
 
 export function buildRoster(
   s: StageRow2026 & { year: number },
@@ -90,7 +121,11 @@ export function buildRoster(
 
     const prof = row.riderUrl ? c.profile.get(row.riderUrl) : undefined;
     const archetype = prof ? classifyArchetype(prof.speciality) : 'domestique';
-    const pcsRank = prof ? baselinePcsRank(prof.seasonHistory, s.year) : 900;
+    let pcsRank = prof ? baselinePcsRank(prof.seasonHistory, s.year) : 900;
+    if (opts.elo && c.eloAsOf) {
+      const rating = c.eloAsOf.get(s.url)?.get(row.riderUrl ?? '');
+      if (rating !== undefined) pcsRank = ratingToRank(rating); // dynamic rating → rank
+    }
     const tl = (row.riderUrl ? c.timeline.get(row.riderUrl) : undefined) ?? [];
     const past = tl.filter((e) => e.date < asOf);
     const form = computeForm(past, asOf, 45, opts.terrainForm ? (s.ourType as StageType) : undefined);

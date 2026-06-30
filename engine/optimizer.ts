@@ -249,21 +249,37 @@ export function optimize(input: OptimizerInput): OptimizedTeam {
     return result;
   }
 
-  // ── Greedy value-density seed honouring constraints ──
+  // ── Greedy value-density seed (budget-RESERVING so it always reaches 8) ──
+  // Reserve enough for the remaining slots' cheapest riders before committing to
+  // an expensive one — otherwise a few high-density picks (e.g. TT specialists on
+  // an ITT) blow the budget and strand the team below 8.
+  const byPrice = [...pool].sort((a, b) => a.price - b.price);
+  const cheapestSum = (need: number, exclude: Set<string>): number => {
+    if (need <= 0) return 0;
+    let sum = 0; let cnt = 0;
+    for (const c of byPrice) {
+      if (cnt >= need) break;
+      if (exclude.has(c.id)) continue;
+      sum += c.price; cnt += 1;
+    }
+    return cnt >= need ? sum : Infinity; // not enough riders to fill 8
+  };
+
   const chosen: string[] = [];
   const counts: Record<string, number> = {};
   let spend = 0;
   for (const c of pool) {
     if (chosen.length >= TEAM_SIZE) break;
     if ((counts[c.team] ?? 0) >= MAX_PER_TEAM) continue;
-    if (spend + c.price > input.budget) continue;
+    const exclude = new Set(chosen); exclude.add(c.id);
+    const reserve = cheapestSum(TEAM_SIZE - chosen.length - 1, exclude);
+    if (spend + c.price + reserve > input.budget) continue; // would strand < 8
     chosen.push(c.id);
     counts[c.team] = (counts[c.team] ?? 0) + 1;
     spend += c.price;
   }
-  // If greedy under-filled (budget too tight near the end), backfill cheapest.
+  // Guarantee 8: if still short (genuinely tight budget), fill the cheapest legal.
   if (chosen.length < TEAM_SIZE) {
-    const byPrice = [...pool].sort((a, b) => a.price - b.price);
     for (const c of byPrice) {
       if (chosen.length >= TEAM_SIZE) break;
       if (chosen.includes(c.id)) continue;

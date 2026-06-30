@@ -105,6 +105,24 @@ describe('optimizer', () => {
     expect(t.expectedEtapebonus).toBeCloseTo(etapebonus(chosenInTop15), 6);
   });
 
+  it('always fills 8 even when the best-value riders are expensive (ITT regression)', () => {
+    // 4 expensive high-density riders + cheap filler. A non-reserving greedy would
+    // spend the whole 50M on ~5 expensive riders and strand the team below 8.
+    const riders: Rider[] = [];
+    const projections: RiderProjection[] = [];
+    for (let i = 0; i < 4; i++) {
+      riders.push(rider(`X${i}`, `X${i}`, 11_000_000));
+      projections.push(proj(`X${i}`, 400_000)); // very high xG → top value density
+    }
+    for (let i = 0; i < 10; i++) {
+      riders.push(rider(`c${i}`, `c${i}`, 3_000_000));
+      projections.push(proj(`c${i}`, 40_000));
+    }
+    const t = optimize(baseInput({ riders, projections, budget: 50_000_000 }));
+    expect(t.riderIds.length).toBe(8);
+    expect(t.spend).toBeLessThanOrEqual(50_000_000);
+  });
+
   it('respects the budget', () => {
     // 8 riders at 5M each = 40M; budget exactly affords a legal team.
     const t = optimize(baseInput({ budget: 40_000_000 }));

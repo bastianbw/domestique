@@ -50,7 +50,10 @@ describe.skipIf(!have)('build PCS features block', () => {
       const prof = c.profile.get(url);
       const archetype = prof ? classifyArchetype(prof.speciality) : undefined;
       const pcsRank = prof ? baselinePcsRank(prof.seasonHistory, asOfYear) : 300;
-      const form = Math.round(computeForm(tl, AS_OF));
+      // computeForm returns recent finishing quality, which is compressed low for
+      // the bunch (domestiques rarely place). Lift it onto the live app's active-pro
+      // scale (~45-96, like the seed) so contenders aren't over-dampened.
+      const form = Math.max(40, Math.min(96, Math.round(45 + 0.55 * computeForm(tl, AS_OF))));
       const brk = Math.round(breakawayTendency(tl.map((e) => e.breakKm)));
       const terrainAffinity = computeTerrainAffinity(tl.map((e) => ({ type: e.type, rank: e.rank })));
       rows.push({
@@ -63,16 +66,24 @@ describe.skipIf(!have)('build PCS features block', () => {
       });
     }
 
-    // Second pass: team strength = mean rider strength on the team (drives TTT,
-    // sprint trains and Holdbonus). Without it every rider shares the default and
-    // the TTT stage looks uniform.
+    // Second pass: team strength (drives TTT, sprint trains, Holdbonus). A team's
+    // strength is set by its LEADERS, not the mean including domestiques (which
+    // collapses every team to ~20-40 and makes the TTT score ~0 for everyone). Use
+    // the mean of each team's top-3 riders, then rescale ACROSS teams to a realistic
+    // ~50-92 spread so elite teams reach the payout tiers the model expects.
     const byTeam = new Map<string, number[]>();
     for (const r of rows) (byTeam.get(r.team) ?? byTeam.set(r.team, []).get(r.team)!).push(strengthFromRank(r.rank));
-    const ridersOut: FeaturesBlock['riders'] = rows.map(({ team, rank, ...r }) => {
-      const arr = byTeam.get(team)!;
-      const teamStrength = Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
-      return { ...r, teamStrength };
-    });
+    const teamTop3 = new Map<string, number>();
+    for (const [team, arr] of byTeam) {
+      const top = [...arr].sort((a, b) => b - a).slice(0, 3);
+      teamTop3.set(team, top.reduce((a, b) => a + b, 0) / top.length);
+    }
+    const vals = [...teamTop3.values()];
+    const lo = Math.min(...vals); const hi = Math.max(...vals);
+    const scale = (t: number) => hi > lo ? 50 + 42 * (t - lo) / (hi - lo) : 70;
+    const ridersOut: FeaturesBlock['riders'] = rows.map(({ team, rank, ...r }) => ({
+      ...r, teamStrength: Math.round(scale(teamTop3.get(team)!)),
+    }));
 
     const block: FeaturesBlock = { type: 'features', asOf: AS_OF, riders: ridersOut };
     const out = path.join(HIST, '..', 'rider_features.json');

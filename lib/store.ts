@@ -438,14 +438,16 @@ function applyFeatures(
   set: (p: Partial<AppState>) => void,
 ): { ok: boolean; messages: string[] } {
   const st = get();
-  const unmatched: string[] = [];
   const riders = st.riders.map((r) => ({ ...r }));
-  let applied = 0;
+  // A features block is a big DICTIONARY (~750 riders); most won't be in your
+  // field, and that's fine. Report from YOUR field's perspective: how many of
+  // your riders got enriched, and which are still on defaults.
+  const covered = new Set<string>();
   for (const row of block.riders) {
     const m = matchRider(row.rider, riders);
-    if (!m.riderId) { unmatched.push(row.rider); continue; }
+    if (!m.riderId) continue;
+    covered.add(m.riderId);
     const idx = riders.findIndex((r) => r.id === m.riderId);
-    // Patch only the fields the PCS feature block actually carries.
     const patch: Partial<Rider> = {};
     if (row.archetype) patch.archetype = row.archetype;
     if (typeof row.pcsRank === 'number') patch.pcsRank = row.pcsRank;
@@ -456,17 +458,17 @@ function applyFeatures(
     if (typeof row.price === 'number' && row.price > 0) patch.price = row.price;
     if (typeof row.ownershipPct === 'number') patch.ownershipPct = row.ownershipPct;
     riders[idx] = { ...riders[idx], ...patch };
-    applied++;
   }
+  const missing = riders.filter((r) => !covered.has(r.id)).map((r) => r.name);
   set({
     riders,
     importLog: [
-      { at: Date.now(), kind: 'features' as const, stage: undefined, summary: `PCS features for ${applied} riders${block.asOf ? ` (as of ${block.asOf})` : ''}`, unmatched },
+      { at: Date.now(), kind: 'features' as const, stage: undefined, summary: `PCS features: ${covered.size}/${riders.length} of your riders enriched${block.asOf ? ` (as of ${block.asOf})` : ''}`, unmatched: missing },
       ...st.importLog,
     ].slice(0, 50),
   });
-  const messages = [`Applied PCS features to ${applied} riders.`];
-  if (unmatched.length) messages.push(`⚠ Unmatched: ${unmatched.join(', ')}`);
+  const messages = [`Enriched ${covered.size} of your ${riders.length} riders with PCS features.`];
+  if (missing.length) messages.push(`⚠ ${missing.length} still on defaults (name not found): ${missing.slice(0, 40).join(', ')}${missing.length > 40 ? ` …+${missing.length - 40}` : ''}`);
   return { ok: true, messages };
 }
 

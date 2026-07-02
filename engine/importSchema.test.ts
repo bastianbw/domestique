@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseImportBlock, validateBlock } from './importSchema';
+import { parseImportBlock, validateBlock, parsePrice } from './importSchema';
 
 describe('validateBlock — block types', () => {
   it('accepts a weather block', () => {
@@ -50,5 +50,18 @@ describe('parseImportBlock + array elements', () => {
     const parsed = bundle.map((b) => validateBlock(b));
     expect(parsed.every((p) => p.ok)).toBe(true);
     expect(parsed.map((p) => p.block?.type)).toEqual(['stageResult', 'weather']);
+  });
+});
+
+describe('parsePrice — European/Holdet formats', () => {
+  it('handles thousands separators, decimals and units', () => {
+    expect(parsePrice('9.500.000')).toBe(9_500_000);
+    expect(parsePrice('9 500 000')).toBe(9_500_000);
+    expect(parsePrice('9,5 mio')).toBe(9_500_000);
+    expect(parsePrice('9,5M')).toBe(9_500_000);
+    expect(parsePrice('9.5')).toBe(9_500_000);
+    expect(parsePrice('9500000')).toBe(9_500_000);
+    expect(parsePrice('kr 12M')).toBe(12_000_000);
+    expect(parsePrice('750K')).toBe(750_000);
   });
 });

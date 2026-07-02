@@ -220,16 +220,29 @@ export function parseStartlistText(text: string): {
   return { riders, warnings };
 }
 
-/** Parse "9.5M", "9,5M", "9500000", "9.5" → DKK. */
+/**
+ * Parse a price into DKK, tolerant of European/Holdet formats:
+ *   "9.5M", "9,5 mio", "9500000", "9.500.000", "9 500 000", "9,5", "kr 9.5M".
+ * Thousands separators (dot/space between 3-digit groups) are stripped; a lone
+ * comma/dot is a decimal. Bare numbers < 1000 are read as millions.
+ */
 export function parsePrice(raw: string): number | null {
   if (!raw) return null;
-  const s = raw.replace(/\s/g, '').replace(',', '.').toUpperCase();
-  const m = s.match(/^([0-9]*\.?[0-9]+)(M|MIO|K)?$/);
-  if (!m) return null;
-  const n = parseFloat(m[1]);
-  if (Number.isNaN(n)) return null;
-  if (m[2] === 'M' || m[2] === 'MIO') return Math.round(n * 1_000_000);
-  if (m[2] === 'K') return Math.round(n * 1_000);
-  // bare number: if small (<1000) treat as millions, else literal DKK
+  let s = raw.toLowerCase().replace(/\s|kr\.?|dkk/g, '').trim();
+  let unit: '' | 'M' | 'K' = '';
+  if (/(mio|m)$/.test(s)) { unit = 'M'; s = s.replace(/(mio|m)$/, ''); }
+  else if (/k$/.test(s)) { unit = 'K'; s = s.replace(/k$/, ''); }
+  // "9.500.000" / "9,500,000" / "9.500,50" → strip thousands separators.
+  if (/^\d{1,3}([.,]\d{3})+([.,]\d+)?$/.test(s)) {
+    const dec = s.match(/[.,]\d{1,2}$/); // trailing 1-2 digit group = decimal
+    s = dec ? s.slice(0, dec.index).replace(/[.,]/g, '') + '.' + dec[0].slice(1)
+            : s.replace(/[.,]/g, '');
+  } else {
+    s = s.replace(',', '.');
+  }
+  const n = parseFloat(s);
+  if (!Number.isFinite(n)) return null;
+  if (unit === 'M') return Math.round(n * 1_000_000);
+  if (unit === 'K') return Math.round(n * 1_000);
   return n < 1000 ? Math.round(n * 1_000_000) : Math.round(n);
 }

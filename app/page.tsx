@@ -170,6 +170,18 @@ export default function OptimalPage() {
         </div>
       </div>
 
+      {recommended.riderIds.length < 8 && (
+        <div className="card border-polka/40 bg-polka/5 p-4">
+          <p className="text-sm j-polka">
+            ⚠ Your buying power (<span className="mono">{(buyingPower / 1_000_000).toFixed(1)}M</span>) only affords{' '}
+            <span className="mono">{recommended.riderIds.length}</span> riders — the field's cheapest 8 cost more than that.
+          </p>
+          <p className="mt-1 text-[13px] text-chalk-300">
+            Almost always the imported <span className="font-medium">prices are too high</span> (check them on Stages &amp; Data → ④ Edit riders — a top rider should be ~10–12M, not 10,000+). Fix the price column/units in ③, or raise buying power above.
+          </p>
+        </div>
+      )}
+
       <div className="grid gap-4 lg:grid-cols-3">
         {/* recommended team */}
         <div className="card overflow-hidden lg:col-span-2">

@@ -88,6 +88,7 @@ export default function HowPage() {
         </p>
         <Schema title="(a) Results block — after a stage" code={RESULTS_EXAMPLE} />
         <Schema title="(b) Odds block — optional, pre-stage" code={ODDS_EXAMPLE} />
+        <Schema title="(b½) Odds block — TTT stage (e.g. stage 1): market is on the TEAM, use &quot;team&quot; not &quot;rider&quot;" code={TTT_ODDS_EXAMPLE} />
         <Schema title="(c) Startlist block — once, before the Tour" code={STARTLIST_EXAMPLE} />
         <Schema title="(d) Weather block — optional, pre-stage" code={WEATHER_EXAMPLE} />
         <Schema title="(e) News block — optional, pre-stage" code={NEWS_EXAMPLE} />
@@ -150,6 +151,9 @@ const RESULTS_EXAMPLE = `{
 const ODDS_EXAMPLE = `{ "type": "odds", "stage": 8,
   "odds": [ {"rider":"Jasper Philipsen","win":2.5,"top3":1.4,"top5":1.2,"top10":1.05} ] }`;
 
+const TTT_ODDS_EXAMPLE = `{ "type": "odds", "stage": 1,
+  "odds": [ {"team":"UAE Emirates","win":2.1}, {"team":"Visma-LAB","win":3.4} ] }`;
+
 const STARTLIST_EXAMPLE = `{ "type": "startlist",
   "riders": [ {"name":"Jasper Philipsen","team":"Alpecin-Deceuninck","archetype":"sprinter","price":8000000,"form":88,"pcsRank":8} ] }`;
 
@@ -166,6 +170,8 @@ const DAILY_PROMPT = `You are my Tour de France 2026 data assistant for the Hold
 For STAGE N, using ProCyclingStats + public sources, return JSON blocks I can paste
 (one per code block, no prose):
   1. odds       — pre-stage decimal odds (win/top3/top5/top10) for as many riders as you can. REQUIRED if available.
+                  On a TEAM TIME TRIAL stage, the market is on the TEAM — use {"team":"...","win":...} rows instead
+                  of {"rider":"...",...} rows (one row per team, not per rider).
   2. weather    — wind (kph + dir), gustRisk low/med/high, crosswindSections, rainProb %, tempC. OPTIONAL.
   3. news       — per rider: intent (breakaway/gc/sprint), role, motivation, formDelta (-30..30), status (fit/doubt/out). OPTIONAL.
 After the stage finishes, also return:

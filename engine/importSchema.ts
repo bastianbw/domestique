@@ -89,6 +89,28 @@ export function matchRider(name: string, roster: Rider[]): NameMatch {
   return best;
 }
 
+/**
+ * Match a team name against the roster's team names (case/punctuation-tolerant,
+ * e.g. "UAE" vs "UAE Emirates" vs "UAE Emirates - XRG"). Used for TTT team-odds
+ * rows, which apply to every rider on the matched team.
+ */
+export function matchTeam(name: string, roster: Rider[]): string | null {
+  const target = normalizeName(name);
+  if (!target) return null;
+  const teams = [...new Set(roster.map((r) => r.team))];
+
+  let best: { team: string; score: number } = { team: '', score: 0 };
+  for (const team of teams) {
+    const cand = normalizeName(team);
+    let score: number;
+    if (cand === target) score = 1;
+    else if (cand.includes(target) || target.includes(cand)) score = 0.9;
+    else score = 1 - levenshtein(cand, target) / Math.max(cand.length, target.length);
+    if (score > best.score) best = { team, score };
+  }
+  return best.score >= 0.6 ? best.team : null;
+}
+
 export interface ParseResult<T> {
   ok: boolean;
   block?: T;
@@ -150,6 +172,13 @@ function validateOdds(json: any): ParseResult<OddsBlock> {
   const errors: string[] = [];
   if (typeof json.stage !== 'number') errors.push('odds block needs a numeric "stage".');
   if (!Array.isArray(json.odds)) errors.push('odds block needs an "odds" array.');
+  else {
+    json.odds.forEach((r: any, i: number) => {
+      if (typeof r.rider !== 'string' && typeof r.team !== 'string') {
+        errors.push(`odds[${i}] needs a "rider" (or, for a TTT, "team") name.`);
+      }
+    });
+  }
   if (errors.length) return { ok: false, errors };
   return { ok: true, block: json as OddsBlock, errors: [] };
 }

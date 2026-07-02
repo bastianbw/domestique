@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { projectField } from './growth';
+import { projectField, devigTeamWinOdds } from './growth';
 import { buildField } from './probability';
 import type { Rider } from './types';
 import { getStage } from './stages';
@@ -85,6 +85,43 @@ describe('TTT special-case (stage 1)', () => {
     const strP = proj.find((p) => p.riderId === 'str')!;
     expect(strP.breakdown.ttt).toBeGreaterThan(0);
     expect(strP.breakdown.placement).toBe(0);
+  });
+
+  it('devigTeamWinOdds collapses one entry per team (not per rider) before de-vigging', () => {
+    const ttt = getStage(1)!;
+    const a1 = rider({ id: 'a1', archetype: 'rouleur', team: 'A' });
+    const a2 = rider({ id: 'a2', archetype: 'rouleur', team: 'A' });
+    const b1 = rider({ id: 'b1', archetype: 'rouleur', team: 'B' });
+    const withOdds = [a1, a2, b1].map((r) => ({
+      ...r,
+      oddsByStage: { [ttt.stage]: { win: r.team === 'A' ? 1.8 : 4.0 } },
+    }));
+    const probs = devigTeamWinOdds(withOdds, ttt.stage);
+    expect(probs.size).toBe(2); // one entry per TEAM, not per rider
+    expect(probs.get('A')!).toBeGreaterThan(probs.get('B')!);
+    const total = [...probs.values()].reduce((a, b) => a + b, 0);
+    expect(total).toBeCloseTo(1, 4); // de-vigged
+  });
+
+  it('pasted team WIN odds (fanned onto every rider on that team) move a TTT favourite up and a longshot down', () => {
+    const ttt = getStage(1)!;
+    const teamA = rider({ id: 'a1', archetype: 'rouleur', team: 'A', teamStrength: 90 });
+    const teamB = rider({ id: 'b1', archetype: 'rouleur', team: 'B', teamStrength: 90 });
+
+    const noOdds = projectField([teamA, teamB], ttt);
+    const beforeA = noOdds.find((p) => p.riderId === 'a1')!.breakdown.ttt;
+    const beforeB = noOdds.find((p) => p.riderId === 'b1')!.breakdown.ttt;
+    expect(beforeA).toBeCloseTo(beforeB, 4); // identical team strength → identical structural estimate
+
+    const withOdds = [
+      { ...teamA, oddsByStage: { [ttt.stage]: { win: 1.4 } } }, // heavy favourite
+      { ...teamB, oddsByStage: { [ttt.stage]: { win: 9.0 } } }, // longshot
+    ];
+    const proj = projectField(withOdds, ttt);
+    const afterA = proj.find((p) => p.riderId === 'a1')!.breakdown.ttt;
+    const afterB = proj.find((p) => p.riderId === 'b1')!.breakdown.ttt;
+    expect(afterA).toBeGreaterThan(beforeA);
+    expect(afterB).toBeLessThan(beforeB);
   });
 });
 

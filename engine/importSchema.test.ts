@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { parseImportBlock, validateBlock, parsePrice } from './importSchema';
+import { parseImportBlock, validateBlock, parsePrice, matchTeam } from './importSchema';
+import type { Rider } from './types';
 
 describe('validateBlock — block types', () => {
   it('accepts a weather block', () => {
@@ -50,6 +51,36 @@ describe('parseImportBlock + array elements', () => {
     const parsed = bundle.map((b) => validateBlock(b));
     expect(parsed.every((p) => p.ok)).toBe(true);
     expect(parsed.map((p) => p.block?.type)).toEqual(['stageResult', 'weather']);
+  });
+});
+
+describe('odds block — team rows (TTT)', () => {
+  it('accepts a row with "team" instead of "rider"', () => {
+    const r = validateBlock({ type: 'odds', stage: 1, odds: [{ team: 'UAE Emirates', win: 2.1 }] });
+    expect(r.ok).toBe(true);
+  });
+
+  it('rejects a row with neither "rider" nor "team"', () => {
+    const r = validateBlock({ type: 'odds', stage: 1, odds: [{ win: 2.1 }] });
+    expect(r.ok).toBe(false);
+  });
+});
+
+describe('matchTeam', () => {
+  const roster = [
+    { team: 'UAE Emirates - XRG' },
+    { team: 'Visma-LAB' },
+    { team: 'Soudal Quick-Step' },
+  ] as Rider[];
+
+  it('matches an exact and a partial/abbreviated team name', () => {
+    expect(matchTeam('Visma-LAB', roster)).toBe('Visma-LAB');
+    expect(matchTeam('UAE', roster)).toBe('UAE Emirates - XRG');
+    expect(matchTeam('UAE Emirates', roster)).toBe('UAE Emirates - XRG');
+  });
+
+  it('returns null for a team with no reasonable match', () => {
+    expect(matchTeam('Some Random FC', roster)).toBeNull();
   });
 });
 

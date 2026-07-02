@@ -22,7 +22,7 @@ import {
   JERSEY_PAYOUT,
   DNF_PENALTY,
 } from './rules';
-import { buildField, calibrateDistribution } from './probability';
+import { buildField, calibrateDistribution, devigShin, oddsForStage } from './probability';
 import { simulateStage, buildEnsembleField, buildStackedField, DEFAULT_SIM, type SimConfig } from './simulate';
 
 /** P(top-K) from a distribution (positions 1..K). */
@@ -116,8 +116,35 @@ export function expectedHoldbonus(
   );
 }
 
-/** TTT special case: expected Holdtidskørsel growth from team strength. */
-export function expectedTTT(rider: Rider, cfg: EngineConfig): number {
+/**
+ * De-vig pasted TTT WIN odds into per-TEAM implied win probabilities.
+ * On a TTT the whole team shares the result, so odds are pasted once per
+ * team (fanned onto every rider on that team by `applyOdds`) — collapse
+ * back to one entry per team before Shin de-vigging, or a large team would
+ * be double-counted relative to a small one.
+ */
+export function devigTeamWinOdds(riders: Rider[], stageNo: number): Map<string, number> {
+  const byTeam = new Map<string, number | undefined>();
+  for (const r of riders) {
+    if (r.injury === 'out' || byTeam.has(r.team)) continue;
+    byTeam.set(r.team, oddsForStage(r, stageNo)?.win);
+  }
+  const teams = [...byTeam.keys()];
+  const odds = teams.map((t) => byTeam.get(t));
+  if (!odds.some((o) => o && o > 1)) return new Map();
+  const probs = devigShin(odds);
+  const out = new Map<string, number>();
+  teams.forEach((t, i) => { if (probs[i] > 0) out.set(t, probs[i]); });
+  return out;
+}
+
+/**
+ * TTT special case: expected Holdtidskørsel growth. Pasted team WIN odds
+ * (§9 — `{"type":"odds","stage":1,"odds":[{"team":"UAE Emirates","win":2.1}]}`)
+ * are the strongest signal, same as individual-rider markets on other stages;
+ * without them, fall back to the team-strength curve.
+ */
+export function expectedTTT(rider: Rider, cfg: EngineConfig, teamWinProb?: number): number {
   // Map team strength (0..100) to an expected placement payout. Strong teams
   // are likely top-5; weak teams earn nothing. Smooth interpolation.
   const s = rider.teamStrength / 100;
@@ -126,7 +153,22 @@ export function expectedTTT(rider: Rider, cfg: EngineConfig): number {
     tttGrowth(1) * Math.max(0, s - 0.8) * 5 + // top tier
     tttGrowth(3) * Math.max(0, Math.min(1, s) - 0.55) * 2.2 +
     tttGrowth(5) * Math.max(0, Math.min(1, s) - 0.4) * 1.5;
-  return Math.min(tttGrowth(1), Math.max(0, e));
+  const structural = Math.min(tttGrowth(1), Math.max(0, e));
+  if (teamWinProb === undefined) return structural;
+
+  // Odds-anchored: spread the team's win probability across 2nd..5th with a
+  // geometric decay (mirrors how a single-market anchor implies the rest of
+  // an individual rider's curve), then take the expectation over the ladder.
+  // Blended with the structural curve at the same weight individual-rider
+  // odds use, so a thin/one-sided market doesn't fully override team form.
+  const decay = 0.6;
+  const p2 = teamWinProb * decay;
+  const p3 = p2 * decay;
+  const p4 = p3 * decay;
+  const p5 = p4 * decay;
+  const oddsExpectation =
+    tttGrowth(1) * teamWinProb + tttGrowth(2) * p2 + tttGrowth(3) * p3 + tttGrowth(4) * p4 + tttGrowth(5) * p5;
+  return cfg.oddsAnchorWeight * oddsExpectation + (1 - cfg.oddsAnchorWeight) * structural;
 }
 
 export function projectRider(
@@ -134,6 +176,7 @@ export function projectRider(
   stage: Stage,
   dist: RiderDistribution,
   cfg: EngineConfig = defaultConfig(),
+  teamWinProb?: number,
 ): RiderProjection {
   const isTTT = stage.type === 'ttt';
 
@@ -147,7 +190,7 @@ export function projectRider(
 
   if (isTTT) {
     // TTT REPLACES Etapeplacering, Holdbonus, Sen ankomst, Etapebonus.
-    ttt = expectedTTT(rider, cfg);
+    ttt = expectedTTT(rider, cfg, teamWinProb);
     gc = gcGrowth(rider.gcPosition); // GC bonus still applies
   } else {
     placement = expectedPlacement(dist);
@@ -261,5 +304,8 @@ export function projectField(
   // Post-hoc probability calibration (γ=1 → identity).
   const cal = dists.map((d) => calibrateDistribution(d, cfg.calibrationGamma));
   const byId = new Map(cal.map((d) => [d.riderId, d]));
-  return riders.map((r) => projectRider(r, stage, byId.get(r.id)!, cfg));
+  // TTT: pasted team WIN odds (fanned onto every rider on that team) anchor
+  // expectedTTT the same way individual-rider odds anchor other stages.
+  const teamWinProbs = stage.type === 'ttt' ? devigTeamWinOdds(riders, stage.stage) : undefined;
+  return riders.map((r) => projectRider(r, stage, byId.get(r.id)!, cfg, teamWinProbs?.get(r.team)));
 }

@@ -18,7 +18,7 @@ import {
   computeStageGrowth, applyToTeam, rollPrice,
 } from '@/engine/resultLogger';
 import { calibrate, CalibrationReport } from '@/engine/calibration';
-import { matchRider, parseImportBlock, validateBlock } from '@/engine/importSchema';
+import { matchRider, matchTeam, parseImportBlock, validateBlock } from '@/engine/importSchema';
 
 export interface Snapshot {
   id: string;
@@ -406,12 +406,11 @@ function applyOdds(
   const st = get();
   const unmatched: string[] = [];
   const riders = st.riders.map((r) => ({ ...r }));
-  for (const row of block.odds) {
-    const m = matchRider(row.rider, riders);
-    if (!m.riderId) { unmatched.push(row.rider); continue; }
-    const idx = riders.findIndex((r) => r.id === m.riderId);
-    // Store under the block's stage so the market only anchors THAT stage —
-    // never another profile or the forward-horizon projection of later stages.
+  let appliedRiders = 0;
+
+  // Store under the block's stage so the market only anchors THAT stage —
+  // never another profile or the forward-horizon projection of later stages.
+  const applyToIdx = (idx: number, row: RiderOdds) => {
     riders[idx] = {
       ...riders[idx],
       oddsByStage: {
@@ -419,15 +418,35 @@ function applyOdds(
         [block.stage]: { win: row.win, top3: row.top3, top5: row.top5, top10: row.top10 },
       },
     };
+    appliedRiders++;
+  };
+
+  for (const row of block.odds) {
+    if ('team' in row && row.team) {
+      // TTT: the bookmaker's market is on the team, not the rider — fan the
+      // same odds onto every rider on the matched team.
+      const team = matchTeam(row.team, riders);
+      if (!team) { unmatched.push(row.team); continue; }
+      riders.forEach((r, idx) => { if (r.team === team) applyToIdx(idx, row); });
+      continue;
+    }
+    if ('rider' in row && row.rider) {
+      const m = matchRider(row.rider, riders);
+      if (!m.riderId) { unmatched.push(row.rider); continue; }
+      applyToIdx(riders.findIndex((r) => r.id === m.riderId), row);
+      continue;
+    }
+    unmatched.push('(row missing rider/team)');
   }
+
   set({
     riders,
     importLog: [
-      { at: Date.now(), kind: 'odds' as const, stage: block.stage, summary: `Odds for stage ${block.stage}: ${block.odds.length} riders`, unmatched },
+      { at: Date.now(), kind: 'odds' as const, stage: block.stage, summary: `Odds for stage ${block.stage}: ${appliedRiders} riders`, unmatched },
       ...st.importLog,
     ].slice(0, 50),
   });
-  const messages = [`Applied odds for ${block.odds.length - unmatched.length} riders on stage ${block.stage}.`];
+  const messages = [`Applied odds for ${appliedRiders} riders on stage ${block.stage}.`];
   if (unmatched.length) messages.push(`⚠ Unmatched: ${unmatched.join(', ')}`);
   return { ok: true, messages };
 }

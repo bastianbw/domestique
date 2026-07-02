@@ -265,7 +265,12 @@ export interface StageResultBlock {
 export interface OddsBlock {
   type: 'odds';
   stage: number;
-  odds: Array<{ rider: string } & RiderOdds>;
+  /**
+   * Either a per-rider row, or (for a TTT, where the bookmaker's market is on
+   * the TEAM, not individual riders) a `team` row — fanned onto every rider
+   * on that team for this stage by `applyOdds`.
+   */
+  odds: Array<({ rider: string } | { team: string }) & RiderOdds>;
 }
 
 export interface StartlistBlock {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { projectField, devigTeamWinOdds } from './growth';
+import { projectField, devigTeamWinOdds, expectedGcGrowth } from './growth';
 import { buildField } from './probability';
-import type { Rider } from './types';
+import type { Rider, RiderDistribution } from './types';
 import { getStage } from './stages';
 
 function rider(partial: Partial<Rider> & Pick<Rider, 'id' | 'archetype'>): Rider {
@@ -132,5 +132,63 @@ describe('injury handling', () => {
     const o = proj.find((p) => p.riderId === 'out')!;
     expect(o.pWin).toBe(0);
     expect(Math.abs(o.xG)).toBeLessThan(1);
+  });
+});
+
+describe('expectedGcGrowth — projected GC shift on GC-relevant terrain', () => {
+  const summit = getStage(6)!; // summit finish
+  const flat = getStage(7)!;
+
+  // A tiny distribution helper: nearly all mass on finishing position `winAt`.
+  function distAt(id: string, winAt: number, n = 20): RiderDistribution {
+    const probs = new Array(n).fill(0);
+    probs[winAt - 1] = 0.9;
+    return { riderId: id, probs, pDNF: 0.02 };
+  }
+
+  it('is identical to the static lookup off GC-relevant terrain (flat)', () => {
+    const strong = rider({ id: 'a', archetype: 'gc', gcPosition: 2 });
+    const weak = rider({ id: 'b', archetype: 'gc', gcPosition: 12 });
+    const byId = new Map([[strong.id, distAt('a', 1)], [weak.id, distAt('b', 20)]]);
+    const out = expectedGcGrowth([strong, weak], flat, byId);
+    expect(out.get('a')).toBe(90_000); // GC_TABLE[2]
+    expect(out.get('b')).toBe(0); // GC_TABLE has no entry beyond 10
+  });
+
+  it('a currently-out-of-the-money rider projected to ride away from the cohort gets real expected GC value', () => {
+    // "Carapaz currently 12th, but climbing away from the group today."
+    const climbingAway = rider({ id: 'riding-away', archetype: 'climber', gcPosition: 12 });
+    const restOfCohort = ['c1', 'c2', 'c3', 'c4'].map((id, i) =>
+      rider({ id, archetype: 'gc', gcPosition: i + 1 }),
+    );
+    const byId = new Map<string, RiderDistribution>([
+      ['riding-away', distAt('riding-away', 1)], // best projected performer today
+      ...restOfCohort.map((r, i) => [r.id, distAt(r.id, i + 10)] as const), // mid-pack today
+    ]);
+    const out = expectedGcGrowth([climbingAway, ...restOfCohort], summit, byId);
+    expect(out.get('riding-away')!).toBeGreaterThan(0); // was a hard 0 under the static lookup
+  });
+
+  it('a strong current leader projected to fade regresses below the static lookup', () => {
+    const fading = rider({ id: 'fading', archetype: 'gc', gcPosition: 1 });
+    const strong = ['s1', 's2', 's3', 's4'].map((id, i) =>
+      rider({ id, archetype: 'gc', gcPosition: i + 6 }),
+    );
+    const byId = new Map<string, RiderDistribution>([
+      ['fading', distAt('fading', 20)], // worst projected performer today
+      ...strong.map((r, i) => [r.id, distAt(r.id, i + 1)] as const),
+    ]);
+    const out = expectedGcGrowth([fading, ...strong], summit, byId);
+    expect(out.get('fading')!).toBeLessThan(100_000); // GC_TABLE[1], the static value
+  });
+
+  it('wires into projectField end-to-end: a strong projected performer just outside the top 10 gets nonzero GC xG on a summit finish', () => {
+    const contender = rider({ id: 'contender', archetype: 'climber', gcPosition: 11, pcsRank: 5, form: 92 });
+    const others = Array.from({ length: 14 }, (_, i) =>
+      rider({ id: `gc${i}`, archetype: 'gc', gcPosition: i < 10 ? i + 1 : undefined, pcsRank: 40 + i, form: 60 }),
+    );
+    const proj = projectField([contender, ...others], summit);
+    const c = proj.find((p) => p.riderId === 'contender')!;
+    expect(c.breakdown.gc).toBeGreaterThan(0);
   });
 });

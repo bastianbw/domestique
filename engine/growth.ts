@@ -7,6 +7,7 @@
 import type {
   Rider,
   Stage,
+  StageType,
   RiderDistribution,
   RiderProjection,
   GrowthBreakdown,
@@ -93,6 +94,75 @@ export function expectedLateArrival(
   return Math.max(0, pBack) * lateArrival(typicalGapSeconds);
 }
 
+/** Stage types where GC materially reshuffles (meaningful time gaps open). */
+const GC_RELEVANT_TYPES = new Set<StageType>(['summit', 'high_mtn', 'hilly_itt']);
+
+/** Smoothed GC_TABLE expectation around a (possibly fractional) position — a
+ * rider projected right at the top-10 cutoff gets partial credit, not the
+ * all-or-nothing a rounded lookup would give. */
+function gcExpectationAtPosition(effectivePos: number, spread: number): number {
+  let sum = 0;
+  let wsum = 0;
+  for (let p = 1; p <= 15; p++) {
+    const w = Math.exp(-((p - effectivePos) ** 2) / (2 * spread * spread));
+    sum += w * gcGrowth(p);
+    wsum += w;
+  }
+  return wsum > 0 ? sum / wsum : 0;
+}
+
+/**
+ * Expected GC-position growth — PROJECTS how a rider's GC standing likely
+ * shifts on this stage instead of freezing it at their pre-stage position.
+ * The static `gcGrowth(rider.gcPosition)` misses real value both ways: a
+ * strong contender projected to gain time (take yellow, move up the top 10)
+ * has upside a fixed lookup can't see, and a rider just outside the paying
+ * positions (11+) who's a live threat to crack the top 10 gets a hard zero
+ * instead of a real (smaller) expectation.
+ *
+ * Only applied on GC-relevant terrain (summit/high_mtn/hilly_itt — where
+ * gaps actually open); elsewhere this returns exactly the static lookup
+ * (GC essentially doesn't move on a flat/hilly/TTT day beyond bonus seconds,
+ * which aren't modelled here either way, so behaviour there is unchanged).
+ *
+ * Model: among riders who currently hold a GC position, rank them by their
+ * OWN projected stage strength (pTopK(dist,15) — a proxy for "how well are
+ * they racing right now"). A rider projected to outperform their current GC
+ * rank on THIS stage shifts toward the front (bounded — a single stage can't
+ * flip the whole GC); one projected to underperform regresses back. Take the
+ * GC_TABLE expectation over a spread of positions around that shifted rank,
+ * not a single rounded point.
+ */
+export function expectedGcGrowth(
+  riders: Rider[],
+  stage: Stage,
+  distById: Map<string, RiderDistribution>,
+): Map<string, number> {
+  const out = new Map<string, number>();
+  const cohort = riders.filter((r) => typeof r.gcPosition === 'number' && r.injury !== 'out');
+  if (!GC_RELEVANT_TYPES.has(stage.type) || cohort.length < 2) {
+    for (const r of cohort) out.set(r.id, gcGrowth(r.gcPosition));
+    return out;
+  }
+
+  // "Stage rank" = this rider's rank AMONG THE COHORT by projected stage
+  // strength (1 = strongest projected performer today).
+  const byStrength = [...cohort].sort(
+    (a, b) => pTopK(distById.get(b.id)!, 15) - pTopK(distById.get(a.id)!, 15),
+  );
+  const stageRank = new Map<string, number>();
+  byStrength.forEach((r, i) => stageRank.set(r.id, i + 1));
+
+  const SHIFT_WEIGHT = 0.35; // how much a single hard stage can move GC — bounded, not a reshuffle
+  const SPREAD = 2.2;
+
+  for (const r of cohort) {
+    const effective = (1 - SHIFT_WEIGHT) * r.gcPosition! + SHIFT_WEIGHT * stageRank.get(r.id)!;
+    out.set(r.id, gcExpectationAtPosition(effective, SPREAD));
+  }
+  return out;
+}
+
 /**
  * Expected Holdbonus: paid to all riders on a team that places top-3 on the
  * stage. We approximate the team's chance of a podium-team result from the
@@ -177,6 +247,7 @@ export function projectRider(
   dist: RiderDistribution,
   cfg: EngineConfig = defaultConfig(),
   teamWinProb?: number,
+  gcExpectation?: number,
 ): RiderProjection {
   const isTTT = stage.type === 'ttt';
 
@@ -191,12 +262,12 @@ export function projectRider(
   if (isTTT) {
     // TTT REPLACES Etapeplacering, Holdbonus, Sen ankomst, Etapebonus.
     ttt = expectedTTT(rider, cfg, teamWinProb);
-    gc = gcGrowth(rider.gcPosition); // GC bonus still applies
+    gc = gcExpectation ?? gcGrowth(rider.gcPosition); // GC bonus still applies
   } else {
     placement = expectedPlacement(dist);
     const contendShare = pTopK(dist, 15);
     sprintMtn = expectedPoints(rider, stage, contendShare, cfg);
-    gc = gcGrowth(rider.gcPosition);
+    gc = gcExpectation ?? gcGrowth(rider.gcPosition);
     hold = expectedHoldbonus(rider, dist);
     late = expectedLateArrival(rider, stage, dist);
   }
@@ -307,5 +378,10 @@ export function projectField(
   // TTT: pasted team WIN odds (fanned onto every rider on that team) anchor
   // expectedTTT the same way individual-rider odds anchor other stages.
   const teamWinProbs = stage.type === 'ttt' ? devigTeamWinOdds(riders, stage.stage) : undefined;
-  return riders.map((r) => projectRider(r, stage, byId.get(r.id)!, cfg, teamWinProbs?.get(r.team)));
+  // GC-relevant stages: project each contender's likely GC shift instead of
+  // freezing their pre-stage position (see expectedGcGrowth).
+  const gcExpectations = expectedGcGrowth(riders, stage, byId);
+  return riders.map((r) =>
+    projectRider(r, stage, byId.get(r.id)!, cfg, teamWinProbs?.get(r.team), gcExpectations.get(r.id)),
+  );
 }

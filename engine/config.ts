@@ -65,8 +65,21 @@ export const ODDS_ANCHOR_WEIGHT = 0.7;
  * 2-3 rider market) doesn't read as a near-certainty across Win/Top5/Top15, and
  * unpriced riders don't collapse onto a flat fallback. A normally-priced field
  * (≥ this fraction) is unaffected; odds remain the dominant signal.
+ *
+ * CORRECTED (2026-07): was 0.35 — unreachable in practice at the real 184-rider
+ * field (FIELD_SIZE). A bookmaker never prices the whole field, only genuine
+ * contenders (realistically ~20-40 names even for a wide-open stage), so even a
+ * THOROUGH odds paste (~30 riders) only reached 30/184≈0.16 coverage → wOdds≈0.47,
+ * diluting a rider's own priced odds by more than half. Confirmed on a real
+ * scenario: a bookmaker top-3 breakaway favourite (win 8.0, ~12.5% implied) came
+ * out at pWin 0.013 and 5x LOWER xG under the old threshold vs. odds fully
+ * trusted — the exact "odds pasted but barely moves anything" symptom reported
+ * live. This constant can't be backtested (no historical odds data exists, per
+ * §0 of the design doc) — 0.15 is chosen so a realistic ~30-rider sheet reaches
+ * full trust while a thin 2-3-rider market (the guard's original protective
+ * case) stays meaningfully damped (coverage ~0.01-0.05 → wOdds ~0.1-0.3).
  */
-export const ODDS_COVERAGE_REF = 0.35;
+export const ODDS_COVERAGE_REF = 0.15;
 
 /** Form / PCS rank / team-strength blend for shaping the non-odds curve. */
 export const SIGNAL_WEIGHTS = {

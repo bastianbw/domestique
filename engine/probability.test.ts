@@ -118,4 +118,27 @@ describe('sparse-odds guard', () => {
     const dists = buildField(field, flat);
     for (const d of dists) expect(d.probs[0]).toBeCloseTo(1 / 12, 4);
   });
+
+  it('a realistic ~184-rider field with a THOROUGH ~30-rider odds sheet is not still heavily diluted', () => {
+    // Confirmed live: at the old ODDS_COVERAGE_REF=0.35, a bookmaker top-3
+    // breakaway favourite (win 8.0) came out ~5x lower xG than with odds fully
+    // trusted, because a bookmaker never prices the WHOLE field (only genuine
+    // contenders) — 30/184 coverage only reached wOdds≈0.47 under the old
+    // threshold. A rider priced as a live favourite should still read as
+    // meaningfully live, not mostly-discarded, once ~30 real contenders are priced.
+    // Realistic decimal odds: one clear favourite (implied 40%) + 29 longer
+    // shots sharing the rest, summing to a believable ~10% bookmaker overround.
+    const priced = [
+      rider('fav', { win: 2.5 }), // implied 40%
+      ...Array.from({ length: 29 }, (_, i) => rider(`priced${i}`, { win: 40 })), // implied ~2.5% each
+    ];
+    const unpriced = Array.from({ length: 154 }, (_, i) => rider(`u${i}`));
+    const field = [...priced, ...unpriced];
+    const dists = buildField(field, flat);
+    const favourite = dists.find((d) => d.riderId === 'fav')!;
+    // Shin de-vig removes the ~10% overround, so the favourite's true win
+    // chance should land close to its 40% implied — not the ~15-25% a
+    // heavily-diluted blend toward the flat structural prior would produce.
+    expect(favourite.probs[0]).toBeGreaterThan(0.32);
+  });
 });

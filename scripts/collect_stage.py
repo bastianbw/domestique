@@ -19,13 +19,20 @@ Usage:
   python collect_stage.py --year 2025 --stage 7 --print   # validate / preview
 """
 from __future__ import annotations
-import argparse, json, os, sys, unicodedata
+import argparse, json, os, sys, time, unicodedata
+from urllib.parse import quote
 
 import requests
 from procyclingstats import Stage
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
+BROWSER_HEADERS = {
+    "User-Agent": UA,
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Referer": "https://www.procyclingstats.com/races.php",
+}
 
 # Estimated green-jersey points by finishing position for the FINISH only
 # (intermediate sprints not included). Keyed by a coarse profile bucket.
@@ -35,10 +42,40 @@ GREEN_MTN  = [20, 17, 15, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
 
 
 def fetch(rel_url: str) -> Stage:
-    """Fetch a PCS page with a browser UA and return a parser bound to it."""
-    html = requests.get("https://www.procyclingstats.com/" + rel_url,
-                        headers={"User-Agent": UA}, timeout=30).text
-    return Stage(rel_url, html=html, update_html=False)
+    """Fetch a PCS page and return a parser bound to it.
+
+    PCS occasionally rate-limits/blocks the GitHub Actions runner's IP outright
+    (a blocked/interstitial response with no <title>, not a clean HTTP error) even
+    with a browser User-Agent. We retry directly with backoff, then fall back to
+    a public read-proxy (same raw HTML, different egress IP) before giving up —
+    and report exactly why on final failure instead of the library's generic
+    "Page title not found" parsing traceback.
+    """
+    target = "https://www.procyclingstats.com/" + rel_url
+    status, html = None, ""
+
+    for attempt in range(3):
+        if attempt:
+            time.sleep(4 * attempt)
+        resp = requests.get(target, headers=BROWSER_HEADERS, timeout=30)
+        status, html = resp.status_code, resp.text
+        if "<title" in html.lower():
+            return Stage(rel_url, html=html, update_html=False)
+
+    try:
+        proxied = "https://api.allorigins.win/raw?url=" + quote(target, safe="")
+        resp = requests.get(proxied, headers={"User-Agent": UA}, timeout=30)
+        status, html = resp.status_code, resp.text
+        if "<title" in html.lower():
+            return Stage(rel_url, html=html, update_html=False)
+    except requests.RequestException:
+        pass
+
+    raise RuntimeError(
+        f"PCS fetch for {rel_url} returned no <title> after direct + proxied attempts "
+        f"(last HTTP {status}, {len(html)} bytes) — looks bot-blocked, not a bad URL. "
+        f"Paste the stage result manually instead. First 200 chars: {html[:200]!r}"
+    )
 
 
 def norm(name: str) -> str:

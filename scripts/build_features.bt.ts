@@ -76,7 +76,7 @@ describe.skipIf(!have)('build PCS features block', () => {
       const individualTl = tl.filter((e) => e.type !== 'ttt');
       const form = Math.max(40, Math.min(96, Math.round(45 + 0.55 * computeForm(individualTl, AS_OF))));
       const brk = Math.round(breakawayTendency(tl.map((e) => e.breakKm)));
-      const terrainAffinity = computeTerrainAffinity(tl.map((e) => ({ type: e.type, rank: e.rank })));
+      const terrainAffinity = computeTerrainAffinity(tl.map((e) => ({ type: e.type, rank: e.rank, level: e.level })));
       rows.push({
         rider: name, team, rank: pcsRank,
         ...(archetype ? { archetype } : {}),

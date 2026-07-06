@@ -216,36 +216,64 @@ const TERRAIN_FAMILY: Record<StageType, 'flat' | 'hilly' | 'mountain' | 'tt'> = 
   ttt: 'tt', hilly_itt: 'tt',
 };
 
-export interface TerrainResult { type?: StageType | null; rank?: number | null }
+export interface TerrainResult { type?: StageType | null; rank?: number | null; level?: number | null }
+
+/**
+ * Race-strength weight from PCS startlist quality: a result at Tour-level
+ * depth (SQ ~1700+) counts for meaningfully more than the same finish at a
+ * merely-solid race (a Giro-tier SQ ~900-1000), so a rider whose best mountain
+ * results all came against a shallower field (e.g. a Giro run in a year the
+ * strongest climbers rode the Tour instead) doesn't get the same terrain
+ * multiplier as one who did it against the Tour's own depth. Deliberately a
+ * WIDER range than computeForm's clamp(level/1000, 0.3, 1) — that ceiling was
+ * tuned to gently damp recent-form noise, but a hard cap at 1.0 flattens
+ * exactly the Tour-vs-Giro gap this is meant to capture (both would round to
+ * ~1.0), so this keeps a real top end up to double the Tour's own SQ.
+ */
+function raceStrengthWeight(level?: number | null): number {
+  return level && level > 0 ? clamp(level / 1000, 0.3, 2) : 0.7;
+}
 
 /**
  * Learn a per-stage-type skill multiplier from a rider's OWN past results: how
  * much better/worse they finish on each terrain family vs their overall level,
- * empirical-Bayes shrunk toward 1 by sample count. Returns a multiplier per
- * StageType (neutral families omitted). Personalises within an archetype — a
- * sprinter who climbs well lifts on mountains; a pure sprinter sinks.
+ * empirical-Bayes shrunk toward 1 by (race-strength-weighted) sample count.
+ * Returns a multiplier per StageType (neutral families omitted). Personalises
+ * within an archetype — a sprinter who climbs well lifts on mountains; a pure
+ * sprinter sinks.
  */
 export function computeTerrainAffinity(results: TerrainResult[]): Partial<Record<StageType, number>> {
-  const valid = results.filter((r) => r.type && r.rank != null && r.rank >= 1) as Array<{ type: StageType; rank: number }>;
+  const valid = results.filter((r) => r.type && r.rank != null && r.rank >= 1) as Array<{ type: StageType; rank: number; level?: number | null }>;
   if (valid.length < TERRAIN_AFFINITY_PRIOR) return {}; // too thin → trust the archetype prior
 
+  // The rider's own baseline level is intentionally UNWEIGHTED — a stable
+  // reference point to compare each family against. If race strength reweighted
+  // this too, emphasising one family's evidence would also drag the baseline
+  // toward that same family, muting rather than amplifying the very gap this
+  // is meant to capture (a bigger mountain weight pulls "overall" toward the
+  // mountain mean, shrinking mountain/overall back toward 1 — the opposite of
+  // trusting a Tour-level result more).
   const overall = valid.reduce((a, r) => a + positionQuality(r.rank), 0) / valid.length;
   if (overall <= 1e-6) return {};
 
-  const byFam = new Map<string, { sum: number; n: number }>();
+  const byFam = new Map<string, { sum: number; wsum: number }>();
   for (const r of valid) {
     const fam = TERRAIN_FAMILY[r.type];
-    const acc = byFam.get(fam) ?? { sum: 0, n: 0 };
-    acc.sum += positionQuality(r.rank);
-    acc.n += 1;
+    const w = raceStrengthWeight(r.level);
+    const acc = byFam.get(fam) ?? { sum: 0, wsum: 0 };
+    acc.sum += w * positionQuality(r.rank);
+    acc.wsum += w;
     byFam.set(fam, acc);
   }
 
   const famMult = new Map<string, number>();
-  for (const [fam, { sum, n }] of byFam) {
-    const mean = sum / n;
-    // shrink the family mean toward the rider's overall level, then ratio it.
-    const shrunk = (n * mean + TERRAIN_AFFINITY_PRIOR * overall) / (n + TERRAIN_AFFINITY_PRIOR);
+  for (const [fam, { sum, wsum }] of byFam) {
+    if (wsum <= 0) continue;
+    const mean = sum / wsum;
+    // shrink the family mean toward the rider's overall level (weighted sample
+    // size, so a few Tour-level results are trusted more than the same COUNT
+    // of results from a weaker field), then ratio it.
+    const shrunk = (wsum * mean + TERRAIN_AFFINITY_PRIOR * overall) / (wsum + TERRAIN_AFFINITY_PRIOR);
     famMult.set(fam, clamp(shrunk / overall, TERRAIN_AFFINITY_CLAMP[0], TERRAIN_AFFINITY_CLAMP[1]));
   }
 

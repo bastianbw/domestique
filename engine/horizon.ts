@@ -5,7 +5,7 @@
 
 import type { Rider, Stage } from './types';
 import { EngineConfig, defaultConfig, DEFAULT_HORIZON_DEPTH } from './config';
-import { projectField } from './growth';
+import { projectField, GC_RELEVANT_TYPES } from './growth';
 import { transferFee } from './rules';
 import { autoHorizonDepth } from './stages';
 
@@ -57,10 +57,46 @@ export function horizonValues(
 }
 
 /**
+ * A GC contender's edge isn't a fresh day-to-day gamble like a stage-hunter's
+ * — it's a persistent asset (holding a strong classification position keeps
+ * paying out on every remaining GC-relevant stage to Paris, plus the final
+ * overall). The block-capped near-term horizon below (autoHorizonDepth, capped
+ * at 4) exists to stop FAR stage-win speculation from dominating the score —
+ * reasonable for one-off stage-hunter value, which is genuinely front-loaded
+ * and hard to project. But that same cap also hides a proven GC favourite's
+ * value on every mountain stage past the next few days, which for a 21-stage
+ * race is most of it. This adds that back as a separate term over the WHOLE
+ * remaining route (not just the current block), discounted more gently than
+ * per-stage form/odds risk since GC contention is far more persistent than
+ * day-to-day stage form. Only counts stages beyond what the near-term horizon
+ * already covers, so nothing is double-counted.
+ */
+function wholeRaceGcValue(
+  riders: Rider[],
+  farStages: Stage[],
+  fromStage: number,
+  cfg: EngineConfig,
+): Record<string, number> {
+  const relevant = farStages.filter((s) => GC_RELEVANT_TYPES.has(s.type));
+  const out: Record<string, number> = {};
+  const gcDiscount = Math.sqrt(cfg.horizonDiscount); // decays slower than the per-stage discount
+  for (const s of relevant) {
+    const projs = projectField(riders, s, cfg);
+    const discount = Math.pow(gcDiscount, s.stage - fromStage);
+    for (const p of projs) {
+      out[p.riderId] = (out[p.riderId] ?? 0) + discount * p.breakdown.gc;
+    }
+  }
+  return out;
+}
+
+/**
  * Forward-looking selection value per rider for the optimizer: the discounted
  * sum of projected xG from `fromStage` to the next rest day (auto depth — no
- * user knob). Feed the result into OptimizerInput.forwardValueById so the squad
- * is chosen for the rest of the current block, not just today.
+ * user knob), PLUS a gently-discounted whole-race GC value for the mountain/
+ * ITT stages beyond that block (see wholeRaceGcValue). Feed the result into
+ * OptimizerInput.forwardValueById so the squad is chosen for the rest of the
+ * current block AND a proven GC favourite's season-long value, not just today.
  */
 export function forwardValues(
   riders: Rider[],
@@ -71,8 +107,10 @@ export function forwardValues(
   const upcoming = allStages.filter((s) => s.stage >= fromStage);
   const depth = autoHorizonDepth(fromStage);
   const hv = horizonValues(riders, upcoming, cfg, depth);
+  const nearTermEnd = fromStage + depth; // first stage NOT already covered by hv
+  const farGc = wholeRaceGcValue(riders, allStages.filter((s) => s.stage >= nearTermEnd), fromStage, cfg);
   const values: Record<string, number> = {};
-  for (const id of Object.keys(hv)) values[id] = hv[id].value;
+  for (const id of Object.keys(hv)) values[id] = hv[id].value + (farGc[id] ?? 0);
   return { values, hv, depth, stages: upcoming.slice(0, depth).map((s) => s.stage) };
 }
 

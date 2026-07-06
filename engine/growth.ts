@@ -95,7 +95,7 @@ export function expectedLateArrival(
 }
 
 /** Stage types where GC materially reshuffles (meaningful time gaps open). */
-const GC_RELEVANT_TYPES = new Set<StageType>(['summit', 'high_mtn', 'hilly_itt']);
+export const GC_RELEVANT_TYPES = new Set<StageType>(['summit', 'high_mtn', 'hilly_itt']);
 
 /** Smoothed GC_TABLE expectation around a (possibly fractional) position — a
  * rider projected right at the top-10 cutoff gets partial credit, not the

@@ -193,6 +193,55 @@ function isLegal(
 }
 
 /**
+ * Greedy local search from `seed`: try replacing each held rider with each
+ * pool rider, keep any swap that improves the score. When `minSwapConfidence`
+ * is set (> 0) and forward value/variance data is available, ALSO require
+ * that specific swap (whichever rider currently sits in that slot → the
+ * candidate) to individually clear the confidence bar before accepting it —
+ * not just the final bundle in aggregate. That distinction matters: several
+ * individually-marginal swaps can look statistically confident when SUMMED
+ * together (their combined edge grows faster than their combined uncertainty),
+ * which would let a bundle sneak past an aggregate-only check even though one
+ * specific swap inside it (e.g. selling a proven favourite) isn't actually
+ * something we're sure about on its own.
+ */
+function localSearch(
+  ctx: ScoreContext,
+  seed: string[],
+  poolIds: string[],
+  minSwapConfidence: number,
+): string[] {
+  const { input, riderById } = ctx;
+  const gateConfidence = minSwapConfidence > 0 && !!input.forwardValueById && !!input.forwardVarianceById;
+  let current = [...seed];
+  let currentScore = scoreTeam(ctx, current).score;
+  let improved = true;
+  let guard = 0;
+  while (improved && guard++ < 50) {
+    improved = false;
+    for (let i = 0; i < current.length; i++) {
+      for (const cand of poolIds) {
+        if (current.includes(cand)) continue;
+        const next = [...current];
+        next[i] = cand;
+        if (!isLegal(ctx, next)) continue;
+        const s = scoreTeam(ctx, next).score;
+        if (s <= currentScore + 1e-6) continue;
+        if (gateConfidence) {
+          const fee = input.chargeFees === false ? 0 : transferFee(riderById.get(cand)!.price);
+          const conf = pSwapBeatsHold(
+            [current[i]], [cand], input.forwardValueById!, input.forwardVarianceById!, fee,
+          );
+          if (conf < minSwapConfidence) continue; // improves the score, but not confidently — skip
+        }
+        current = next; currentScore = s; improved = true;
+      }
+    }
+  }
+  return current;
+}
+
+/**
  * Attach netGainVsHold + swapConfidence, and — for a preset with a
  * minSwapConfidence bar (currently 'safe') — fall back to holding the current
  * team outright when the recommended moves aren't actually confident, not
@@ -237,6 +286,7 @@ function withSwapConfidence(
 export function optimize(input: OptimizerInput): OptimizedTeam {
   const ctx = buildContext(input);
   const { riderById } = ctx;
+  const risk = defaultConfig().riskTuning[input.risk];
 
   // Candidate pool: starters only (injury 'out' projects to ~0 and shouldn't
   // be bought), sorted by value density.
@@ -250,37 +300,29 @@ export function optimize(input: OptimizerInput): OptimizedTeam {
       density: ctx.projById.get(r.id)!.xG / Math.max(1, r.price),
     }))
     .sort((a, b) => b.density - a.density);
+  const poolIds = pool.map((p) => p.id);
 
   // ── Seed ──
-  // When contracts are limited (Basis), start from the current team so the
-  // contract budget is respected from a feasible point; local search then makes
-  // only as many swaps as contracts allow. Otherwise greedy value-density seed.
-  const seedFromOwned =
-    Number.isFinite(input.contractsRemaining) &&
-    input.currentTeam?.length === TEAM_SIZE &&
-    isLegal(ctx, input.currentTeam);
+  // Anchor to the current team (search FROM what's owned rather than
+  // building fresh) whenever contracts are limited (Basis — must start from
+  // a feasible point) OR this preset requires per-swap confidence (Safe).
+  // The Safe case matters beyond "start closer to home": a preset with a
+  // confidence bar needs to gate EACH swap as it's considered (inside
+  // localSearch), not just check the final bundle in aggregate — a bundle of
+  // several individually-marginal swaps (e.g. selling a proven favourite
+  // alongside four other decent ones) can look confident once summed even
+  // when that one swap alone isn't, which lets it slip past an aggregate-only
+  // check. Building fresh from the whole market (below) has no "current
+  // slot" to gate a swap against, so it can only ever check the bundle as a
+  // whole. Balanced/aggressive are unaffected — they still explore the full
+  // market from scratch, preserving balanced's role as the EV leader.
+  const hasLegalCurrentTeam =
+    input.currentTeam?.length === TEAM_SIZE && isLegal(ctx, input.currentTeam);
+  const anchorToOwned =
+    hasLegalCurrentTeam && (Number.isFinite(input.contractsRemaining) || risk.minSwapConfidence > 0);
 
-  if (seedFromOwned) {
-    let current = [...input.currentTeam!];
-    let currentScore = scoreTeam(ctx, current).score;
-    const poolIds = pool.map((p) => p.id);
-    let improved = true;
-    let guard = 0;
-    while (improved && guard++ < 50) {
-      improved = false;
-      for (let i = 0; i < current.length; i++) {
-        for (const cand of poolIds) {
-          if (current.includes(cand)) continue;
-          const next = [...current];
-          next[i] = cand;
-          if (!isLegal(ctx, next)) continue;
-          const s = scoreTeam(ctx, next).score;
-          if (s > currentScore + 1e-6) {
-            current = next; currentScore = s; improved = true;
-          }
-        }
-      }
-    }
+  if (anchorToOwned) {
+    const current = localSearch(ctx, input.currentTeam!, poolIds, risk.minSwapConfidence);
     const result = scoreTeam(ctx, current);
     const hold = scoreTeam(ctx, input.currentTeam!);
     return withSwapConfidence(ctx, result, hold);
@@ -328,42 +370,17 @@ export function optimize(input: OptimizerInput): OptimizedTeam {
     }
   }
 
-  let current = chosen;
-  let currentScore = scoreTeam(ctx, current).score;
-
   // ── Local search: try replacing each held rider with each pool rider ──
-  const poolIds = pool.map((p) => p.id);
-  let improved = true;
-  let guard = 0;
-  while (improved && guard++ < 50) {
-    improved = false;
-    for (let i = 0; i < current.length; i++) {
-      for (const cand of poolIds) {
-        if (current.includes(cand)) continue;
-        const next = [...current];
-        next[i] = cand;
-        if (!isLegal(ctx, next)) continue;
-        const s = scoreTeam(ctx, next).score;
-        if (s > currentScore + 1e-6) {
-          current = next;
-          currentScore = s;
-          improved = true;
-        }
-      }
-    }
-  }
-
+  // No per-swap confidence gate here — this path is only reached by Balanced/
+  // Aggressive (or Safe with no legal current team to anchor to), so it's
+  // meant to explore the full market from scratch.
+  const current = localSearch(ctx, chosen, poolIds, 0);
   const result = scoreTeam(ctx, current);
 
   // net gain vs standing pat: score of keeping the exact current team (if legal)
-  if (input.currentTeam && input.currentTeam.length === TEAM_SIZE) {
-    const holdLegal = isLegal(ctx, input.currentTeam);
-    if (holdLegal) {
-      const hold = scoreTeam(ctx, input.currentTeam);
-      return withSwapConfidence(ctx, result, hold);
-    } else {
-      result.netGainVsHold = result.score; // current team not held intact anyway
-    }
+  if (hasLegalCurrentTeam) {
+    const hold = scoreTeam(ctx, input.currentTeam!);
+    return withSwapConfidence(ctx, result, hold);
   }
 
   return result;

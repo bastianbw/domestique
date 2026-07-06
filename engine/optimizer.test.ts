@@ -3,6 +3,7 @@ import { optimize, expectedEtapebonus, scoreTeam } from './optimizer';
 import type { Rider, RiderProjection, OptimizerInput, GrowthBreakdown, JointSamples } from './types';
 import { getStage } from './stages';
 import { etapebonus } from './rules';
+import { pSwapBeatsHold } from './horizon';
 
 const ZERO_BREAKDOWN: GrowthBreakdown = {
   placement: 0, sprintMtn: 0, gc: 0, jerseys: 0,
@@ -264,12 +265,14 @@ describe('swap confidence gate (forwardValueById + forwardVarianceById)', () => 
     }));
     // ...so 'safe' (minSwapConfidence 0.65) declines it and keeps the current 8,
     // even though the swap's raw score (mean edge minus fee/churn penalty) is
-    // comfortably positive — the NEW gate is what's rejecting it, not the old
-    // mean-variance penalty.
+    // comfortably positive — the gate rejects it PER-SWAP inside the search
+    // itself, so the low-confidence team is never assembled at all (reported
+    // confidence is 1: "unchanged", not a rejected value) — a stronger
+    // guarantee than reverting to hold only after the fact.
     expect(t.buys).toEqual([]);
     expect(t.sells).toEqual([]);
     expect(t.riderIds.slice().sort()).toEqual(currentTeam.slice().sort());
-    expect(t.swapConfidence).toBeLessThan(0.65);
+    expect(t.swapConfidence).toBe(1);
   });
 
   it('a clearly-better, low-variance swap is confident and safe accepts it too', () => {
@@ -283,6 +286,56 @@ describe('swap confidence gate (forwardValueById + forwardVarianceById)', () => 
     }));
     expect(t.buys).toEqual(['Z0']);
     expect(t.swapConfidence!).toBeGreaterThan(0.99);
+  });
+
+  it('a bundle of two individually-unconfident swaps must not sneak past Safe just because it looks confident in AGGREGATE', () => {
+    // Two SEPARATE held riders, each with its own candidate replacement. Each
+    // swap alone is a real edge but genuinely uncertain (~62% — a coin-flip-
+    // ish edge, well under Safe's 65% bar). Bundling two i.i.d. edges together
+    // shrinks RELATIVE uncertainty (variance adds, mean adds faster in
+    // aggregate) enough to nominally clear 65% as a bundle — exactly the trap
+    // an aggregate-only confidence check would fall for. The optimizer must
+    // gate each swap on its OWN merits and reject both, not let them launder
+    // each other's uncertainty away.
+    const teams = ['A', 'B', 'C', 'D'];
+    const riders: Rider[] = [];
+    const projections: RiderProjection[] = [];
+    const forwardValueById: Record<string, number> = {};
+    const forwardVarianceById: Record<string, number> = {};
+    for (const t of teams) {
+      for (let j = 0; j < 2; j++) {
+        const id = `${t}${j}`;
+        riders.push(rider(id, t, 1_000_000));
+        projections.push(proj(id, 50_000, 0.3, 0.1, 0.02, 1));
+        forwardValueById[id] = 100_000;
+        forwardVarianceById[id] = 4.5e10;
+      }
+    }
+    const currentTeam = teams.flatMap((t) => [`${t}0`, `${t}1`]);
+    // Two independent candidates, each an individually ~62%-confident swap
+    // (z = 90k / sqrt(9e10) = 0.3 → Φ(0.3) ≈ 0.618 < 0.65) against WHICHEVER
+    // held rider they'd replace (all held riders are identical here).
+    for (const cid of ['Y0', 'Y1']) {
+      riders.push(rider(cid, 'Y', 1_000_000));
+      projections.push(proj(cid, 50_000, 0.3, 0.1, 0.02, 1));
+      forwardValueById[cid] = 200_000; // net edge 90k over a held rider after the 10k fee (200k - 100k - 10k)
+      forwardVarianceById[cid] = 4.5e10;
+    }
+
+    // Sanity check the trap is real: the AGGREGATE (both swaps at once) reads
+    // as confident even though neither swap is, on its own.
+    const singleConf = pSwapBeatsHold(['A0'], ['Y0'], forwardValueById, forwardVarianceById, 10_000);
+    const bundleConf = pSwapBeatsHold(['A0', 'B0'], ['Y0', 'Y1'], forwardValueById, forwardVarianceById, 20_000);
+    expect(singleConf).toBeLessThan(0.65);
+    expect(bundleConf).toBeGreaterThan(0.65);
+
+    const t = optimize(baseInput({
+      riders, projections, forwardValueById, forwardVarianceById,
+      currentTeam, risk: 'safe', budget: 50_000_000,
+    }));
+    // The real optimizer must NOT take either swap.
+    expect(t.buys).toEqual([]);
+    expect(t.sells).toEqual([]);
   });
 });
 

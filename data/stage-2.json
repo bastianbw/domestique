@@ -4,79 +4,107 @@
   "results": [
     {
       "rider": "Isaac Del Toro Romero",
-      "pos": 1
+      "pos": 1,
+      "sprintPts": 30,
+      "gcPos": 4
     },
     {
       "rider": "Tadej Pogacar",
-      "pos": 2
+      "pos": 2,
+      "sprintPts": 25,
+      "gcPos": 2
     },
     {
       "rider": "Remco Evenepoel",
-      "pos": 3
+      "pos": 3,
+      "sprintPts": 22,
+      "gcPos": 3
     },
     {
       "rider": "Jonas Vingegaard Hansen",
-      "pos": 4
+      "pos": 4,
+      "sprintPts": 19,
+      "gcPos": 1
     },
     {
       "rider": "Mattias Skjelmose",
       "pos": 5,
-      "gap": 3
+      "gap": 3,
+      "sprintPts": 17
     },
     {
       "rider": "Tobias Halland Johannessen",
       "pos": 6,
-      "gap": 3
+      "gap": 3,
+      "sprintPts": 15,
+      "gcPos": 12
     },
     {
       "rider": "Romain Gregoire",
       "pos": 7,
-      "gap": 3
+      "gap": 3,
+      "sprintPts": 13,
+      "gcPos": 7
     },
     {
       "rider": "Lenny Martinez",
       "pos": 8,
-      "gap": 3
+      "gap": 3,
+      "sprintPts": 11,
+      "gcPos": 9
     },
     {
       "rider": "Paul Seixas",
       "pos": 9,
-      "gap": 3
+      "gap": 3,
+      "sprintPts": 9,
+      "gcPos": 6
     },
     {
       "rider": "Tom Pidcock",
       "pos": 10,
-      "gap": 3
+      "gap": 3,
+      "sprintPts": 7,
+      "gcPos": 10
     },
     {
       "rider": "Lennert Van Eetvelt",
       "pos": 11,
-      "gap": 3
+      "gap": 3,
+      "sprintPts": 6
     },
     {
       "rider": "Juan Ayuso Pesquera",
       "pos": 12,
-      "gap": 3
+      "gap": 3,
+      "sprintPts": 5,
+      "gcPos": 5
     },
     {
       "rider": "Ilan Van Wilder",
       "pos": 13,
-      "gap": 3
+      "gap": 3,
+      "sprintPts": 4,
+      "gcPos": 11
     },
     {
       "rider": "Richard Carapaz",
       "pos": 14,
-      "gap": 7
+      "gap": 7,
+      "sprintPts": 3
     },
     {
       "rider": "Alex Baudin",
       "pos": 15,
-      "gap": 10
+      "gap": 10,
+      "sprintPts": 2,
+      "gcPos": 13
     },
     {
       "rider": "Florian Lipowitz",
       "pos": 16,
-      "gap": 10
+      "gap": 10,
+      "gcPos": 8
     },
     {
       "rider": "Cian Uijtdebroeks",
@@ -96,7 +124,8 @@
     {
       "rider": "Tobias Svendsen Foss",
       "pos": 20,
-      "gap": 43
+      "gap": 43,
+      "gcPos": 14
     },
     {
       "rider": "Thymen Arensman",
@@ -106,7 +135,8 @@
     {
       "rider": "Mathieu Van Der Poel",
       "pos": 22,
-      "gap": 47
+      "gap": 47,
+      "gcPos": 15
     },
     {
       "rider": "Egan Bernal Gomez",
@@ -456,7 +486,8 @@
     {
       "rider": "Michael Matthews",
       "pos": 92,
-      "gap": 717
+      "gap": 717,
+      "sprintPts": 6
     },
     {
       "rider": "Valentin Paret Peintre",
@@ -556,7 +587,8 @@
     {
       "rider": "Felix Engelhardt",
       "pos": 112,
-      "gap": 813
+      "gap": 813,
+      "sprintPts": 20
     },
     {
       "rider": "Nils Politt",
@@ -646,7 +678,8 @@
     {
       "rider": "Anthony Turgis",
       "pos": 130,
-      "gap": 813
+      "gap": 813,
+      "sprintPts": 9
     },
     {
       "rider": "Matis Louvel",
@@ -656,12 +689,14 @@
     {
       "rider": "Jasper Philipsen",
       "pos": 132,
-      "gap": 813
+      "gap": 813,
+      "sprintPts": 10
     },
     {
       "rider": "Jasper Stuyven",
       "pos": 133,
-      "gap": 813
+      "gap": 813,
+      "sprintPts": 2
     },
     {
       "rider": "Brent Van Moer",
@@ -671,7 +706,8 @@
     {
       "rider": "Florian Vermeersch",
       "pos": 135,
-      "gap": 813
+      "gap": 813,
+      "sprintPts": 3
     },
     {
       "rider": "Tim Van Dijke",
@@ -706,7 +742,8 @@
     {
       "rider": "Max Kanter",
       "pos": 142,
-      "gap": 813
+      "gap": 813,
+      "sprintPts": 7
     },
     {
       "rider": "Jenthe Biermans",
@@ -731,7 +768,8 @@
     {
       "rider": "Tim Merlier",
       "pos": 147,
-      "gap": 813
+      "gap": 813,
+      "sprintPts": 8
     },
     {
       "rider": "Daan Hoole",
@@ -776,12 +814,14 @@
     {
       "rider": "Mads Pedersen",
       "pos": 156,
-      "gap": 836
+      "gap": 836,
+      "sprintPts": 12
     },
     {
       "rider": "Biniam Girmay",
       "pos": 157,
-      "gap": 836
+      "gap": 836,
+      "sprintPts": 14
     },
     {
       "rider": "Arvid De Kleijn",
@@ -801,7 +841,8 @@
     {
       "rider": "Frank Van Den Broek",
       "pos": 161,
-      "gap": 836
+      "gap": 836,
+      "sprintPts": 16
     },
     {
       "rider": "Pascal Ackermann",
@@ -821,7 +862,8 @@
     {
       "rider": "Alex Molenaar",
       "pos": 165,
-      "gap": 836
+      "gap": 836,
+      "sprintPts": 25
     },
     {
       "rider": "Piet Allegaert",
@@ -856,7 +898,8 @@
     {
       "rider": "Soeren Waerenskjold",
       "pos": 172,
-      "gap": 906
+      "gap": 906,
+      "sprintPts": 5
     },
     {
       "rider": "Matteo Trentin",
@@ -871,7 +914,8 @@
     {
       "rider": "Davide Ballerini",
       "pos": 175,
-      "gap": 944
+      "gap": 944,
+      "sprintPts": 4
     },
     {
       "rider": "Marco Haller",
@@ -914,8 +958,14 @@
       "gap": 1105
     }
   ],
+  "jerseys": {
+    "yellow": "Jonas Vingegaard Hansen",
+    "green": "Isaac Del Toro Romero",
+    "polka": "Alex Molenaar",
+    "white": "Isaac Del Toro Romero"
+  },
   "_source": "letour.fr:rankings/stage-2",
-  "_note": "no sprint/mtn points, GC position or jerseys from this source — finishing order + gap only; add those manually if you want the full picture",
+  "_note": "dnf/dns not available from this source — add by hand if any riders abandoned.",
   "teamResultTop3": [
     "UAE TEAM EMIRATES XRG",
     "RED BULL - BORA - HANSGROHE",

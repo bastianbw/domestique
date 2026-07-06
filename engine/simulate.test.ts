@@ -159,6 +159,41 @@ describe('crosswind echelons (correlated team risk)', () => {
   });
 });
 
+describe('correlated pack crash (not just independent per-rider DNF)', () => {
+  // 80 similar-strength mid-pack riders on a flat stage — none are the clear
+  // favourite, so any of them could be the unlucky ones caught in a pileup,
+  // and top-15 is a small enough slice (~19%) that being pushed out of it is
+  // a meaningful, low-noise signal.
+  const midPack: Rider[] = Array.from({ length: 80 }, (_, i) =>
+    rider({ id: `m${i}`, archetype: 'rouleur', team: `team${i}`, pcsRank: 40 + i }));
+  const dry: Stage = { ...flat, weather: { rainProb: 5 } };
+  const wet: Stage = { ...flat, weather: { rainProb: 95, gustRisk: 'high' } };
+
+  it('a wet, crash-prone day raises a mid-pack rider\'s outcome VARIANCE vs a dry one', () => {
+    // A crash reshuffles WHO is caught out each sim, so the marginal MEAN for
+    // any one rider is largely conserved (someone else's bad luck is this
+    // rider's gain about as often as the reverse) — the real signature is
+    // higher UNCERTAINTY, not a shifted average. gVar (from growth.ts, the
+    // same variance the swap-confidence gate consumes) is exactly that.
+    const dryProj = projectField(midPack, dry, undefined, { simulate: { nSims: 10_000, seed: 21 } });
+    const wetProj = projectField(midPack, wet, undefined, { simulate: { nSims: 10_000, seed: 21 } });
+    const avgGVar = (proj: typeof dryProj) =>
+      proj.slice(25, 45).reduce((a, p) => a + p.gVar, 0) / 20;
+    expect(avgGVar(wetProj)).toBeGreaterThan(avgGVar(dryProj));
+  });
+
+  it('a baseline crash risk is active even without weather (unlike echelons, real pack crashes happen on dry days too)', () => {
+    const noCrash = { ...defaultConfig(), crashRate: { flat: 0, hilly: 0, summit: 0, high_mtn: 0, ttt: 0, hilly_itt: 0 } };
+    const withDefault = simulateStage(midPack, flat, defaultConfig(), { nSims: 8000, seed: 7 });
+    const withoutCrash = simulateStage(midPack, flat, noCrash, { nSims: 8000, seed: 7 });
+    // Same seed, same field — zeroing the crash rate must change the outcome
+    // (the reshuffle no longer fires), proving it's live by default pre-weather.
+    const a = withDefault.find((d) => d.riderId === 'm10')!.probs[0];
+    const b = withoutCrash.find((d) => d.riderId === 'm10')!.probs[0];
+    expect(a).not.toBeCloseTo(b, 6);
+  });
+});
+
 describe('projectField opt-in simulator path', () => {
   const hilly: Stage = { ...flat, type: 'hilly' };
 

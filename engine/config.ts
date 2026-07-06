@@ -176,6 +176,20 @@ export const BREAKAWAY_WIN_RATE: Record<StageType, number> = {
   flat: 0.08, hilly: 0.24, high_mtn: 0.10, summit: 0.02, ttt: 0, hilly_itt: 0,
 };
 
+/**
+ * Baseline (weather-neutral) probability a stage produces a correlated pack
+ * crash/pileup that reshuffles part of the field — a real, well-documented
+ * cycling dynamic (whoever is unlucky enough to be riding in that exact spot
+ * loses the day together, GC contender or domestique alike) that a per-rider-
+ * independent DNF model structurally cannot produce. Bunch-sprint finishes
+ * (flat/hilly) carry the most pack-crash risk in the technical, nervous run-in;
+ * mountain stages carry a smaller but real descent/crash risk; TTT/ITT riders
+ * go off individually/as a team with clear road, so risk is negligible.
+ */
+export const CRASH_RATE: Record<StageType, number> = {
+  flat: 0.05, hilly: 0.06, summit: 0.03, high_mtn: 0.04, ttt: 0.01, hilly_itt: 0.01,
+};
+
 /** Differential mode: how strongly to lean away from heavily-owned riders. */
 export const OWNERSHIP_LEVERAGE = 0.15;
 
@@ -235,6 +249,7 @@ export interface EngineConfig {
   climbinessGain: number;
   climbinessResponse: Record<Archetype, number>;
   breakawayWinRate: Record<StageType, number>;
+  crashRate: Record<StageType, number>;
   calibrationGamma: number;
   ensembleAnalyticWeight: Record<StageType, number>;
   /** Optional logistic stacking meta-model (no-odds path). Absent → linear ensemble. */
@@ -263,6 +278,7 @@ export function defaultConfig(): EngineConfig {
     climbinessGain: CLIMBINESS_GAIN,
     climbinessResponse: { ...CLIMBINESS_RESPONSE },
     breakawayWinRate: { ...BREAKAWAY_WIN_RATE },
+    crashRate: { ...CRASH_RATE },
     calibrationGamma: CALIBRATION_GAMMA,
     ensembleAnalyticWeight: { ...ENSEMBLE_ANALYTIC_WEIGHT },
   };

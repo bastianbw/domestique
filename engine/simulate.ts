@@ -18,7 +18,7 @@ import type { Rider, Stage, RiderDistribution, JointSamples } from './types';
 import { EngineConfig, defaultConfig } from './config';
 import { riderSkill, breakSkill, riderDnfRisk, buildCoherentField } from './probability';
 import { strengthFromRank } from './features';
-import { weatherBreakFactor, weatherEchelonProb } from './modifiers';
+import { weatherBreakFactor, weatherEchelonProb, weatherCrashFactor } from './modifiers';
 import type { StackModel } from './config';
 
 /** Stage types where echelons realistically form (exposed, raced for position). */
@@ -45,7 +45,7 @@ export interface SimConfig {
   nSims: number;
   seed: number;
 }
-export const DEFAULT_SIM: SimConfig = { nSims: 2000, seed: 0x5eed };
+export const DEFAULT_SIM: SimConfig = { nSims: 4000, seed: 0x5eed };
 
 /** Default ensemble weight on the analytic coherent model (rest → simulator). */
 export const DEFAULT_ENSEMBLE_W = 0.5;
@@ -70,6 +70,8 @@ function forEachSimOrder(
   const pBreak = Math.min(0.6, (cfg.breakawayWinRate?.[stage.type] ?? 0) * weatherBreakFactor(stage));
   // Crosswind echelon split (per-race scenario, weather-gated, 0 when none).
   const pEcho = ECHELON_TYPES.has(stage.type) ? weatherEchelonProb(stage) : 0;
+  // Correlated pack crash/pileup (per-race scenario, weather-boosted by rain).
+  const pCrash = Math.min(0.3, (cfg.crashRate?.[stage.type] ?? 0) * weatherCrashFactor(stage));
   const teamStr = starters.map((r) => clampStr(r.teamStrength));
   // Index riders by team so a shared per-team shock can move teammates together.
   const teamOf = starters.map((r) => r.team);
@@ -89,6 +91,10 @@ function forEachSimOrder(
   for (let s = 0; s < sim.nSims; s++) {
     const isBreak = pBreak > 0 && rng() < pBreak;
     const isEcho = !isBreak && pEcho > 0 && rng() < pEcho;
+    // A crash is its own bunch-day scenario (echelon days already have their
+    // own chaos via the team-shock split; a break day's peloton isn't riding
+    // as one group for a pack pileup to apply the same way).
+    const isCrash = !isBreak && !isEcho && pCrash > 0 && rng() < pCrash;
 
     if (isEcho) {
       // Echelon scenario: the bunch splits and whole TEAMS make or miss the
@@ -116,6 +122,24 @@ function forEachSimOrder(
         key[i] = exp() / bunchSkill[i];
       }
       idx.sort((a, b) => key[a] - key[b]);
+
+      if (isCrash) {
+        // Correlated pack crash: a contiguous CLUSTER of the mid-pack (rarely
+        // the very front, which is usually clear before a crash happens
+        // behind) gets caught out together and loses the day — real cycling
+        // variance an independent per-rider DNF roll can't produce (whoever is
+        // unlucky enough to be riding there that moment, GC contender or
+        // domestique alike, goes down together). They're pushed to the back
+        // of the order; the normal per-rider DNF roll below still applies on
+        // top (some of them may not finish at all).
+        const start = Math.max(1, Math.floor(M * (0.15 + rng() * 0.35)));
+        const width = Math.max(1, Math.round(M * (0.1 + rng() * 0.25)));
+        const end = Math.min(M, start + width);
+        const caught = idx.slice(start, end);
+        const clear = [...idx.slice(0, start), ...idx.slice(end)];
+        for (let i = 0; i < clear.length; i++) idx[i] = clear[i];
+        for (let i = 0; i < caught.length; i++) idx[clear.length + i] = caught[i];
+      }
     } else {
       // Break scenario: draw a break pool by break skill, then order the break
       // for the win by terrain skill; the bunch fills in behind.

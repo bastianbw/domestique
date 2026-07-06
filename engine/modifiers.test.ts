@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  weatherSpreadFactor, weatherDnfFactor, weatherBreakFactor,
+  weatherSpreadFactor, weatherDnfFactor, weatherBreakFactor, weatherCrashFactor,
   newsSkillFactor, newsBreakFactor,
 } from './modifiers';
 import { effectiveSpread, riderDnfRisk, riderSkill, breakSkill } from './probability';
@@ -27,6 +27,7 @@ describe('modifiers — strict neutral default', () => {
     expect(weatherSpreadFactor(flat)).toBe(1);
     expect(weatherDnfFactor(flat)).toBe(1);
     expect(weatherBreakFactor(flat)).toBe(1);
+    expect(weatherCrashFactor(flat)).toBe(1);
     const r = rider({ id: 'r', archetype: 'sprinter' });
     expect(newsSkillFactor(r)).toBe(1);
     expect(newsBreakFactor(r)).toBe(1);
@@ -67,6 +68,10 @@ describe('weather modifiers — correct direction', () => {
 
   it('rain nudges the break-success factor up', () => {
     expect(weatherBreakFactor({ ...flat, weather: { rainProb: 90 } })).toBeGreaterThan(1);
+  });
+
+  it('rain raises the crash factor (wet roads → real pileup risk)', () => {
+    expect(weatherCrashFactor({ ...flat, weather: { rainProb: 85 } })).toBeGreaterThan(1);
   });
 });
 

@@ -71,6 +71,22 @@ export function weatherBreakFactor(stage: Stage): number {
   return clamp(f, 1, 1.5);
 }
 
+/**
+ * Wet roads are the single biggest driver of real pack-crash risk (braking
+ * distance, painted lines/roundabouts in the technical run-in). 1.0 when no
+ * weather. Feeds the simulator's correlated crash SCENARIO (a shared event
+ * that catches a cluster of the field together), not an independent per-rider
+ * risk — see engine/simulate.ts.
+ */
+export function weatherCrashFactor(stage: Stage): number {
+  const w = stage.weather;
+  if (!w) return 1;
+  let f = 1;
+  if (typeof w.rainProb === 'number') f += 0.7 * clamp(w.rainProb / 100, 0, 1); // wet roads → real pileup risk
+  if (w.gustRisk === 'high') f += 0.1; // gusts push riders together/off-line too
+  return clamp(f, 1, 2.2);
+}
+
 // ── News (per rider) ─────────────────────────────────────────────────────────
 
 /**

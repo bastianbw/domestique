@@ -87,7 +87,11 @@ function wholeRaceGc(
   const variance: Record<string, number> = {};
   const gcDiscount = Math.sqrt(cfg.horizonDiscount); // decays slower than the per-stage discount
   for (const s of relevant) {
-    const projs = projectField(riders, s, cfg);
+    // Analytic (no Monte Carlo) — this term is already a heavily-discounted,
+    // many-stages-out estimate, so simulator-level precision isn't worth the
+    // cost of running a full sim for every remaining mountain/ITT stage on
+    // every recompute (this loop can cover 5-8+ stages at once).
+    const projs = projectField(riders, s, cfg, { analytic: true });
     const discount = Math.pow(gcDiscount, s.stage - fromStage);
     for (const p of projs) {
       value[p.riderId] = (value[p.riderId] ?? 0) + discount * p.breakdown.gc;

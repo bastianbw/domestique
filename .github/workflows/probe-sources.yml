@@ -1,0 +1,27 @@
+name: Probe result sources
+
+# One-off diagnostic (manual trigger only): which result sources are reachable
+# from GitHub Actions' IP range? Answers "would letour.fr / a proxy work?"
+# with data instead of guesses. Safe to delete after the Tour.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe each source
+        run: |
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
+          probe () {
+            code=$(curl -s -o /tmp/body -w "%{http_code}" -A "$UA" --max-time 45 "$1" || echo "ERR")
+            size=$(wc -c < /tmp/body 2>/dev/null || echo 0)
+            marker=$(head -c 300 /tmp/body | tr -d '\n' | cut -c1-120)
+            echo "$2 → HTTP $code, $size bytes | $marker"
+          }
+          probe "https://www.procyclingstats.com/race/tour-de-france/2026/stage-2" "PCS direct"
+          probe "https://r.jina.ai/https://www.procyclingstats.com/race/tour-de-france/2026/stage-2" "PCS via r.jina.ai"
+          probe "https://www.letour.fr/en/rankings/stage-2" "letour.fr rankings page"
+          probe "https://www.eurosport.com/cycling/tour-de-france/2026/stage-2/results.shtml" "eurosport"
+          probe "https://firstcycling.com/race.php?r=17&y=2026&e=02" "firstcycling"

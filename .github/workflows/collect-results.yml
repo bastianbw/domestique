@@ -1,18 +1,26 @@
 name: Collect stage results
 
 # Best-effort automatic collection during the Tour (4–26 July 2026).
-# Each evening it works out which stage was raced today, scrapes the result from
-# ProCyclingStats, and commits a Domestique import block to data/. The PWA pulls
-# it via the raw GitHub URL (Stages & Data → ①½ Auto-fetch). Manual paste in the
-# app is always the reliable fallback if PCS blocks the runner on a given day.
+# TWO daily runs:
+#  - MORNING (05:30 UTC / 07:30 CEST): weather forecast for TODAY's stage —
+#    the pre-stage nudge you actually want before picking a team. No results
+#    attempt (the stage hasn't been raced).
+#  - EVENING (19:00 UTC / 21:00 CEST): today's stage result (best-effort — PCS
+#    403s GitHub's IP at the Cloudflare edge, see scripts/collect_stage.py) +
+#    tomorrow's weather forecast.
+# Whatever succeeded is bundled into data/latest.json; the PWA pulls it via the
+# raw GitHub URL (Stages & Data → ①½). Weather is expected to succeed every
+# run (Open-Meteo doesn't block); results are the fragile part, with manual
+# paste as the reliable fallback.
 
 on:
   schedule:
-    - cron: '0 19 * 7 *'   # 19:00 UTC every day in July (21:00 CEST)
+    - cron: '30 5 * 7 *'   # 05:30 UTC every day in July — morning weather
+    - cron: '0 19 * 7 *'   # 19:00 UTC every day in July — results + tomorrow weather
   workflow_dispatch:
     inputs:
       stage:
-        description: 'Stage number to collect (manual run / backfill)'
+        description: 'Stage number to collect (manual run / backfill; forces evening mode)'
         required: false
         type: string
 
@@ -32,7 +40,7 @@ jobs:
       - name: Install dependencies
         run: pip install requests procyclingstats cloudscraper
 
-      - name: Determine stage from today's date
+      - name: Determine stage and run mode from today's date
         id: stage
         run: |
           python - <<'PY' >> "$GITHUB_OUTPUT"
@@ -42,46 +50,63 @@ jobs:
                    14:10,15:11,16:12,17:13,18:14,19:15,
                    21:16,22:17,23:18,24:19,25:20,26:21}
           manual = os.environ.get("MANUAL_STAGE", "").strip()
+          now = datetime.datetime.utcnow()
           if manual:
               print(f"stage={manual}")
+              print("mode=evening")
           else:
-              today = datetime.datetime.utcnow()
-              s = SCHED.get(today.day) if today.month == 7 else None
+              s = SCHED.get(now.day) if now.month == 7 else None
               print(f"stage={s if s else ''}")
+              print(f"mode={'morning' if now.hour < 12 else 'evening'}")
           PY
         env:
           MANUAL_STAGE: ${{ github.event.inputs.stage }}
 
-      - name: Collect result block
-        if: steps.stage.outputs.stage != ''
+      - name: Collect result block (evening only — best-effort, PCS may 403)
+        id: results
+        if: steps.stage.outputs.stage != '' && steps.stage.outputs.mode == 'evening'
+        continue-on-error: true
         run: |
           python scripts/collect_stage.py --year 2026 --stage "${{ steps.stage.outputs.stage }}" --out data
 
-      - name: Collect next-stage weather forecast (best-effort)
+      - name: Collect weather forecast (today's stage in the morning, tomorrow's in the evening)
+        id: weather
         if: steps.stage.outputs.stage != ''
         continue-on-error: true
         run: |
-          NEXT=$(( ${{ steps.stage.outputs.stage }} + 1 ))
-          if [ "$NEXT" -le 21 ]; then
-            python scripts/collect_weather.py --stage "$NEXT" --out data || true
+          if [ "${{ steps.stage.outputs.mode }}" = "morning" ]; then
+            TARGET="${{ steps.stage.outputs.stage }}"
+          else
+            TARGET=$(( ${{ steps.stage.outputs.stage }} + 1 ))
+          fi
+          if [ "$TARGET" -le 21 ]; then
+            echo "target=$TARGET" >> "$GITHUB_OUTPUT"
+            python scripts/collect_weather.py --stage "$TARGET" --out data
           fi
 
-      - name: Bundle latest.json (today's result + tomorrow's weather)
+      - name: Bundle latest.json (only blocks produced by THIS run)
         if: steps.stage.outputs.stage != ''
         run: |
           python - <<'PY'
           import json, os
-          stage = int("${{ steps.stage.outputs.stage }}")
           blocks = []
-          rp = f"data/stage-{stage}.json"
-          if os.path.exists(rp):
-              blocks.append(json.load(open(rp, encoding="utf-8")))
-          wp = f"data/weather-stage-{stage+1}.json"
-          if os.path.exists(wp):
-              blocks.append(json.load(open(wp, encoding="utf-8")))
+          # Result only when THIS run's collection succeeded — bundling an older
+          # stage-N.json would re-serve a stale result (the app skips re-logging,
+          # but there's no reason to ship it).
+          if "${{ steps.results.outcome }}" == "success":
+              rp = "data/stage-${{ steps.stage.outputs.stage }}.json"
+              if os.path.exists(rp):
+                  blocks.append(json.load(open(rp, encoding="utf-8")))
+          wt = "${{ steps.weather.outputs.target }}"
+          if wt:
+              wp = f"data/weather-stage-{wt}.json"
+              if os.path.exists(wp):
+                  blocks.append(json.load(open(wp, encoding="utf-8")))
           if blocks:
               json.dump(blocks, open("data/latest.json", "w", encoding="utf-8"), ensure_ascii=False, indent=2)
               print(f"bundled {len(blocks)} block(s) into latest.json")
+          else:
+              print("nothing new this run — latest.json left untouched")
           PY
 
       - name: Commit data
@@ -90,5 +115,5 @@ jobs:
           git config user.name  "domestique-bot"
           git config user.email "actions@github.com"
           git add data/
-          git commit -m "results: stage ${{ steps.stage.outputs.stage }} (+ weather)" || echo "no changes"
+          git commit -m "collect: stage ${{ steps.stage.outputs.stage }} (${{ steps.stage.outputs.mode }})" || echo "no changes"
           git push

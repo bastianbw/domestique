@@ -109,6 +109,20 @@ def fetch(rel_url: str) -> Stage:
     if stage is not None:
         return stage
 
+    # r.jina.ai reader: different egress IPs and a real browser render upstream;
+    # X-Return-Format: html asks for the raw page HTML the parser needs.
+    try:
+        resp = requests.get("https://r.jina.ai/" + target,
+                            headers={"User-Agent": UA, "X-Return-Format": "html"}, timeout=60)
+        status, html = resp.status_code, resp.text
+        stage = _parse_or_none(rel_url, html)
+        print(f"[fetch] r.jina.ai: HTTP {status}, {len(html)} bytes, parsed={stage is not None}",
+              file=sys.stderr)
+        if stage is not None:
+            return stage
+    except requests.RequestException as e:
+        print(f"[fetch] r.jina.ai: {e!r}", file=sys.stderr)
+
     try:
         proxied = "https://api.allorigins.win/raw?url=" + quote(target, safe="")
         resp = requests.get(proxied, headers={"User-Agent": UA}, timeout=30)

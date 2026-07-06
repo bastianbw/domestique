@@ -8,8 +8,12 @@ the GitHub Action each evening during the Tour, or by hand on any machine.
 Honest notes:
 - ProCyclingStats blocks the procyclingstats package's default User-Agent (HTTP
   403). We fetch the HTML ourselves with a browser UA and hand it to the parser.
-- Datacenter IPs are sometimes rate-limited/blocked by PCS; the GitHub Action is
-  best-effort. The app's manual paste flow is always the reliable fallback.
+- PCS puts Cloudflare's JS challenge ("Just a moment...") in front of the GitHub
+  Actions runner's IP specifically — confirmed by capturing the actual response
+  body from a failed run. Plain `requests` can never solve that (no JS engine),
+  so we fetch via `cloudscraper` (solves the common Cloudflare JS challenges)
+  with a fall back to plain `requests` for environments where it isn't needed.
+  Still best-effort: the app's manual paste flow is the reliable fallback.
 - Per-rider *stage* green/KOM points aren't cleanly exposed by PCS, so finish
   green points are ESTIMATED from finishing position + stage profile (clearly an
   approximation; the app's model also estimates, and you can correct any value).
@@ -25,6 +29,11 @@ from urllib.parse import quote
 import requests
 from procyclingstats import Stage
 from procyclingstats.errors import ExpectedParsingError
+
+try:
+    import cloudscraper
+except ImportError:
+    cloudscraper = None
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
@@ -59,24 +68,36 @@ def _parse_or_none(rel_url: str, html: str) -> Stage | None:
 def fetch(rel_url: str) -> Stage:
     """Fetch a PCS page and return a parser bound to it.
 
-    PCS occasionally rate-limits/blocks the GitHub Actions runner's IP outright
-    (a blocked/interstitial response, not a clean HTTP error) even with a
-    browser User-Agent. We retry directly with backoff, then fall back to a
-    public read-proxy (same raw HTML, different egress IP) before giving up —
-    and report exactly why on final failure instead of the library's generic
-    "Page title not found" parsing traceback.
+    PCS puts a Cloudflare JS challenge in front of the GitHub Actions runner's
+    IP specifically (confirmed: captured the literal "Just a moment..." body
+    from a failed run) — plain `requests` can never solve that, so `cloudscraper`
+    (built to solve exactly this) is the primary path, with retries/backoff for
+    its occasional flakiness, then plain `requests` (works fine from non-flagged
+    IPs), then a public read-proxy as a last resort. Reports exactly why on
+    final failure instead of the library's generic parsing traceback.
     """
     target = "https://www.procyclingstats.com/" + rel_url
     status, html = None, ""
 
-    for attempt in range(3):
-        if attempt:
-            time.sleep(4 * attempt)
-        resp = requests.get(target, headers=BROWSER_HEADERS, timeout=30)
-        status, html = resp.status_code, resp.text
-        stage = _parse_or_none(rel_url, html)
-        if stage is not None:
-            return stage
+    if cloudscraper is not None:
+        scraper = cloudscraper.create_scraper()
+        for attempt in range(3):
+            if attempt:
+                time.sleep(4 * attempt)
+            try:
+                resp = scraper.get(target, headers=BROWSER_HEADERS, timeout=30)
+                status, html = resp.status_code, resp.text
+            except Exception:
+                continue
+            stage = _parse_or_none(rel_url, html)
+            if stage is not None:
+                return stage
+
+    resp = requests.get(target, headers=BROWSER_HEADERS, timeout=30)
+    status, html = resp.status_code, resp.text
+    stage = _parse_or_none(rel_url, html)
+    if stage is not None:
+        return stage
 
     try:
         proxied = "https://api.allorigins.win/raw?url=" + quote(target, safe="")
@@ -89,9 +110,9 @@ def fetch(rel_url: str) -> Stage:
         pass
 
     raise RuntimeError(
-        f"PCS fetch for {rel_url} never parsed (.page-title missing) after direct + proxied "
-        f"attempts (last HTTP {status}, {len(html)} bytes) — looks bot-blocked, not a bad URL. "
-        f"Paste the stage result manually instead. First 200 chars: {html[:200]!r}"
+        f"PCS fetch for {rel_url} never parsed (.page-title missing) after cloudscraper + direct "
+        f"+ proxied attempts (last HTTP {status}, {len(html)} bytes) — looks bot-blocked, not a "
+        f"bad URL. Paste the stage result manually instead. First 200 chars: {html[:200]!r}"
     )
 
 

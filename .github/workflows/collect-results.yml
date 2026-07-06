@@ -30,7 +30,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install requests procyclingstats
+        run: pip install requests procyclingstats cloudscraper
 
       - name: Determine stage from today's date
         id: stage

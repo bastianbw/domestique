@@ -15,9 +15,9 @@ export function growth(n: number): string {
   return `${sign}${Math.round(abs)}`;
 }
 
-/** Price like 9.5M */
+/** Price like 9.513M — full-precision internally either way, this is just display. */
 export function priceM(n: number): string {
-  return `${(n / 1_000_000).toFixed(1)}M`;
+  return `${(n / 1_000_000).toFixed(3)}M`;
 }
 
 export function pct(p: number): string {

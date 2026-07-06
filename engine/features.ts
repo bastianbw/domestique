@@ -109,11 +109,15 @@ export function classifyArchetype(spec: SpecialityVector): Archetype {
 
 // ── Baseline strength / pcsRank prior (slow-moving) ───────────────────────────
 
-/** Best (lowest) PCS season rank over the trailing seasons up to `year`. */
+/**
+ * Best (lowest) PCS season rank over the trailing seasons up to `year`. This
+ * is a deliberately SLOW-MOVING skill-ceiling prior (an "established level"),
+ * not a live ranking — recency-sensitive current-season performance belongs
+ * in `computeForm` instead. Early in `year` the current-season rank is noisy
+ * (few points), so fall back to the previous season when this one is thin.
+ */
 export function baselinePcsRank(history: SeasonHistoryRow[], year: number): number {
   const recent = history.filter((h) => h.season <= year && h.season >= year - 2);
-  // Prefer an established rank; early in `year` the current-season rank is noisy
-  // (few points), so fall back to the previous season when this one is thin.
   const cur = recent.find((h) => h.season === year);
   if (cur && cur.points >= 200) return cur.rank;
   const ranks = recent.filter((h) => h.points >= 50).map((h) => h.rank);

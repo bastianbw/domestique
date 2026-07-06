@@ -68,7 +68,13 @@ describe.skipIf(!have)('build PCS features block', () => {
       // computeForm returns recent finishing quality, which is compressed low for
       // the bunch (domestiques rarely place). Lift it onto the live app's active-pro
       // scale (~45-96, like the seed) so contenders aren't over-dampened.
-      const form = Math.max(40, Math.min(96, Math.round(45 + 0.55 * computeForm(tl, AS_OF))));
+      // Exclude TTT results from the general form snapshot: a TTT "rank" is the
+      // whole TEAM's finishing position, not this rider's own — crediting it at
+      // full weight (no target stage type to discount it against here) can make a
+      // rider whose only good result all season was a strong team time trial read
+      // as having decent individual form.
+      const individualTl = tl.filter((e) => e.type !== 'ttt');
+      const form = Math.max(40, Math.min(96, Math.round(45 + 0.55 * computeForm(individualTl, AS_OF))));
       const brk = Math.round(breakawayTendency(tl.map((e) => e.breakKm)));
       const terrainAffinity = computeTerrainAffinity(tl.map((e) => ({ type: e.type, rank: e.rank })));
       rows.push({

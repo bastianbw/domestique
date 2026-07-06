@@ -22,7 +22,7 @@
    "rider": "Skjelmose Mattias",
    "archetype": "gc",
    "pcsRank": 24,
-   "form": 66,
+   "form": 63,
    "breakawayTendency": 8,
    "terrainAffinity": {
     "flat": 0.55,
@@ -38,7 +38,7 @@
    "rider": "Cosnefroy Benoit",
    "archetype": "puncheur",
    "pcsRank": 17,
-   "form": 52,
+   "form": 49,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "flat": 0.58,
@@ -102,7 +102,7 @@
    "rider": "Vansevenant Mauri",
    "archetype": "climber",
    "pcsRank": 165,
-   "form": 54,
+   "form": 52,
    "breakawayTendency": 10,
    "terrainAffinity": {
     "flat": 0.55,
@@ -148,7 +148,7 @@
    "rider": "Frigo Marco",
    "archetype": "climber",
    "pcsRank": 147,
-   "form": 56,
+   "form": 55,
    "breakawayTendency": 23,
    "terrainAffinity": {
     "flat": 0.55,
@@ -164,7 +164,7 @@
    "rider": "Baudin Alex",
    "archetype": "puncheur",
    "pcsRank": 32,
-   "form": 64,
+   "form": 60,
    "breakawayTendency": 11,
    "terrainAffinity": {
     "flat": 0.55,
@@ -196,7 +196,7 @@
    "rider": "Godon Dorian",
    "archetype": "puncheur",
    "pcsRank": 33,
-   "form": 60,
+   "form": 56,
    "breakawayTendency": 8,
    "terrainAffinity": {
     "flat": 0.691,
@@ -228,7 +228,7 @@
    "rider": "Bilbao Pello",
    "archetype": "gc",
    "pcsRank": 58,
-   "form": 52,
+   "form": 50,
    "breakawayTendency": 13,
    "terrainAffinity": {
     "flat": 0.55,
@@ -276,7 +276,7 @@
    "rider": "Glivar Gal",
    "archetype": "puncheur",
    "pcsRank": 326,
-   "form": 50,
+   "form": 47,
    "breakawayTendency": 14,
    "terrainAffinity": {
     "flat": 0.6,
@@ -322,7 +322,7 @@
    "rider": "Burgaudeau Mathieu",
    "archetype": "puncheur",
    "pcsRank": 177,
-   "form": 48,
+   "form": 47,
    "breakawayTendency": 18,
    "terrainAffinity": {
     "flat": 0.55,
@@ -434,7 +434,7 @@
    "rider": "Simmons Quinn",
    "archetype": "puncheur",
    "pcsRank": 111,
-   "form": 59,
+   "form": 55,
    "breakawayTendency": 25,
    "terrainAffinity": {
     "flat": 0.55,
@@ -448,7 +448,7 @@
    "rider": "Zimmermann Georg",
    "archetype": "puncheur",
    "pcsRank": 106,
-   "form": 49,
+   "form": 48,
    "breakawayTendency": 16,
    "terrainAffinity": {
     "flat": 0.55,
@@ -464,7 +464,7 @@
    "rider": "Velasco Simone",
    "archetype": "puncheur",
    "pcsRank": 57,
-   "form": 55,
+   "form": 54,
    "breakawayTendency": 13,
    "terrainAffinity": {
     "flat": 0.622,
@@ -509,7 +509,7 @@
    "rider": "Pacher Quentin",
    "archetype": "puncheur",
    "pcsRank": 156,
-   "form": 51,
+   "form": 48,
    "breakawayTendency": 9,
    "terrainAffinity": {
     "flat": 0.55,
@@ -621,7 +621,7 @@
    "rider": "Eenkhoorn Pascal",
    "archetype": "puncheur",
    "pcsRank": 346,
-   "form": 49,
+   "form": 45,
    "breakawayTendency": 17,
    "terrainAffinity": {
     "flat": 1.224,
@@ -750,7 +750,7 @@
    "rider": "Vauquelin Kevin",
    "archetype": "gc",
    "pcsRank": 46,
-   "form": 59,
+   "form": 54,
    "breakawayTendency": 4,
    "terrainAffinity": {
     "flat": 0.55,
@@ -798,7 +798,7 @@
    "rider": "Covi Alessandro",
    "archetype": "puncheur",
    "pcsRank": 161,
-   "form": 53,
+   "form": 50,
    "breakawayTendency": 3,
    "terrainAffinity": {
     "flat": 0.698,
@@ -830,7 +830,7 @@
    "rider": "Geniets Kevin",
    "archetype": "rouleur",
    "pcsRank": 342,
-   "form": 50,
+   "form": 46,
    "breakawayTendency": 5,
    "terrainAffinity": {
     "flat": 0.55,
@@ -862,7 +862,7 @@
    "rider": "Remijn Senna",
    "archetype": "puncheur",
    "pcsRank": 684,
-   "form": 49,
+   "form": 46,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "flat": 0.91,
@@ -910,7 +910,7 @@
    "rider": "Mohoric Matej",
    "archetype": "gc",
    "pcsRank": 84,
-   "form": 52,
+   "form": 46,
    "breakawayTendency": 10,
    "terrainAffinity": {
     "flat": 0.55,
@@ -1078,7 +1078,7 @@
    "rider": "Le Berre Mathis",
    "archetype": "puncheur",
    "pcsRank": 510,
-   "form": 54,
+   "form": 53,
    "breakawayTendency": 26,
    "terrainAffinity": {
     "flat": 1.068,
@@ -1110,7 +1110,7 @@
    "rider": "Bou Joan",
    "archetype": "climber",
    "pcsRank": 369,
-   "form": 47,
+   "form": 46,
    "breakawayTendency": 10,
    "terrainAffinity": {
     "flat": 0.785,
@@ -1126,7 +1126,7 @@
    "rider": "Donze Robin",
    "archetype": "domestique",
    "pcsRank": 900,
-   "form": 47,
+   "form": 46,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "flat": 0.933,
@@ -1206,7 +1206,7 @@
    "rider": "Sivakov Pavel",
    "archetype": "gc",
    "pcsRank": 68,
-   "form": 49,
+   "form": 46,
    "breakawayTendency": 2,
    "terrainAffinity": {
     "flat": 0.55,
@@ -1238,7 +1238,7 @@
    "rider": "Etxeberria Haimar",
    "archetype": "puncheur",
    "pcsRank": 242,
-   "form": 55,
+   "form": 45,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "hilly": 0.666,
@@ -1253,7 +1253,7 @@
    "rider": "Vermeersch Gianni",
    "archetype": "puncheur",
    "pcsRank": 118,
-   "form": 51,
+   "form": 46,
    "breakawayTendency": 4,
    "terrainAffinity": {
     "flat": 0.856,
@@ -1317,7 +1317,7 @@
    "rider": "Kron Andreas",
    "archetype": "puncheur",
    "pcsRank": 127,
-   "form": 55,
+   "form": 54,
    "breakawayTendency": 14,
    "terrainAffinity": {
     "flat": 0.55,
@@ -1471,7 +1471,7 @@
    "rider": "Houle Hugo",
    "archetype": "rouleur",
    "pcsRank": 524,
-   "form": 48,
+   "form": 45,
    "breakawayTendency": 22,
    "terrainAffinity": {
     "flat": 0.55,
@@ -1487,7 +1487,7 @@
    "rider": "Charmig Anthon",
    "archetype": "puncheur",
    "pcsRank": 162,
-   "form": 54,
+   "form": 53,
    "breakawayTendency": 6,
    "terrainAffinity": {
     "flat": 0.55,
@@ -1591,7 +1591,7 @@
    "rider": "Marti Pau",
    "archetype": "puncheur",
    "pcsRank": 313,
-   "form": 48,
+   "form": 46,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "flat": 0.857,
@@ -1745,7 +1745,7 @@
    "rider": "Conci Nicola",
    "archetype": "puncheur",
    "pcsRank": 422,
-   "form": 49,
+   "form": 45,
    "breakawayTendency": 7,
    "terrainAffinity": {
     "flat": 0.55,
@@ -1809,7 +1809,7 @@
    "rider": "Sutterlin Jasha",
    "archetype": "rouleur",
    "pcsRank": 420,
-   "form": 49,
+   "form": 45,
    "breakawayTendency": 6,
    "terrainAffinity": {
     "flat": 0.8,
@@ -1825,7 +1825,7 @@
    "rider": "Johannessen Anders Halland",
    "archetype": "climber",
    "pcsRank": 114,
-   "form": 48,
+   "form": 45,
    "breakawayTendency": 7,
    "terrainAffinity": {
     "flat": 0.55,
@@ -1841,7 +1841,7 @@
    "rider": "Garcia Pierna Raul",
    "archetype": "rouleur",
    "pcsRank": 214,
-   "form": 61,
+   "form": 59,
    "breakawayTendency": 24,
    "terrainAffinity": {
     "flat": 0.55,
@@ -1917,7 +1917,7 @@
    "rider": "Maisonobe Sam",
    "archetype": "puncheur",
    "pcsRank": 423,
-   "form": 50,
+   "form": 49,
    "breakawayTendency": 16,
    "terrainAffinity": {
     "flat": 0.721,
@@ -1949,7 +1949,7 @@
    "rider": "Faure Prost Alexy",
    "archetype": "climber",
    "pcsRank": 707,
-   "form": 48,
+   "form": 47,
    "breakawayTendency": 10,
    "terrainAffinity": {
     "flat": 0.989,
@@ -1965,7 +1965,7 @@
    "rider": "Skaarseth Anders",
    "archetype": "puncheur",
    "pcsRank": 790,
-   "form": 48,
+   "form": 45,
    "breakawayTendency": 2,
    "terrainAffinity": {
     "flat": 0.55,
@@ -2043,7 +2043,7 @@
    "rider": "Reinderink Pepijn",
    "archetype": "puncheur",
    "pcsRank": 587,
-   "form": 52,
+   "form": 48,
    "breakawayTendency": 22,
    "terrainAffinity": {
     "flat": 1.521,
@@ -2155,7 +2155,7 @@
    "rider": "Coquard Bryan",
    "archetype": "sprinter",
    "pcsRank": 99,
-   "form": 54,
+   "form": 53,
    "breakawayTendency": 1,
    "terrainAffinity": {
     "flat": 1.7,
@@ -2281,7 +2281,7 @@
    "rider": "Kuzmin Anton",
    "archetype": "rouleur",
    "pcsRank": 539,
-   "form": 49,
+   "form": 45,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "flat": 1.224,
@@ -2361,7 +2361,7 @@
    "rider": "Jorgenson Matteo",
    "archetype": "gc",
    "pcsRank": 27,
-   "form": 65,
+   "form": 60,
    "breakawayTendency": 9,
    "terrainAffinity": {
     "flat": 0.55,
@@ -2377,7 +2377,7 @@
    "rider": "Hagenes Per Strand",
    "archetype": "puncheur",
    "pcsRank": 89,
-   "form": 56,
+   "form": 45,
    "breakawayTendency": 9,
    "terrainAffinity": {
     "flat": 0.614,
@@ -2533,7 +2533,7 @@
    "rider": "Van Mechelen Vlad",
    "archetype": "sprinter",
    "pcsRank": 385,
-   "form": 54,
+   "form": 52,
    "breakawayTendency": 13,
    "terrainAffinity": {
     "flat": 1.014,
@@ -2565,7 +2565,7 @@
    "rider": "Leonard Michael",
    "archetype": "rouleur",
    "pcsRank": 466,
-   "form": 53,
+   "form": 47,
    "breakawayTendency": 17,
    "terrainAffinity": {
     "flat": 0.55,
@@ -2645,7 +2645,7 @@
    "rider": "Eriksson Jacob",
    "archetype": "puncheur",
    "pcsRank": 900,
-   "form": 47,
+   "form": 45,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "flat": 0.852,
@@ -2677,7 +2677,7 @@
    "rider": "Tulett Ben",
    "archetype": "puncheur",
    "pcsRank": 71,
-   "form": 65,
+   "form": 60,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "flat": 0.55,
@@ -3392,7 +3392,7 @@
    "rider": "Watson Samuel",
    "archetype": "rouleur",
    "pcsRank": 76,
-   "form": 55,
+   "form": 45,
    "breakawayTendency": 2,
    "terrainAffinity": {
     "flat": 1.219,
@@ -4072,7 +4072,7 @@
    "rider": "Raisberg Nadav",
    "archetype": "puncheur",
    "pcsRank": 616,
-   "form": 55,
+   "form": 54,
    "breakawayTendency": 4,
    "terrainAffinity": {
     "flat": 1.592,
@@ -4318,7 +4318,7 @@
    "rider": "Durbridge Luke",
    "archetype": "gc",
    "pcsRank": 677,
-   "form": 49,
+   "form": 45,
    "breakawayTendency": 4,
    "terrainAffinity": {
     "flat": 0.55,
@@ -4593,7 +4593,7 @@
    "rider": "Bauhaus Phil",
    "archetype": "sprinter",
    "pcsRank": 117,
-   "form": 61,
+   "form": 59,
    "breakawayTendency": 1,
    "terrainAffinity": {
     "flat": 1.7,
@@ -5787,7 +5787,7 @@
    "rider": "van Aert Wout",
    "archetype": "puncheur",
    "pcsRank": 18,
-   "form": 72,
+   "form": 66,
    "breakawayTendency": 21,
    "terrainAffinity": {
     "flat": 1.148,
@@ -5979,7 +5979,7 @@
    "rider": "Hoole Daan",
    "archetype": "rouleur",
    "pcsRank": 208,
-   "form": 52,
+   "form": 45,
    "breakawayTendency": 4,
    "terrainAffinity": {
     "flat": 0.55,
@@ -6127,7 +6127,7 @@
    "rider": "Tarling Joshua",
    "archetype": "rouleur",
    "pcsRank": 132,
-   "form": 57,
+   "form": 47,
    "breakawayTendency": 12,
    "terrainAffinity": {
     "flat": 0.685,
@@ -6143,7 +6143,7 @@
    "rider": "Walker Max",
    "archetype": "rouleur",
    "pcsRank": 474,
-   "form": 52,
+   "form": 45,
    "breakawayTendency": 18,
    "terrainAffinity": {
     "flat": 0.55,
@@ -6191,7 +6191,7 @@
    "rider": "Bissegger Stefan",
    "archetype": "rouleur",
    "pcsRank": 186,
-   "form": 51,
+   "form": 45,
    "breakawayTendency": 6,
    "terrainAffinity": {
     "flat": 1.08,
@@ -6223,7 +6223,7 @@
    "rider": "Gogl Michael",
    "archetype": "puncheur",
    "pcsRank": 585,
-   "form": 49,
+   "form": 46,
    "breakawayTendency": 4,
    "terrainAffinity": {
     "flat": 1.131,
@@ -6367,7 +6367,7 @@
    "rider": "Svrcek Martin",
    "archetype": "rouleur",
    "pcsRank": 543,
-   "form": 52,
+   "form": 49,
    "breakawayTendency": 12,
    "terrainAffinity": {
     "flat": 1.17,
@@ -6383,7 +6383,7 @@
    "rider": "Affini Edoardo",
    "archetype": "rouleur",
    "pcsRank": 184,
-   "form": 53,
+   "form": 46,
    "breakawayTendency": 5,
    "terrainAffinity": {
     "flat": 0.58,
@@ -6399,7 +6399,7 @@
    "rider": "Corkery Dillon",
    "archetype": "sprinter",
    "pcsRank": 624,
-   "form": 54,
+   "form": 53,
    "breakawayTendency": 19,
    "terrainAffinity": {
     "flat": 1.232,
@@ -6415,7 +6415,7 @@
    "rider": "Thornley Callum",
    "archetype": "rouleur",
    "pcsRank": 617,
-   "form": 54,
+   "form": 48,
    "breakawayTendency": 15,
    "terrainAffinity": {
     "flat": 0.974,
@@ -6553,7 +6553,7 @@
    "rider": "Trentin Matteo",
    "archetype": "puncheur",
    "pcsRank": 109,
-   "form": 52,
+   "form": 51,
    "breakawayTendency": 12,
    "terrainAffinity": {
     "flat": 1.284,
@@ -6880,7 +6880,7 @@
    "rider": "Engelhardt Felix",
    "archetype": "puncheur",
    "pcsRank": 226,
-   "form": 50,
+   "form": 48,
    "breakawayTendency": 12,
    "terrainAffinity": {
     "flat": 0.55,
@@ -6944,7 +6944,7 @@
    "rider": "Guernalec Thibault",
    "archetype": "rouleur",
    "pcsRank": 441,
-   "form": 48,
+   "form": 46,
    "breakawayTendency": 12,
    "terrainAffinity": {
     "flat": 0.55,
@@ -7001,7 +7001,7 @@
    "rider": "Skujins Toms",
    "archetype": "puncheur",
    "pcsRank": 45,
-   "form": 51,
+   "form": 45,
    "breakawayTendency": 12,
    "terrainAffinity": {
     "flat": 0.55,
@@ -7144,7 +7144,7 @@
    "rider": "Ferron Valentin",
    "archetype": "puncheur",
    "pcsRank": 446,
-   "form": 47,
+   "form": 45,
    "breakawayTendency": 11,
    "terrainAffinity": {
     "flat": 0.55,
@@ -7160,7 +7160,7 @@
    "rider": "Fox Matthew",
    "archetype": "sprinter",
    "pcsRank": 347,
-   "form": 47,
+   "form": 45,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "flat": 0.859,
@@ -7192,7 +7192,7 @@
    "rider": "Kamna Lennard",
    "archetype": "climber",
    "pcsRank": 373,
-   "form": 52,
+   "form": 46,
    "breakawayTendency": 13,
    "terrainAffinity": {
     "flat": 0.709,
@@ -7255,7 +7255,7 @@
    "rider": "Paret-Peintre Aurelien",
    "archetype": "gc",
    "pcsRank": 100,
-   "form": 51,
+   "form": 46,
    "breakawayTendency": 8,
    "terrainAffinity": {
     "flat": 0.55,
@@ -7350,7 +7350,7 @@
    "rider": "Urianstad Bugge Martin",
    "archetype": "puncheur",
    "pcsRank": 628,
-   "form": 50,
+   "form": 48,
    "breakawayTendency": 12,
    "terrainAffinity": {
     "flat": 1.627,
@@ -7382,7 +7382,7 @@
    "rider": "Hessmann Michel",
    "archetype": "puncheur",
    "pcsRank": 900,
-   "form": 50,
+   "form": 46,
    "breakawayTendency": 14,
    "terrainAffinity": {
     "flat": 0.55,
@@ -7422,7 +7422,7 @@
    "rider": "Wilksch Hannes",
    "archetype": "puncheur",
    "pcsRank": 678,
-   "form": 48,
+   "form": 45,
    "breakawayTendency": 3,
    "terrainAffinity": {
     "flat": 0.55,
@@ -7735,7 +7735,7 @@
    "rider": "Buitrago Santiago",
    "archetype": "gc",
    "pcsRank": 85,
-   "form": 52,
+   "form": 49,
    "breakawayTendency": 9,
    "terrainAffinity": {
     "flat": 0.55,
@@ -8884,7 +8884,7 @@
    "rider": "Plapp Luke",
    "archetype": "rouleur",
    "pcsRank": 34,
-   "form": 57,
+   "form": 54,
    "breakawayTendency": 12,
    "terrainAffinity": {
     "flat": 0.55,
@@ -8900,7 +8900,7 @@
    "rider": "Prodhomme Nicolas",
    "archetype": "climber",
    "pcsRank": 56,
-   "form": 51,
+   "form": 46,
    "breakawayTendency": 21,
    "terrainAffinity": {
     "flat": 0.55,
@@ -8916,7 +8916,7 @@
    "rider": "Oliveira Ivo",
    "archetype": "rouleur",
    "pcsRank": 236,
-   "form": 52,
+   "form": 45,
    "breakawayTendency": 6,
    "terrainAffinity": {
     "flat": 1.199,
@@ -8932,7 +8932,7 @@
    "rider": "MacKellar Alastair",
    "archetype": "rouleur",
    "pcsRank": 900,
-   "form": 53,
+   "form": 45,
    "breakawayTendency": 2,
    "terrainAffinity": {
     "flat": 0.55,
@@ -8980,7 +8980,7 @@
    "rider": "Martin Guillaume",
    "archetype": "gc",
    "pcsRank": 171,
-   "form": 54,
+   "form": 52,
    "breakawayTendency": 15,
    "terrainAffinity": {
     "flat": 0.55,
@@ -8996,7 +8996,7 @@
    "rider": "Cepeda Jefferson Alveiro",
    "archetype": "climber",
    "pcsRank": 167,
-   "form": 57,
+   "form": 52,
    "breakawayTendency": 16,
    "terrainAffinity": {
     "flat": 0.55,
@@ -9012,7 +9012,7 @@
    "rider": "Bennett George",
    "archetype": "gc",
    "pcsRank": 196,
-   "form": 52,
+   "form": 51,
    "breakawayTendency": 4,
    "terrainAffinity": {
     "flat": 0.55,
@@ -9028,7 +9028,7 @@
    "rider": "Tuckwell Luke",
    "archetype": "climber",
    "pcsRank": 83,
-   "form": 64,
+   "form": 61,
    "breakawayTendency": 4,
    "terrainAffinity": {
     "flat": 0.857,
@@ -9128,7 +9128,7 @@
    "rider": "Knox James",
    "archetype": "gc",
    "pcsRank": 578,
-   "form": 46,
+   "form": 45,
    "breakawayTendency": 3,
    "terrainAffinity": {
     "flat": 0.55,
@@ -9168,7 +9168,7 @@
    "rider": "Veistroffer Baptiste",
    "archetype": "puncheur",
    "pcsRank": 401,
-   "form": 47,
+   "form": 45,
    "breakawayTendency": 47,
    "terrainAffinity": {
     "flat": 0.569,
@@ -9216,7 +9216,7 @@
    "rider": "McKenzie Hamish",
    "archetype": "puncheur",
    "pcsRank": 900,
-   "form": 53,
+   "form": 48,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "flat": 1.091,
@@ -9230,7 +9230,7 @@
    "rider": "Fisher-Black Finn",
    "archetype": "puncheur",
    "pcsRank": 121,
-   "form": 64,
+   "form": 62,
    "breakawayTendency": 9,
    "terrainAffinity": {
     "flat": 0.553,
@@ -9266,7 +9266,7 @@
    "rider": "Seixas Paul",
    "archetype": "climber",
    "pcsRank": 3,
-   "form": 64,
+   "form": 61,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "flat": 0.634,
@@ -9346,7 +9346,7 @@
    "rider": "Armirail Bruno",
    "archetype": "rouleur",
    "pcsRank": 172,
-   "form": 59,
+   "form": 52,
    "breakawayTendency": 23,
    "terrainAffinity": {
     "flat": 0.55,
@@ -9362,7 +9362,7 @@
    "rider": "del Toro Isaac",
    "archetype": "gc",
    "pcsRank": 5,
-   "form": 70,
+   "form": 69,
    "breakawayTendency": 5,
    "terrainAffinity": {
     "flat": 0.55,
@@ -9378,7 +9378,7 @@
    "rider": "Tejada Harold",
    "archetype": "climber",
    "pcsRank": 76,
-   "form": 52,
+   "form": 50,
    "breakawayTendency": 14,
    "terrainAffinity": {
     "flat": 0.55,
@@ -9410,7 +9410,7 @@
    "rider": "Hayter Ethan",
    "archetype": "gc",
    "pcsRank": 186,
-   "form": 49,
+   "form": 46,
    "breakawayTendency": 4,
    "terrainAffinity": {
     "flat": 0.66,
@@ -9426,7 +9426,7 @@
    "rider": "Johannessen Tobias Halland",
    "archetype": "gc",
    "pcsRank": 12,
-   "form": 63,
+   "form": 64,
    "breakawayTendency": 12,
    "terrainAffinity": {
     "flat": 0.55,
@@ -9458,7 +9458,7 @@
    "rider": "Braz Afonso Clement",
    "archetype": "climber",
    "pcsRank": 209,
-   "form": 55,
+   "form": 52,
    "breakawayTendency": 30,
    "terrainAffinity": {
     "flat": 0.553,
@@ -9474,7 +9474,7 @@
    "rider": "Bisiaux Leo",
    "archetype": "climber",
    "pcsRank": 158,
-   "form": 61,
+   "form": 59,
    "breakawayTendency": 10,
    "terrainAffinity": {
     "flat": 0.618,
@@ -9490,7 +9490,7 @@
    "rider": "Cras Steff",
    "archetype": "climber",
    "pcsRank": 264,
-   "form": 51,
+   "form": 48,
    "breakawayTendency": 10,
    "terrainAffinity": {
     "flat": 0.55,
@@ -9506,7 +9506,7 @@
    "rider": "Healy Ben",
    "archetype": "climber",
    "pcsRank": 22,
-   "form": 55,
+   "form": 45,
    "breakawayTendency": 31,
    "terrainAffinity": {
     "flat": 0.55,
@@ -9522,7 +9522,7 @@
    "rider": "Ayuso Juan",
    "archetype": "gc",
    "pcsRank": 47,
-   "form": 69,
+   "form": 66,
    "breakawayTendency": 3,
    "terrainAffinity": {
     "flat": 0.55,
@@ -9570,7 +9570,7 @@
    "rider": "Uijtdebroeks Cian",
    "archetype": "gc",
    "pcsRank": 88,
-   "form": 62,
+   "form": 59,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "flat": 0.55,
@@ -9602,7 +9602,7 @@
    "rider": "Buchmann Emanuel",
    "archetype": "gc",
    "pcsRank": 304,
-   "form": 48,
+   "form": 45,
    "breakawayTendency": 5,
    "terrainAffinity": {
     "flat": 0.55,
@@ -9618,7 +9618,7 @@
    "rider": "Bernard Julien",
    "archetype": "climber",
    "pcsRank": 340,
-   "form": 51,
+   "form": 46,
    "breakawayTendency": 21,
    "terrainAffinity": {
     "flat": 0.55,
@@ -9690,7 +9690,7 @@
    "rider": "Træen Torstein",
    "archetype": "climber",
    "pcsRank": 192,
-   "form": 50,
+   "form": 48,
    "breakawayTendency": 8,
    "terrainAffinity": {
     "flat": 0.55,
@@ -9832,7 +9832,7 @@
    "rider": "Fortunato Lorenzo",
    "archetype": "gc",
    "pcsRank": 48,
-   "form": 52,
+   "form": 50,
    "breakawayTendency": 14,
    "terrainAffinity": {
     "flat": 0.55,
@@ -9943,7 +9943,7 @@
    "rider": "Castellon Jan",
    "archetype": "climber",
    "pcsRank": 249,
-   "form": 60,
+   "form": 61,
    "breakawayTendency": 17,
    "terrainAffinity": {
     "flat": 0.99,
@@ -9959,7 +9959,7 @@
    "rider": "Arriolabengoa Julen",
    "archetype": "domestique",
    "pcsRank": 900,
-   "form": 48,
+   "form": 46,
    "breakawayTendency": 31,
    "terrainAffinity": {
     "flat": 0.859,
@@ -10014,7 +10014,7 @@
    "rider": "Belmans Lennert",
    "archetype": "domestique",
    "pcsRank": 900,
-   "form": 49,
+   "form": 47,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "flat": 1.389,
@@ -10046,7 +10046,7 @@
    "rider": "Verona Carlos",
    "archetype": "gc",
    "pcsRank": 247,
-   "form": 51,
+   "form": 46,
    "breakawayTendency": 15,
    "terrainAffinity": {
     "flat": 0.55,
@@ -10165,7 +10165,7 @@
    "rider": "Voisard Yannis",
    "archetype": "climber",
    "pcsRank": 173,
-   "form": 51,
+   "form": 50,
    "breakawayTendency": 5,
    "terrainAffinity": {
     "flat": 0.55,
@@ -10181,7 +10181,7 @@
    "rider": "Decomble Maxime",
    "archetype": "rouleur",
    "pcsRank": 413,
-   "form": 49,
+   "form": 46,
    "breakawayTendency": 6,
    "terrainAffinity": {
     "flat": 0.859,
@@ -10197,7 +10197,7 @@
    "rider": "Kockelmann Mathieu",
    "archetype": "puncheur",
    "pcsRank": 503,
-   "form": 53,
+   "form": 52,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "flat": 1.047,
@@ -10276,7 +10276,7 @@
    "rider": "Molard Rudy",
    "archetype": "gc",
    "pcsRank": 231,
-   "form": 54,
+   "form": 52,
    "breakawayTendency": 6,
    "terrainAffinity": {
     "flat": 0.55,
@@ -10292,7 +10292,7 @@
    "rider": "Martinez Daniel Felipe",
    "archetype": "gc",
    "pcsRank": 86,
-   "form": 52,
+   "form": 46,
    "breakawayTendency": 8,
    "terrainAffinity": {
     "flat": 0.588,
@@ -10324,7 +10324,7 @@
    "rider": "Romeo Ivan",
    "archetype": "rouleur",
    "pcsRank": 67,
-   "form": 53,
+   "form": 45,
    "breakawayTendency": 20,
    "terrainAffinity": {
     "flat": 0.55,
@@ -10340,7 +10340,7 @@
    "rider": "Vercher Matteo",
    "archetype": "puncheur",
    "pcsRank": 248,
-   "form": 54,
+   "form": 53,
    "breakawayTendency": 13,
    "terrainAffinity": {
     "flat": 0.55,
@@ -10388,7 +10388,7 @@
    "rider": "Paret-Peintre Valentin",
    "archetype": "climber",
    "pcsRank": 91,
-   "form": 55,
+   "form": 53,
    "breakawayTendency": 13,
    "terrainAffinity": {
     "flat": 0.55,
@@ -10420,7 +10420,7 @@
    "rider": "Nordhagen Jørgen",
    "archetype": "climber",
    "pcsRank": 63,
-   "form": 58,
+   "form": 51,
    "breakawayTendency": 5,
    "terrainAffinity": {
     "flat": 0.726,
@@ -10436,7 +10436,7 @@
    "rider": "Thalmann Roland",
    "archetype": "climber",
    "pcsRank": 900,
-   "form": 47,
+   "form": 45,
    "breakawayTendency": 19,
    "terrainAffinity": {
     "flat": 0.67,
@@ -10558,7 +10558,7 @@
    "rider": "Rouland Louis",
    "archetype": "climber",
    "pcsRank": 444,
-   "form": 48,
+   "form": 45,
    "breakawayTendency": 5,
    "terrainAffinity": {
     "flat": 0.55,
@@ -10582,7 +10582,7 @@
    "rider": "De Plus Laurens",
    "archetype": "gc",
    "pcsRank": 130,
-   "form": 52,
+   "form": 46,
    "breakawayTendency": 4,
    "terrainAffinity": {
     "flat": 0.55,
@@ -10695,7 +10695,7 @@
    "rider": "Dhondt Robbe",
    "archetype": "puncheur",
    "pcsRank": 900,
-   "form": 50,
+   "form": 49,
    "breakawayTendency": 21,
    "terrainAffinity": {
     "flat": 0.894,
@@ -10757,7 +10757,7 @@
    "rider": "Thomas Benjamin",
    "archetype": "rouleur",
    "pcsRank": 176,
-   "form": 52,
+   "form": 51,
    "breakawayTendency": 12,
    "terrainAffinity": {
     "flat": 0.55,
@@ -10917,7 +10917,7 @@
    "rider": "Steinhauser Georg",
    "archetype": "climber",
    "pcsRank": 116,
-   "form": 54,
+   "form": 49,
    "breakawayTendency": 24,
    "terrainAffinity": {
     "flat": 0.55,
@@ -10933,7 +10933,7 @@
    "rider": "Onley Oscar",
    "archetype": "gc",
    "pcsRank": 9,
-   "form": 62,
+   "form": 53,
    "breakawayTendency": 6,
    "terrainAffinity": {
     "flat": 0.55,
@@ -11005,7 +11005,7 @@
    "rider": "Rodriguez Carlos",
    "archetype": "gc",
    "pcsRank": 175,
-   "form": 58,
+   "form": 53,
    "breakawayTendency": 4,
    "terrainAffinity": {
     "flat": 0.55,
@@ -11021,7 +11021,7 @@
    "rider": "Arndt Nikias",
    "archetype": "puncheur",
    "pcsRank": 478,
-   "form": 49,
+   "form": 45,
    "breakawayTendency": 6,
    "terrainAffinity": {
     "flat": 1.231,
@@ -11037,7 +11037,7 @@
    "rider": "Castrillo Pablo",
    "archetype": "climber",
    "pcsRank": 149,
-   "form": 59,
+   "form": 55,
    "breakawayTendency": 22,
    "terrainAffinity": {
     "flat": 0.55,
@@ -11117,7 +11117,7 @@
    "rider": "Govekar Matevz",
    "archetype": "puncheur",
    "pcsRank": 338,
-   "form": 51,
+   "form": 46,
    "breakawayTendency": 3,
    "terrainAffinity": {
     "flat": 1.394,
@@ -11210,7 +11210,7 @@
    "rider": "Vermaerke Kevin",
    "archetype": "puncheur",
    "pcsRank": 92,
-   "form": 59,
+   "form": 57,
    "breakawayTendency": 13,
    "terrainAffinity": {
     "flat": 0.55,
@@ -11625,7 +11625,7 @@
    "rider": "Berthet Clement",
    "archetype": "climber",
    "pcsRank": 134,
-   "form": 55,
+   "form": 54,
    "breakawayTendency": 7,
    "terrainAffinity": {
     "flat": 0.55,
@@ -11641,7 +11641,7 @@
    "rider": "Van Gils Maxim",
    "archetype": "puncheur",
    "pcsRank": 22,
-   "form": 61,
+   "form": 57,
    "breakawayTendency": 10,
    "terrainAffinity": {
     "flat": 0.55,
@@ -11657,7 +11657,7 @@
    "rider": "Quinn Sean",
    "archetype": "climber",
    "pcsRank": 584,
-   "form": 53,
+   "form": 47,
    "breakawayTendency": 12,
    "terrainAffinity": {
     "flat": 0.55,
@@ -11689,7 +11689,7 @@
    "rider": "Rodriguez Cristian",
    "archetype": "gc",
    "pcsRank": 131,
-   "form": 59,
+   "form": 58,
    "breakawayTendency": 8,
    "terrainAffinity": {
     "flat": 0.55,
@@ -11721,7 +11721,7 @@
    "rider": "Breuillard Nicolas",
    "archetype": "puncheur",
    "pcsRank": 270,
-   "form": 48,
+   "form": 46,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "flat": 0.857,
@@ -11737,7 +11737,7 @@
    "rider": "Jasch Lennart",
    "archetype": "climber",
    "pcsRank": 457,
-   "form": 52,
+   "form": 51,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "flat": 0.9,
@@ -11753,7 +11753,7 @@
    "rider": "Torres Pablo",
    "archetype": "climber",
    "pcsRank": 543,
-   "form": 51,
+   "form": 48,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "flat": 0.754,
@@ -11785,7 +11785,7 @@
    "rider": "Bouchard Geoffrey",
    "archetype": "climber",
    "pcsRank": 900,
-   "form": 47,
+   "form": 45,
    "breakawayTendency": 6,
    "terrainAffinity": {
     "flat": 0.55,
@@ -11801,7 +11801,7 @@
    "rider": "Diaz Alex",
    "archetype": "domestique",
    "pcsRank": 900,
-   "form": 49,
+   "form": 48,
    "breakawayTendency": 63,
    "terrainAffinity": {
     "flat": 1.379,
@@ -11817,7 +11817,7 @@
    "rider": "Darder Sergi",
    "archetype": "puncheur",
    "pcsRank": 434,
-   "form": 50,
+   "form": 49,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "flat": 1.252,
@@ -11833,7 +11833,7 @@
    "rider": "Matthews Michael",
    "archetype": "puncheur",
    "pcsRank": 41,
-   "form": 56,
+   "form": 54,
    "breakawayTendency": 9,
    "terrainAffinity": {
     "flat": 0.723,
@@ -11849,7 +11849,7 @@
    "rider": "Uhlig Henri",
    "archetype": "puncheur",
    "pcsRank": 406,
-   "form": 55,
+   "form": 54,
    "breakawayTendency": 4,
    "terrainAffinity": {
     "flat": 1.631,
@@ -11879,7 +11879,7 @@
    "rider": "Samitier Sergio",
    "archetype": "climber",
    "pcsRank": 563,
-   "form": 47,
+   "form": 45,
    "breakawayTendency": 12,
    "terrainAffinity": {
     "flat": 0.55,
@@ -11895,7 +11895,7 @@
    "rider": "Almeida Joao",
    "archetype": "gc",
    "pcsRank": 153,
-   "form": 51,
+   "form": 45,
    "breakawayTendency": 0,
    "terrainAffinity": {
     "flat": 0.55,

@@ -203,10 +203,13 @@ function RiderEditor() {
     <Section title="④ EDIT RIDERS  (archetype, form, rank, team strength, GC, injury, odds, ownership)">
       <input className="input mb-2 w-48" placeholder="Filter riders…" value={q} onChange={(e) => setQ(e.target.value)} />
       <p className="mb-2 text-xs text-chalk-500">
-        <span className="mono">PCS</span> = season rank (1 = best in the world; a default of 60 means unenriched — use{' '}
-        <span className="mono">① Enrich riders from PCS</span>) · <span className="mono">Form</span> = recency-weighted
-        recent finishing quality, 40–96 · <span className="mono">GC</span> = current Tour classification position, 0
-        until a stage result sets it · <span className="mono">Brk</span> = breakaway tendency, 0–100.
+        <span className="mono">PCS</span> = established skill-level prior (best season rank over the last ~3 years; 1 =
+        best in the world) — deliberately slow-moving, so it can lag behind the live PCS ranking on procyclingstats.com
+        for a rider whose current season is much better or worse than their recent peak; a default of 60 means
+        unenriched — use <span className="mono">① Enrich riders from PCS</span>) · <span className="mono">Form</span> =
+        recency-weighted recent finishing quality (the fast-moving signal), 40–96 · <span className="mono">GC</span> =
+        current Tour classification position, 0 until a stage result sets it · <span className="mono">Brk</span> =
+        breakaway tendency, 0–100.
       </p>
       <div className="overflow-x-auto">
         <table className="sheet">
@@ -214,7 +217,7 @@ function RiderEditor() {
             <th>Rider</th>
             <th title="Archetype: sprinter / puncheur / climber / gc / rouleur / breakaway / domestique">Arch</th>
             <th title="Recency-weighted recent finishing quality, scaled 40–96">Form</th>
-            <th title="ProCyclingStats season rank — 1 is the best rider in the world; lower is better">PCS</th>
+            <th title="Established skill-level prior — best season rank over the last ~3 years, 1 is the best rider in the world. Slow-moving by design; can lag the live PCS site ranking">PCS</th>
             <th title="Team strength 0–100 — drives TTT payout, sprint trains, Holdbonus">TeamStr</th>
             <th title="Current Tour general-classification position — 0 means not yet established (no stage logged)">GC</th>
             <th title="Breakaway tendency, 0–100 (derived from historical breakaway km)">Brk</th>

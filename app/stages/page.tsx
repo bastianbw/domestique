@@ -43,9 +43,11 @@ function Section({ title, children, defaultOpen = false }: { title: string; chil
 // ── 1. Paste-one-block import (primary daily loop) ──
 function ImportSection() {
   const importRaw = useStore((s) => s.importRaw);
+  const fetchFeatures = useStore((s) => s.fetchFeatures);
   const [raw, setRaw] = useState('');
   const [msgs, setMsgs] = useState<string[]>([]);
   const [ok, setOk] = useState(true);
+  const [busy, setBusy] = useState(false);
 
   return (
     <Section title="① IMPORT BLOCK  (paste from Claude chat — primary daily loop)" defaultOpen>
@@ -57,13 +59,19 @@ function ImportSection() {
       <textarea className="input h-32 w-full font-mono text-xs" value={raw}
         placeholder='{"type":"stageResult","stage":7,"results":[{"rider":"Jasper Philipsen","pos":1,"sprintPts":20}], ...}'
         onChange={(e) => setRaw(e.target.value)} />
-      <div className="mt-2 flex gap-2">
+      <div className="mt-2 flex flex-wrap gap-2">
         <button className="btn-accent" onClick={() => {
           const res = importRaw(raw);
           setOk(res.ok); setMsgs(res.messages);
           if (res.ok) setRaw('');
         }}>Import</button>
         <button className="btn" onClick={() => { setRaw(''); setMsgs([]); }}>Clear</button>
+        <button className="btn" disabled={busy} title="Pulls data/rider_features.json from GitHub: archetype, PCS rank, form, team strength & terrain affinity for ~750 riders. Fixes wrong archetypes/ranks without any copy-paste."
+          onClick={async () => {
+            setBusy(true);
+            const res = await fetchFeatures();
+            setOk(res.ok); setMsgs(res.messages); setBusy(false);
+          }}>{busy ? 'Fetching…' : '⬇ Enrich riders from PCS (GitHub)'}</button>
       </div>
       {msgs.length > 0 && (
         <ul className={`mono mt-2 space-y-0.5 text-xs ${ok ? 'text-chalk-300' : 'j-polka'}`}>
@@ -194,9 +202,25 @@ function RiderEditor() {
   return (
     <Section title="④ EDIT RIDERS  (archetype, form, rank, team strength, GC, injury, odds, ownership)">
       <input className="input mb-2 w-48" placeholder="Filter riders…" value={q} onChange={(e) => setQ(e.target.value)} />
+      <p className="mb-2 text-xs text-chalk-500">
+        <span className="mono">PCS</span> = season rank (1 = best in the world; a default of 60 means unenriched — use{' '}
+        <span className="mono">① Enrich riders from PCS</span>) · <span className="mono">Form</span> = recency-weighted
+        recent finishing quality, 40–96 · <span className="mono">GC</span> = current Tour classification position, 0
+        until a stage result sets it · <span className="mono">Brk</span> = breakaway tendency, 0–100.
+      </p>
       <div className="overflow-x-auto">
         <table className="sheet">
-          <thead><tr><th>Rider</th><th>Arch</th><th>Form</th><th>PCS</th><th>TeamStr</th><th>GC</th><th>Brk</th><th>Injury</th><th>Own%</th></tr></thead>
+          <thead><tr>
+            <th>Rider</th>
+            <th title="Archetype: sprinter / puncheur / climber / gc / rouleur / breakaway / domestique">Arch</th>
+            <th title="Recency-weighted recent finishing quality, scaled 40–96">Form</th>
+            <th title="ProCyclingStats season rank — 1 is the best rider in the world; lower is better">PCS</th>
+            <th title="Team strength 0–100 — drives TTT payout, sprint trains, Holdbonus">TeamStr</th>
+            <th title="Current Tour general-classification position — 0 means not yet established (no stage logged)">GC</th>
+            <th title="Breakaway tendency, 0–100 (derived from historical breakaway km)">Brk</th>
+            <th>Injury</th>
+            <th title="Manual ownership % guess, for differential mode">Own%</th>
+          </tr></thead>
           <tbody>
             {shown.map((r) => (
               <tr key={r.id}>

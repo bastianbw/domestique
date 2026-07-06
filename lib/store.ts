@@ -67,6 +67,7 @@ interface AppState {
   setRisk: (r: RiskPreset) => void;
   setAutoFetchUrl: (u: string) => void;
   fetchResult: (stage?: number) => Promise<{ ok: boolean; messages: string[] }>;
+  fetchFeatures: () => Promise<{ ok: boolean; messages: string[] }>;
 
   toggleRider: (id: string) => void;
   setTeam: (ids: string[], captainId?: string) => void;
@@ -139,6 +140,21 @@ export const useStore = create<AppState>()(
         }
       },
 
+      // One-click enrichment: pull the published PCS features block (archetype,
+      // rank, form, team strength, terrain affinity for ~750 riders) straight
+      // from the repo — no 747-rider copy-paste. Same import path as pasting.
+      fetchFeatures: async () => {
+        const url = 'https://raw.githubusercontent.com/bastianbw/domestique/main/data/rider_features.json';
+        try {
+          const res = await fetch(url, { cache: 'no-store' });
+          if (!res.ok) return { ok: false, messages: [`Fetch failed: HTTP ${res.status} from GitHub.`] };
+          const text = await res.text();
+          return get().importRaw(text);
+        } catch {
+          return { ok: false, messages: ['Could not reach GitHub (offline?). Paste the features block manually instead.'] };
+        }
+      },
+
       toggleRider: (id) => {
         const ids = get().currentTeamIds;
         if (ids.includes(id)) reconcileTeam(get, set, ids.filter((x) => x !== id));
@@ -196,6 +212,12 @@ export const useStore = create<AppState>()(
         const st = get();
         const stage = st.stages.find((s) => s.stage === block.stage);
         if (!stage) return { messages: [`Stage ${block.stage} not found.`] };
+        // Idempotency guard: prices/bank roll forward on every log, so importing
+        // the same stage twice (Fetch pressed again, latest.json re-imported)
+        // would double-roll them. One log per stage.
+        if (st.loggedStages.includes(block.stage)) {
+          return { messages: [`Stage ${block.stage} already logged — skipped (re-importing would double-roll prices). Use ⑧ export/import state to rewind if you need to correct it.`] };
+        }
 
         const abandonedSet = new Set(st.abandoned);
         const growth = computeStageGrowth(block, st.riders, stage, {
@@ -330,10 +352,23 @@ export const useStore = create<AppState>()(
           const { odds, ...rest } = r;
           return { ...rest, oddsByStage: { [legacyStage]: odds } } as Rider;
         });
+        // A persisted `stages` array wholesale-replaces the fresh STAGES_2026 —
+        // state saved before the difficulty layer existed carries no
+        // profileScore/verticalMeters, which silently switched OFF the
+        // continuous-climbiness refinement (climbiness() returns −1 without
+        // verticalMeters). Parcours facts are static and not user-editable, so
+        // they always come from code; user edits (type, points, …) are kept.
+        const stages = p.stages?.map((s) => {
+          const fresh = STAGES_2026.find((f) => f.stage === s.stage);
+          return fresh
+            ? { ...s, profileScore: fresh.profileScore, verticalMeters: fresh.verticalMeters }
+            : s;
+        });
         return {
           ...current,
           ...p,
           ...(riders ? { riders } : {}),
+          ...(stages ? { stages } : {}),
           config: mergeConfig(current.config, p.config),
           configHistory: (p.configHistory ?? []).map((c) => mergeConfig(current.config, c)),
         };

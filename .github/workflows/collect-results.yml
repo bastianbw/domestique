@@ -5,9 +5,11 @@ name: Collect stage results
 #  - MORNING (05:30 UTC / 07:30 CEST): weather forecast for TODAY's stage —
 #    the pre-stage nudge you actually want before picking a team. No results
 #    attempt (the stage hasn't been raced).
-#  - EVENING (19:00 UTC / 21:00 CEST): today's stage result (best-effort — PCS
-#    403s GitHub's IP at the Cloudflare edge, see scripts/collect_stage.py) +
-#    tomorrow's weather forecast.
+#  - EVENING (19:00 UTC / 21:00 CEST): today's stage result — primary source is
+#    the OFFICIAL letour.fr site (confirmed reachable from Actions' IP, unlike
+#    PCS/firstcycling/Eurosport — see probe-sources.yml), falling back to PCS
+#    (best-effort — 403'd at the Cloudflare edge, see scripts/collect_stage.py)
+#    if letour.fr's page structure ever changes — + tomorrow's weather forecast.
 # Whatever succeeded is bundled into data/latest.json; the PWA pulls it via the
 # raw GitHub URL (Stages & Data → ①½). Weather is expected to succeed every
 # run (Open-Meteo doesn't block); results are the fragile part, with manual
@@ -62,12 +64,19 @@ jobs:
         env:
           MANUAL_STAGE: ${{ github.event.inputs.stage }}
 
-      - name: Collect result block (evening only — best-effort, PCS may 403)
+      - name: Collect result block (evening only — letour.fr primary, PCS fallback)
         id: results
         if: steps.stage.outputs.stage != '' && steps.stage.outputs.mode == 'evening'
         continue-on-error: true
         run: |
-          python scripts/collect_stage.py --year 2026 --stage "${{ steps.stage.outputs.stage }}" --out data
+          if python scripts/collect_stage_letour.py --stage "${{ steps.stage.outputs.stage }}" --out data; then
+            echo "source=letour" >> "$GITHUB_OUTPUT"
+          elif python scripts/collect_stage.py --year 2026 --stage "${{ steps.stage.outputs.stage }}" --out data; then
+            echo "source=pcs" >> "$GITHUB_OUTPUT"
+          else
+            echo "Both result sources failed — nothing collected this run." >&2
+            exit 1
+          fi
 
       - name: Collect weather forecast (today's stage in the morning, tomorrow's in the evening)
         id: weather

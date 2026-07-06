@@ -56,6 +56,16 @@ export function StageBar() {
             <span>{stage.date}</span>
             <span className="text-ink-400">·</span>
             <span className="mono">{stage.km} km</span>
+            {typeof stage.verticalMeters === 'number' && (
+              <><span className="text-ink-400">·</span>
+              <span className="mono" title="total climbing">{stage.verticalMeters.toLocaleString('da-DK')} m↑</span></>
+            )}
+            {typeof stage.profileScore === 'number' && (
+              <><span className="text-ink-400">·</span>
+              <span className="mono" title="PCS difficulty score — the model uses this continuous value, not just the coarse type label">
+                difficulty {stage.profileScore}
+              </span></>
+            )}
             {stage.note && <><span className="text-ink-400">·</span><span className="truncate">{stage.note}</span></>}
           </div>
         </div>

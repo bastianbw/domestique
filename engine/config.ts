@@ -85,8 +85,8 @@ export const BASE_DNF_RISK: Record<Archetype, number> = {
   rouleur: 0.02, breakaway: 0.03, domestique: 0.025,
 };
 
-/** Field size assumed for the finishing distribution. */
-export const FIELD_SIZE = 176; // ~22 teams × 8
+/** Field size assumed for the finishing distribution. 2026 Tour: 23 teams × 8. */
+export const FIELD_SIZE = 184;
 
 /**
  * Risk presets are a MEAN–VARIANCE reshape of the SAME expected-value objective,

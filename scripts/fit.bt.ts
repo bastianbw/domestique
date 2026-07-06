@@ -195,5 +195,5 @@ describe.skipIf(!have)('learn-from-data fit + held-out 2026 validation', () => {
     console.log(lines.join('\n'));
 
     expect(rows[0][1].stages).toBeGreaterThan(20);
-  });
+  }, 600_000); // full-corpus fit + FIELD_SIZE=184 sim: comfortably over vitest's 180s default
 });

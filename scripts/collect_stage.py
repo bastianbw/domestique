@@ -8,12 +8,17 @@ the GitHub Action each evening during the Tour, or by hand on any machine.
 Honest notes:
 - ProCyclingStats blocks the procyclingstats package's default User-Agent (HTTP
   403). We fetch the HTML ourselves with a browser UA and hand it to the parser.
-- PCS puts Cloudflare's JS challenge ("Just a moment...") in front of the GitHub
-  Actions runner's IP specifically — confirmed by capturing the actual response
-  body from a failed run. Plain `requests` can never solve that (no JS engine),
-  so we fetch via `cloudscraper` (solves the common Cloudflare JS challenges)
-  with a fall back to plain `requests` for environments where it isn't needed.
-  Still best-effort: the app's manual paste flow is the reliable fallback.
+- CONFIRMED (by running this from GitHub Actions and reading the actual response):
+  Cloudflare returns a flat HTTP 403 to the Actions runner's IP on every attempt —
+  cloudscraper included. That's an IP-reputation block at the edge, not a solvable
+  JS challenge — no header, retry, or scraping-library trick fixes it client-side;
+  it needs a different egress IP (a paid residential/rotating proxy), which this
+  script deliberately does NOT add (new cost + credentials, a call for you to make,
+  not a code fix). So on GitHub Actions this is realistically often going to fail —
+  the app's manual/chat-Claude paste flow (Stages & Data → ①) is the reliable path,
+  not a fallback of last resort. This script still fully works run locally/by hand
+  (your own IP isn't blocked), and the retries + cloudscraper + proxy layers below
+  do help in environments where the block is a real JS challenge, not an outright 403.
 - Per-rider *stage* green/KOM points aren't cleanly exposed by PCS, so finish
   green points are ESTIMATED from finishing position + stage profile (clearly an
   approximation; the app's model also estimates, and you can correct any value).

@@ -32,9 +32,11 @@ export default function OptimalPage() {
   const buyingPower = s.bank + ownedValue;
 
   // Forward-looking value (to the next rest day) baked into selection — no knob.
+  // Reuses `projections` (the current stage is always the horizon's first
+  // stage) instead of re-running that same Monte Carlo simulation twice.
   const forward = useMemo(
-    () => (hydrated ? forwardValues(s.riders, s.stages, s.selectedStage, s.config) : null),
-    [hydrated, s.riders, s.stages, s.selectedStage, s.config],
+    () => (hydrated ? forwardValues(s.riders, s.stages, s.selectedStage, s.config, projections) : null),
+    [hydrated, s.riders, s.stages, s.selectedStage, s.config, projections],
   );
 
   // Fees only bite once the race has started (initial squad / stage-1 are free).

@@ -3,7 +3,7 @@
 // actually matter for a rider, discount future growth, and make keep-vs-swap
 // compare the multi-stage value of holding vs the fee to swap.
 
-import type { Rider, Stage } from './types';
+import type { Rider, Stage, RiderProjection } from './types';
 import { EngineConfig, defaultConfig, DEFAULT_HORIZON_DEPTH } from './config';
 import { projectField, GC_RELEVANT_TYPES } from './growth';
 import { transferFee } from './rules';
@@ -24,18 +24,23 @@ export interface HorizonValue {
 
 /**
  * Compute discounted horizon value for every rider across `upcomingStages`.
- * Caches one field projection per stage (cheap) and aggregates per rider.
+ * Caches one field projection per stage and aggregates per rider. `reuse`
+ * lets a caller that ALREADY projected the first (current) stage separately
+ * (e.g. the page's own `projections` for display) hand it in instead of
+ * paying for that Monte Carlo run a second time — the current stage is
+ * always upcomingStages[0], so this is a straight cache hit, not an estimate.
  */
 export function horizonValues(
   riders: Rider[],
   upcomingStages: Stage[],
   cfg: EngineConfig = defaultConfig(),
   depth: number = DEFAULT_HORIZON_DEPTH,
+  reuse?: { stage: number; projs: RiderProjection[] },
 ): Record<string, HorizonValue> {
   const stages = upcomingStages.slice(0, depth);
   const projByStage = stages.map((s) => ({
     stage: s.stage,
-    projs: projectField(riders, s, cfg),
+    projs: reuse && reuse.stage === s.stage ? reuse.projs : projectField(riders, s, cfg),
   }));
 
   const out: Record<string, HorizonValue> = {};
@@ -121,6 +126,7 @@ export function forwardValues(
   allStages: Stage[],
   fromStage: number,
   cfg: EngineConfig = defaultConfig(),
+  currentStageProjections?: RiderProjection[],
 ): {
   values: Record<string, number>;
   variances: Record<string, number>;
@@ -130,7 +136,10 @@ export function forwardValues(
 } {
   const upcoming = allStages.filter((s) => s.stage >= fromStage);
   const depth = autoHorizonDepth(fromStage);
-  const hv = horizonValues(riders, upcoming, cfg, depth);
+  const hv = horizonValues(
+    riders, upcoming, cfg, depth,
+    currentStageProjections ? { stage: fromStage, projs: currentStageProjections } : undefined,
+  );
   const nearTermEnd = fromStage + depth; // first stage NOT already covered by hv
   const farGc = wholeRaceGc(riders, allStages.filter((s) => s.stage >= nearTermEnd), fromStage, cfg);
   const values: Record<string, number> = {};

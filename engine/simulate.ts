@@ -345,16 +345,37 @@ export function simulateJoint(
   const N = cfg.fieldSize;
   const starters = riders.filter((r) => r.injury !== 'out');
   const M = starters.length;
-  const distributions = simulateStage(riders, stage, cfg, sim);
   if (M === 0) {
+    const distributions = riders.map((r) => ({ riderId: r.id, probs: new Array(N).fill(0), pDNF: 0 }));
     return { distributions, samples: { starterIds: [], nSims: sim.nSims, top15: [], winner: [] } };
   }
+
+  // ONE simulation pass builds both the marginals (posCount/finishes, same as
+  // simulateStage) AND the joint samples (top15/winner) — this used to run
+  // forEachSimOrder twice (once inside simulateStage, once again here) over
+  // the exact same deterministic seed, silently doubling the cost for no
+  // reason (both passes are bit-identical).
+  const posCount: Float64Array[] = starters.map(() => new Float64Array(N));
+  const finishes = new Float64Array(M);
   const top15: number[][] = [];
   const winner: number[] = [];
   forEachSimOrder(starters, stage, cfg, sim, (order) => {
+    for (let pos = 0; pos < order.length && pos < N; pos++) posCount[order[pos]][pos] += 1;
+    for (const ri of order) finishes[ri] += 1;
     top15.push(order.slice(0, Math.min(15, order.length)));
     winner.push(order.length ? order[0] : -1);
   });
+
+  const byId = new Map<string, RiderDistribution>();
+  starters.forEach((r, i) => {
+    const probs = new Array<number>(N).fill(0);
+    for (let p = 0; p < N; p++) probs[p] = posCount[i][p] / sim.nSims;
+    byId.set(r.id, { riderId: r.id, probs, pDNF: 1 - finishes[i] / sim.nSims });
+  });
+  const distributions = riders.map(
+    (r) => byId.get(r.id) ?? { riderId: r.id, probs: new Array(N).fill(0), pDNF: 0 },
+  );
+
   return { distributions, samples: { starterIds: starters.map((r) => r.id), nSims: sim.nSims, top15, winner } };
 }
 

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { forwardValues, normalCdf, pSwapBeatsHold } from './horizon';
 import { getStage } from './stages';
+import { projectField } from './growth';
 import type { Rider, Stage } from './types';
 
 function rider(partial: Partial<Rider> & Pick<Rider, 'id' | 'archetype'>): Rider {
@@ -46,6 +47,24 @@ describe('forwardValues — whole-race GC value beyond the near-term cap', () =>
     // sprinter has no gcPosition, so far-horizon GC stages contribute nothing —
     // forward value should equal the near-term (capped) horizon value exactly.
     expect(fv.values['spr']).toBeCloseTo(fv.hv['spr'].value, 6);
+  });
+
+  it('reusing an already-computed current-stage projection gives the identical result as recomputing it', () => {
+    // The current stage is always upcomingStages[0] — a caller (the page)
+    // that already ran projectField for display purposes can hand that in
+    // instead of paying for the same Monte Carlo simulation twice.
+    const field = [
+      rider({ id: 'a', archetype: 'gc', pcsRank: 5, gcPosition: 3 }),
+      rider({ id: 'b', archetype: 'sprinter', pcsRank: 10 }),
+      rider({ id: 'c', archetype: 'climber', pcsRank: 20 }),
+    ];
+    const withoutReuse = forwardValues(field, allStages, 1);
+    const precomputed = projectField(field, getStage(1)!);
+    const withReuse = forwardValues(field, allStages, 1, undefined, precomputed);
+    for (const r of field) {
+      expect(withReuse.values[r.id]).toBeCloseTo(withoutReuse.values[r.id], 6);
+      expect(withReuse.variances[r.id]).toBeCloseTo(withoutReuse.variances[r.id], 6);
+    }
   });
 });
 

@@ -58,8 +58,21 @@ function buildContext(input: OptimizerInput): ScoreContext {
   };
 }
 
-/** Full metrics + objective score for a candidate set of rider ids. */
-export function scoreTeam(ctx: ScoreContext, riderIds: string[]): OptimizedTeam {
+/**
+ * Full metrics + objective score for a candidate set of rider ids.
+ *
+ * `useJointSamples` (default true) controls Etapebonus: joint over the sim
+ * realisations when samples are supplied (so teammate correlation + break/
+ * echelon scenarios count), vs the Poisson-binomial independence
+ * approximation. The joint version is O(nSims × 15) — cheap once, but
+ * `localSearch` below calls scoreTeam tens of thousands of times while
+ * searching, and joint Etapebonus was measured at only ~0.7% more accurate
+ * than the approximation (Holdet's ≤2-per-team rule already decorrelates the
+ * roster) — nowhere near worth 4000× the per-call cost during the SEARCH
+ * itself. Pass `false` there; the final reported team still gets the
+ * accurate joint number (this function's default).
+ */
+export function scoreTeam(ctx: ScoreContext, riderIds: string[], useJointSamples = true): OptimizedTeam {
   const { input, projById, riderById } = ctx;
   const cfg = defaultConfig();
   const risk = cfg.riskTuning[input.risk];
@@ -85,12 +98,9 @@ export function scoreTeam(ctx: ScoreContext, riderIds: string[]): OptimizedTeam 
   }
   const captainBonus = Math.max(0, bestXg);
 
-  // Etapebonus: joint over the sim realisations when samples are supplied (so
-  // teammate correlation + break/echelon scenarios count), else the
-  // Poisson-binomial independence approximation on the marginals.
   const samples = input.jointSamples;
   let expectedEtape: number;
-  if (samples && samples.nSims > 0 && ctx.sampleIdxById) {
+  if (useJointSamples && samples && samples.nSims > 0 && ctx.sampleIdxById) {
     const teamIdx = new Set<number>();
     for (const id of riderIds) {
       const i = ctx.sampleIdxById.get(id);
@@ -214,7 +224,7 @@ function localSearch(
   const { input, riderById } = ctx;
   const gateConfidence = minSwapConfidence > 0 && !!input.forwardValueById && !!input.forwardVarianceById;
   let current = [...seed];
-  let currentScore = scoreTeam(ctx, current).score;
+  let currentScore = scoreTeam(ctx, current, false).score;
   let improved = true;
   let guard = 0;
   while (improved && guard++ < 50) {
@@ -225,7 +235,7 @@ function localSearch(
         const next = [...current];
         next[i] = cand;
         if (!isLegal(ctx, next)) continue;
-        const s = scoreTeam(ctx, next).score;
+        const s = scoreTeam(ctx, next, false).score;
         if (s <= currentScore + 1e-6) continue;
         if (gateConfidence) {
           const fee = input.chargeFees === false ? 0 : transferFee(riderById.get(cand)!.price);

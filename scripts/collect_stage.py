@@ -87,15 +87,20 @@ def fetch(rel_url: str) -> Stage:
             try:
                 resp = scraper.get(target, headers=BROWSER_HEADERS, timeout=30)
                 status, html = resp.status_code, resp.text
-            except Exception:
+            except Exception as e:
+                print(f"[fetch] cloudscraper attempt {attempt}: {e!r}", file=sys.stderr)
                 continue
             stage = _parse_or_none(rel_url, html)
+            print(f"[fetch] cloudscraper attempt {attempt}: HTTP {status}, {len(html)} bytes, "
+                  f"parsed={stage is not None}", file=sys.stderr)
             if stage is not None:
                 return stage
 
     resp = requests.get(target, headers=BROWSER_HEADERS, timeout=30)
     status, html = resp.status_code, resp.text
     stage = _parse_or_none(rel_url, html)
+    print(f"[fetch] plain requests: HTTP {status}, {len(html)} bytes, parsed={stage is not None}",
+          file=sys.stderr)
     if stage is not None:
         return stage
 
@@ -104,6 +109,8 @@ def fetch(rel_url: str) -> Stage:
         resp = requests.get(proxied, headers={"User-Agent": UA}, timeout=30)
         status, html = resp.status_code, resp.text
         stage = _parse_or_none(rel_url, html)
+        print(f"[fetch] read-proxy: HTTP {status}, {len(html)} bytes, parsed={stage is not None}",
+              file=sys.stderr)
         if stage is not None:
             return stage
     except requests.RequestException:

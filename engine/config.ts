@@ -116,10 +116,19 @@ export const RISK_TUNING: Record<RiskPreset, {
   churnPenalty: number; // extra multiple on transfer fees (favours keeping riders)
   winWeight: number; // DKK added per expected stage win (ceiling tilt)
   breakawayWeight: number; // DKK added per unit breakaway tendency (lottery upside)
+  /**
+   * Minimum P(these moves actually beat holding) required to recommend them
+   * at all (see engine/horizon.ts pSwapBeatsHold), 0 = no gate. A mean-variance
+   * penalty only ever discounts the mean by a fixed multiple of σ — it can't
+   * tell "barely ahead, huge uncertainty" from "clearly ahead, some noise".
+   * This asks the sharper question directly: swap only when we're actually
+   * SURE, not just nominally ahead on paper.
+   */
+  minSwapConfidence: number;
 }> = {
-  safe: { varPenalty: 0.45, churnPenalty: 1.5, winWeight: 0, breakawayWeight: 0 },
-  balanced: { varPenalty: 0, churnPenalty: 0, winWeight: 0, breakawayWeight: 0 },
-  aggressive: { varPenalty: 0, churnPenalty: 0, winWeight: 900_000, breakawayWeight: 220_000 },
+  safe: { varPenalty: 0.45, churnPenalty: 1.5, winWeight: 0, breakawayWeight: 0, minSwapConfidence: 0.65 },
+  balanced: { varPenalty: 0, churnPenalty: 0, winWeight: 0, breakawayWeight: 0, minSwapConfidence: 0 },
+  aggressive: { varPenalty: 0, churnPenalty: 0, winWeight: 900_000, breakawayWeight: 220_000, minSwapConfidence: 0 },
 };
 
 /** Horizon planning: discount factor per stage into the future. */

@@ -9,7 +9,7 @@ import { optimize } from '@/engine/optimizer';
 import { simulateJoint } from '@/engine/simulate';
 import { forwardValues } from '@/engine/horizon';
 import type { OptimizerInput, RiskPreset, OptimizedTeam } from '@/engine/types';
-import { kr, growth, priceM, ARCHE_LABEL } from '@/lib/format';
+import { kr, growth, priceM, pct, ARCHE_LABEL } from '@/lib/format';
 
 const RISKS: RiskPreset[] = ['safe', 'balanced', 'aggressive'];
 
@@ -59,6 +59,7 @@ export default function OptimalPage() {
     contractsRemaining: effectiveContracts(s.contractsRemaining),
     risk: s.risk,
     forwardValueById: forward?.values,
+    forwardVarianceById: forward?.variances,
     chargeFees,
     jointSamples,
   }), [stage, s.riders, projections, buyingPower, s.currentTeamIds, s.teamType, s.contractsRemaining, s.risk, forward, chargeFees, jointSamples]);
@@ -286,10 +287,18 @@ export default function OptimalPage() {
                 captain is <span className="font-medium text-chalk-100">{recCaptainName}</span>.
               </p>
             ) : !ridersChange && !captainChange ? (
-              <p className="text-sm j-green">
-                Stand pat — your 8 riders and captain (<span className="font-medium">{recCaptainName}</span>) already maximise
-                expected net growth for this stage.
-              </p>
+              <div className="text-sm j-green">
+                <p>
+                  Stand pat — your 8 riders and captain (<span className="font-medium">{recCaptainName}</span>) already maximise
+                  expected net growth for this stage.
+                </p>
+                {typeof recommended.swapConfidence === 'number' && recommended.swapConfidence < 1 && (
+                  <p className="mt-1 text-[13px] text-chalk-400">
+                    ↳ A higher-mean transfer set exists, but we&apos;re only {pct(recommended.swapConfidence)} sure it actually beats
+                    holding once uncertainty is accounted for — Safe requires 65%+ confidence, so we&apos;re keeping your riders.
+                  </p>
+                )}
+              </div>
             ) : (
               <div className="space-y-3 text-sm">
                 {ridersChange && (
@@ -322,6 +331,9 @@ export default function OptimalPage() {
                   <div className="text-[13px] text-chalk-300">
                     Fee cost <span className="mono">{growth(-recommended.transferFees)}</span> · net expected gain vs standing pat{' '}
                     <span className={`mono ${recommended.netGainVsHold >= 0 ? 'j-green' : 'j-polka'}`}>{growth(recommended.netGainVsHold)}</span>
+                    {typeof recommended.swapConfidence === 'number' && (
+                      <> · <span className="mono">{pct(recommended.swapConfidence)}</span> confident this beats holding</>
+                    )}
                   </div>
                 )}
                 {ridersChange && recommended.netGainVsHold < 0 && (

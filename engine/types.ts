@@ -200,6 +200,12 @@ export interface OptimizerInput {
    */
   forwardValueById?: Record<string, number>;
   /**
+   * Uncertainty (variance) matching each forwardValueById entry, over the same
+   * horizon. Lets the optimizer tell a confident edge from a coin flip instead
+   * of just comparing means — see engine/horizon.ts pSwapBeatsHold.
+   */
+  forwardVarianceById?: Record<string, number>;
+  /**
    * Whether the 1% transfer fee applies. False before the race starts (the
    * initial squad and any stage-1 changes are free). Defaults to true.
    */
@@ -234,6 +240,13 @@ export interface OptimizedTeam {
   /** net expected gain of making these moves vs standing pat */
   netGainVsHold: number;
   score: number; // the objective value the optimizer maximised
+  /**
+   * Probability (0..1) that these moves actually beat holding the current
+   * team, given each side's forward value AND uncertainty — not just whose
+   * mean is higher. Only set when a legal current team was supplied. See
+   * engine/horizon.ts pSwapBeatsHold and RiskTuning.minSwapConfidence.
+   */
+  swapConfidence?: number;
 }
 
 // ── Import-block schemas (the Phase-2 daily bridge) ──────────────────────────

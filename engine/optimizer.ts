@@ -12,6 +12,7 @@ import type {
 import { etapebonus, transferFee } from './rules';
 import { defaultConfig } from './config';
 import { jointEtapebonus } from './simulate';
+import { pSwapBeatsHold } from './horizon';
 
 const TEAM_SIZE = 8;
 const MAX_PER_TEAM = 2;
@@ -192,6 +193,43 @@ function isLegal(
 }
 
 /**
+ * Attach netGainVsHold + swapConfidence, and — for a preset with a
+ * minSwapConfidence bar (currently 'safe') — fall back to holding the current
+ * team outright when the recommended moves aren't actually confident, not
+ * just nominally ahead on mean score. Only engages when forward value AND
+ * variance data were supplied; without them there's nothing to gate on, so
+ * behaviour is unchanged (today's pure score comparison).
+ */
+function withSwapConfidence(
+  ctx: ScoreContext,
+  result: OptimizedTeam,
+  hold: OptimizedTeam,
+): OptimizedTeam {
+  result.netGainVsHold = result.score - hold.score;
+  if (result.buys.length === 0 && result.sells.length === 0) {
+    result.swapConfidence = 1;
+    return result;
+  }
+  const { input, riderById } = ctx;
+  if (!input.forwardValueById || !input.forwardVarianceById) return result;
+
+  const risk = defaultConfig().riskTuning[input.risk];
+  const feeCost = input.chargeFees === false
+    ? 0
+    : result.buys.reduce((a, id) => a + transferFee(riderById.get(id)!.price), 0);
+  const confidence = pSwapBeatsHold(
+    result.sells, result.buys, input.forwardValueById, input.forwardVarianceById, feeCost,
+  );
+  result.swapConfidence = confidence;
+  if (risk.minSwapConfidence > 0 && confidence < risk.minSwapConfidence) {
+    hold.swapConfidence = confidence;
+    hold.netGainVsHold = 0;
+    return hold;
+  }
+  return result;
+}
+
+/**
  * Optimize. Greedy value-density seed (xG per kr, honouring 2-per-team and
  * budget) then local-search swaps to climb the objective. Runs instantly on
  * ~180 riders.
@@ -245,8 +283,7 @@ export function optimize(input: OptimizerInput): OptimizedTeam {
     }
     const result = scoreTeam(ctx, current);
     const hold = scoreTeam(ctx, input.currentTeam!);
-    result.netGainVsHold = result.score - hold.score;
-    return result;
+    return withSwapConfidence(ctx, result, hold);
   }
 
   // ── Greedy value-density seed (budget-RESERVING so it always reaches 8) ──
@@ -323,7 +360,7 @@ export function optimize(input: OptimizerInput): OptimizedTeam {
     const holdLegal = isLegal(ctx, input.currentTeam);
     if (holdLegal) {
       const hold = scoreTeam(ctx, input.currentTeam);
-      result.netGainVsHold = result.score - hold.score;
+      return withSwapConfidence(ctx, result, hold);
     } else {
       result.netGainVsHold = result.score; // current team not held intact anyway
     }

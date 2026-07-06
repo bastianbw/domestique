@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { forwardValues } from './horizon';
+import { forwardValues, normalCdf, pSwapBeatsHold } from './horizon';
 import { getStage } from './stages';
 import type { Rider, Stage } from './types';
 
@@ -46,5 +46,43 @@ describe('forwardValues — whole-race GC value beyond the near-term cap', () =>
     // sprinter has no gcPosition, so far-horizon GC stages contribute nothing —
     // forward value should equal the near-term (capped) horizon value exactly.
     expect(fv.values['spr']).toBeCloseTo(fv.hv['spr'].value, 6);
+  });
+});
+
+describe('normalCdf', () => {
+  it('is 0.5 at z=0 and approaches 0/1 at the tails', () => {
+    expect(normalCdf(0)).toBeCloseTo(0.5, 6);
+    expect(normalCdf(-10)).toBeCloseTo(0, 6);
+    expect(normalCdf(10)).toBeCloseTo(1, 6);
+  });
+
+  it('matches the standard normal CDF at a known point (z=1 ≈ 0.8413)', () => {
+    expect(normalCdf(1)).toBeCloseTo(0.8413, 3);
+  });
+});
+
+describe('pSwapBeatsHold', () => {
+  it('a huge mean edge with negligible variance is ~certain', () => {
+    const p = pSwapBeatsHold(['sell'], ['buy'],
+      { sell: 100_000, buy: 500_000 }, { sell: 1, buy: 1 }, 10_000);
+    expect(p).toBeGreaterThan(0.999);
+  });
+
+  it('a small mean edge swamped by huge variance is close to a coin flip', () => {
+    const p = pSwapBeatsHold(['sell'], ['buy'],
+      { sell: 100_000, buy: 110_000 }, { sell: 5e11, buy: 5e11 }, 1_000);
+    expect(p).toBeGreaterThan(0.5);
+    expect(p).toBeLessThan(0.6);
+  });
+
+  it('a negative mean edge (fee outweighs the gain) is below even odds', () => {
+    const p = pSwapBeatsHold(['sell'], ['buy'],
+      { sell: 100_000, buy: 105_000 }, { sell: 1, buy: 1 }, 20_000);
+    expect(p).toBeLessThan(0.01);
+  });
+
+  it('zero variance on both sides falls back to a hard yes/no on the mean', () => {
+    expect(pSwapBeatsHold(['s'], ['b'], { s: 100, b: 200 }, { s: 0, b: 0 }, 0)).toBe(1);
+    expect(pSwapBeatsHold(['s'], ['b'], { s: 200, b: 100 }, { s: 0, b: 0 }, 0)).toBe(0);
   });
 });

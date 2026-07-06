@@ -97,18 +97,58 @@ export function expectedLateArrival(
 /** Stage types where GC materially reshuffles (meaningful time gaps open). */
 export const GC_RELEVANT_TYPES = new Set<StageType>(['summit', 'high_mtn', 'hilly_itt']);
 
-/** Smoothed GC_TABLE expectation around a (possibly fractional) position — a
- * rider projected right at the top-10 cutoff gets partial credit, not the
- * all-or-nothing a rounded lookup would give. */
-function gcExpectationAtPosition(effectivePos: number, spread: number): number {
+/** How much a single hard stage can shift a rider's effective GC rank — bounded,
+ *  not a full reshuffle — and the spread of the smoothing window around it. */
+const GC_SHIFT_WEIGHT = 0.35;
+const GC_SHIFT_SPREAD = 2.2;
+
+/** Mean AND variance of the smoothed GC_TABLE expectation around a (possibly
+ * fractional) position — a rider projected right at the top-10 cutoff gets
+ * partial credit, not the all-or-nothing a rounded lookup would give, and a
+ * rider sitting right on that cutoff carries real uncertainty (variance)
+ * about whether they land in or out of the money. */
+function gcMomentsAtPosition(effectivePos: number, spread: number): { mean: number; variance: number } {
   let sum = 0;
+  let sum2 = 0;
   let wsum = 0;
   for (let p = 1; p <= 15; p++) {
     const w = Math.exp(-((p - effectivePos) ** 2) / (2 * spread * spread));
-    sum += w * gcGrowth(p);
+    const g = gcGrowth(p);
+    sum += w * g;
+    sum2 += w * g * g;
     wsum += w;
   }
-  return wsum > 0 ? sum / wsum : 0;
+  if (wsum <= 0) return { mean: 0, variance: 0 };
+  const mean = sum / wsum;
+  const variance = Math.max(0, sum2 / wsum - mean * mean);
+  return { mean, variance };
+}
+
+/** Cohort + each member's effective (possibly stage-shifted) GC position,
+ * shared between expectedGcGrowth and expectedGcVariance so they can't drift
+ * out of sync. Returns `effectiveById: null` when the static lookup should be
+ * used as-is (off GC-relevant terrain, or too small a cohort to rank). */
+function gcCohortEffectivePositions(
+  riders: Rider[],
+  stage: Stage,
+  distById: Map<string, RiderDistribution>,
+): { cohort: Rider[]; effectiveById: Map<string, number> | null } {
+  const cohort = riders.filter((r) => typeof r.gcPosition === 'number' && r.injury !== 'out');
+  if (!GC_RELEVANT_TYPES.has(stage.type) || cohort.length < 2) {
+    return { cohort, effectiveById: null };
+  }
+  // "Stage rank" = this rider's rank AMONG THE COHORT by projected stage
+  // strength (1 = strongest projected performer today).
+  const byStrength = [...cohort].sort(
+    (a, b) => pTopK(distById.get(b.id)!, 15) - pTopK(distById.get(a.id)!, 15),
+  );
+  const stageRank = new Map<string, number>();
+  byStrength.forEach((r, i) => stageRank.set(r.id, i + 1));
+  const effectiveById = new Map<string, number>();
+  for (const r of cohort) {
+    effectiveById.set(r.id, (1 - GC_SHIFT_WEIGHT) * r.gcPosition! + GC_SHIFT_WEIGHT * stageRank.get(r.id)!);
+  }
+  return { cohort, effectiveById };
 }
 
 /**
@@ -139,27 +179,34 @@ export function expectedGcGrowth(
   distById: Map<string, RiderDistribution>,
 ): Map<string, number> {
   const out = new Map<string, number>();
-  const cohort = riders.filter((r) => typeof r.gcPosition === 'number' && r.injury !== 'out');
-  if (!GC_RELEVANT_TYPES.has(stage.type) || cohort.length < 2) {
+  const { cohort, effectiveById } = gcCohortEffectivePositions(riders, stage, distById);
+  if (!effectiveById) {
     for (const r of cohort) out.set(r.id, gcGrowth(r.gcPosition));
     return out;
   }
+  for (const r of cohort) out.set(r.id, gcMomentsAtPosition(effectiveById.get(r.id)!, GC_SHIFT_SPREAD).mean);
+  return out;
+}
 
-  // "Stage rank" = this rider's rank AMONG THE COHORT by projected stage
-  // strength (1 = strongest projected performer today).
-  const byStrength = [...cohort].sort(
-    (a, b) => pTopK(distById.get(b.id)!, 15) - pTopK(distById.get(a.id)!, 15),
-  );
-  const stageRank = new Map<string, number>();
-  byStrength.forEach((r, i) => stageRank.set(r.id, i + 1));
-
-  const SHIFT_WEIGHT = 0.35; // how much a single hard stage can move GC — bounded, not a reshuffle
-  const SPREAD = 2.2;
-
-  for (const r of cohort) {
-    const effective = (1 - SHIFT_WEIGHT) * r.gcPosition! + SHIFT_WEIGHT * stageRank.get(r.id)!;
-    out.set(r.id, gcExpectationAtPosition(effective, SPREAD));
+/**
+ * Variance of the GC-position growth above — a rider projected right at a
+ * paying-position cutoff carries real uncertainty (could land just in or just
+ * out of the money), which the mean-only expectation can't convey. Off GC-
+ * relevant terrain the static lookup carries no modelled variance (0), since
+ * gcGrowth there is a fixed table read, not a projection.
+ */
+export function expectedGcVariance(
+  riders: Rider[],
+  stage: Stage,
+  distById: Map<string, RiderDistribution>,
+): Map<string, number> {
+  const out = new Map<string, number>();
+  const { cohort, effectiveById } = gcCohortEffectivePositions(riders, stage, distById);
+  if (!effectiveById) {
+    for (const r of cohort) out.set(r.id, 0);
+    return out;
   }
+  for (const r of cohort) out.set(r.id, gcMomentsAtPosition(effectiveById.get(r.id)!, GC_SHIFT_SPREAD).variance);
   return out;
 }
 
@@ -381,7 +428,11 @@ export function projectField(
   // GC-relevant stages: project each contender's likely GC shift instead of
   // freezing their pre-stage position (see expectedGcGrowth).
   const gcExpectations = expectedGcGrowth(riders, stage, byId);
-  return riders.map((r) =>
-    projectRider(r, stage, byId.get(r.id)!, cfg, teamWinProbs?.get(r.team), gcExpectations.get(r.id)),
-  );
+  const gcVariances = expectedGcVariance(riders, stage, byId);
+  return riders.map((r) => {
+    const p = projectRider(r, stage, byId.get(r.id)!, cfg, teamWinProbs?.get(r.team), gcExpectations.get(r.id));
+    const gcVar = gcVariances.get(r.id);
+    if (gcVar) p.gVar += gcVar; // fold GC-position uncertainty into total stage-growth variance
+    return p;
+  });
 }

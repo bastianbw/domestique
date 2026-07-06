@@ -209,6 +209,83 @@ describe('risk presets actually change the team (mean-variance)', () => {
   });
 });
 
+describe('swap confidence gate (forwardValueById + forwardVarianceById)', () => {
+  // 8 current riders (2 per team, 4 teams) all with identical immediate xG/gVar
+  // (so captain/Etapebonus/existing variance-penalty terms can't confound the
+  // result) but a uniform forward SELECTION value of 100k. One outside
+  // candidate, Z0, has a MUCH higher forward value (300k) — a 200k edge, large
+  // enough that even 'safe's existing churn/variance penalties (which act on
+  // score, not confidence) don't block the swap on their own. But both Z0 and
+  // whichever current rider it displaces carry huge forwardVarianceById, so
+  // the edge — while nominally positive — isn't a confident one.
+  function confidenceField() {
+    const teams = ['A', 'B', 'C', 'D'];
+    const riders: Rider[] = [];
+    const projections: RiderProjection[] = [];
+    const forwardValueById: Record<string, number> = {};
+    const forwardVarianceById: Record<string, number> = {};
+    for (const t of teams) {
+      for (let j = 0; j < 2; j++) {
+        const id = `${t}${j}`;
+        riders.push(rider(id, t, 1_000_000));
+        projections.push(proj(id, 50_000, 0.3, 0.1, 0.02, 1)); // gVar≈0: isolate the new gate from the existing variance penalty
+        forwardValueById[id] = 100_000;
+        forwardVarianceById[id] = 2e12; // huge — held riders' true forward value is uncertain too
+      }
+    }
+    riders.push(rider('Z0', 'Z', 1_000_000));
+    projections.push(proj('Z0', 50_000, 0.3, 0.1, 0.02, 1));
+    forwardValueById['Z0'] = 300_000; // +200k edge — big enough to clear fees/churn penalty on score alone
+    forwardVarianceById['Z0'] = 2e12; // huge — the swap's real edge is uncertain, not free money
+    const currentTeam = teams.flatMap((t) => [`${t}0`, `${t}1`]);
+    return { riders, projections, forwardValueById, forwardVarianceById, currentTeam };
+  }
+
+  it('balanced takes the swap — positive edge, and balanced has no confidence bar', () => {
+    const { riders, projections, forwardValueById, forwardVarianceById, currentTeam } = confidenceField();
+    const t = optimize(baseInput({
+      riders, projections, forwardValueById, forwardVarianceById,
+      currentTeam, risk: 'balanced', budget: 50_000_000,
+    }));
+    expect(t.buys).toEqual(['Z0']);
+    expect(t.sells.length).toBe(1);
+    expect(t.swapConfidence).toBeDefined();
+    // Positive edge (barely above a coin flip given the huge variance) — not the
+    // near-certainty a naive "mean is higher" comparison would imply.
+    expect(t.swapConfidence!).toBeGreaterThan(0.5);
+    expect(t.swapConfidence!).toBeLessThan(0.65);
+  });
+
+  it('safe refuses the same swap — not confident enough — and holds the current team', () => {
+    const { riders, projections, forwardValueById, forwardVarianceById, currentTeam } = confidenceField();
+    const t = optimize(baseInput({
+      riders, projections, forwardValueById, forwardVarianceById,
+      currentTeam, risk: 'safe', budget: 50_000_000,
+    }));
+    // ...so 'safe' (minSwapConfidence 0.65) declines it and keeps the current 8,
+    // even though the swap's raw score (mean edge minus fee/churn penalty) is
+    // comfortably positive — the NEW gate is what's rejecting it, not the old
+    // mean-variance penalty.
+    expect(t.buys).toEqual([]);
+    expect(t.sells).toEqual([]);
+    expect(t.riderIds.slice().sort()).toEqual(currentTeam.slice().sort());
+    expect(t.swapConfidence).toBeLessThan(0.65);
+  });
+
+  it('a clearly-better, low-variance swap is confident and safe accepts it too', () => {
+    const { riders, projections, forwardValueById, forwardVarianceById, currentTeam } = confidenceField();
+    // Same edge, but make it a sure thing: tiny variance on both sides.
+    forwardVarianceById['Z0'] = 1;
+    for (const id of currentTeam) forwardVarianceById[id] = 1;
+    const t = optimize(baseInput({
+      riders, projections, forwardValueById, forwardVarianceById,
+      currentTeam, risk: 'safe', budget: 50_000_000,
+    }));
+    expect(t.buys).toEqual(['Z0']);
+    expect(t.swapConfidence!).toBeGreaterThan(0.99);
+  });
+});
+
 describe('expectedEtapebonus (Poisson-binomial)', () => {
   it('is 0 when nobody can reach top-15', () => {
     expect(expectedEtapebonus([0, 0, 0, 0, 0, 0, 0, 0])).toBe(0);

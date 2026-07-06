@@ -24,6 +24,7 @@ from urllib.parse import quote
 
 import requests
 from procyclingstats import Stage
+from procyclingstats.errors import ExpectedParsingError
 
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
@@ -41,13 +42,27 @@ GREEN_MED  = [50, 35, 28, 24, 20, 16, 14, 12, 10, 8, 7, 6, 5, 4, 3]
 GREEN_MTN  = [20, 17, 15, 13, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
 
 
+def _parse_or_none(rel_url: str, html: str) -> Stage | None:
+    """Bind a Stage to this HTML and validate it actually parses PCS's
+    `.page-title` element. A blocked/challenge response usually still has a
+    generic HTML <title> tag, so checking for that would be a false positive —
+    `.page-title` is the specific element the library (and every field we use)
+    needs, so this is the real "did we get the real page" signal."""
+    stage = Stage(rel_url, html=html, update_html=False)
+    try:
+        stage.stage_type()
+    except ExpectedParsingError:
+        return None
+    return stage
+
+
 def fetch(rel_url: str) -> Stage:
     """Fetch a PCS page and return a parser bound to it.
 
     PCS occasionally rate-limits/blocks the GitHub Actions runner's IP outright
-    (a blocked/interstitial response with no <title>, not a clean HTTP error) even
-    with a browser User-Agent. We retry directly with backoff, then fall back to
-    a public read-proxy (same raw HTML, different egress IP) before giving up —
+    (a blocked/interstitial response, not a clean HTTP error) even with a
+    browser User-Agent. We retry directly with backoff, then fall back to a
+    public read-proxy (same raw HTML, different egress IP) before giving up —
     and report exactly why on final failure instead of the library's generic
     "Page title not found" parsing traceback.
     """
@@ -59,21 +74,23 @@ def fetch(rel_url: str) -> Stage:
             time.sleep(4 * attempt)
         resp = requests.get(target, headers=BROWSER_HEADERS, timeout=30)
         status, html = resp.status_code, resp.text
-        if "<title" in html.lower():
-            return Stage(rel_url, html=html, update_html=False)
+        stage = _parse_or_none(rel_url, html)
+        if stage is not None:
+            return stage
 
     try:
         proxied = "https://api.allorigins.win/raw?url=" + quote(target, safe="")
         resp = requests.get(proxied, headers={"User-Agent": UA}, timeout=30)
         status, html = resp.status_code, resp.text
-        if "<title" in html.lower():
-            return Stage(rel_url, html=html, update_html=False)
+        stage = _parse_or_none(rel_url, html)
+        if stage is not None:
+            return stage
     except requests.RequestException:
         pass
 
     raise RuntimeError(
-        f"PCS fetch for {rel_url} returned no <title> after direct + proxied attempts "
-        f"(last HTTP {status}, {len(html)} bytes) — looks bot-blocked, not a bad URL. "
+        f"PCS fetch for {rel_url} never parsed (.page-title missing) after direct + proxied "
+        f"attempts (last HTTP {status}, {len(html)} bytes) — looks bot-blocked, not a bad URL. "
         f"Paste the stage result manually instead. First 200 chars: {html[:200]!r}"
     )
 

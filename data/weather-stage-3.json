@@ -1,0 +1,10 @@
+{
+  "type": "weather",
+  "stage": 3,
+  "windKph": 36,
+  "windDir": "N",
+  "gustRisk": "high",
+  "rainProb": 0,
+  "tempC": 36,
+  "_source": "open-meteo:Les Angles, France:2026-07-06"
+}

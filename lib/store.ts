@@ -492,16 +492,26 @@ function applyFeatures(
   set: (p: Partial<AppState>) => void,
 ): { ok: boolean; messages: string[] } {
   const st = get();
-  const riders = st.riders.map((r) => ({ ...r }));
   // A features block is a big DICTIONARY (~750 riders); most won't be in your
   // field, and that's fine. Report from YOUR field's perspective: how many of
   // your riders got enriched, and which are still on defaults.
+  //
+  // Match direction matters: this used to loop the DICTIONARY and match each
+  // row against your (small) roster, unconditionally overwriting on every hit —
+  // so with no score comparison across hits, a later, WEAKER false-positive
+  // (matchRider's shared-token rule scores ANY shared token, e.g. a common
+  // given name like "Jonas", at 0.85) could clobber an earlier, correct match
+  // (e.g. the real "Vingegaard Jonas" at 0.98) just by appearing later in the
+  // 747-row file. Loop YOUR roster instead and let matchRider pick the single
+  // BEST dictionary row per rider (it already keeps the highest-scoring
+  // candidate) — one enrichment attempt per rider, no overwrite races.
+  const dictAsRoster = block.riders.map((row, i) => ({ id: String(i), name: row.rider })) as Rider[];
   const covered = new Set<string>();
-  for (const row of block.riders) {
-    const m = matchRider(row.rider, riders);
-    if (!m.riderId) continue;
-    covered.add(m.riderId);
-    const idx = riders.findIndex((r) => r.id === m.riderId);
+  const riders = st.riders.map((r) => {
+    const m = matchRider(r.name, dictAsRoster);
+    if (!m.riderId) return r;
+    covered.add(r.id);
+    const row = block.riders[Number(m.riderId)];
     const patch: Partial<Rider> = {};
     if (row.archetype) patch.archetype = row.archetype;
     if (typeof row.pcsRank === 'number') patch.pcsRank = row.pcsRank;
@@ -511,8 +521,8 @@ function applyFeatures(
     if (row.terrainAffinity && typeof row.terrainAffinity === 'object') patch.terrainAffinity = row.terrainAffinity;
     if (typeof row.price === 'number' && row.price > 0) patch.price = row.price;
     if (typeof row.ownershipPct === 'number') patch.ownershipPct = row.ownershipPct;
-    riders[idx] = { ...riders[idx], ...patch };
-  }
+    return { ...r, ...patch };
+  });
   const missing = riders.filter((r) => !covered.has(r.id)).map((r) => r.name);
   set({
     riders,

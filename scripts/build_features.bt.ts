@@ -37,6 +37,17 @@ describe.skipIf(!have)('build PCS features block', () => {
         if (row.riderUrl && row.rider) pool.set(row.riderUrl, { name: row.rider, team: row.team ?? 'UNK' });
       }
     }
+    // Also pull in riders with an established multi-year PROFILE but NO 2026
+    // stage rows in THIS corpus (e.g. Olav Kooij: a top-30-ranked sprinter for
+    // years, but the ~93 scraped 2026 races happened not to include whatever
+    // he raced this season) — real, priced, startlist riders who'd otherwise
+    // silently fall back to generic defaults. Gate on a genuinely RECENT
+    // competitive rank so this doesn't pull in retired/inactive names.
+    for (const [url, prof] of c.profile) {
+      if (pool.has(url) || !prof.team2026) continue;
+      const rank = baselinePcsRank(prof.seasonHistory, asOfYear);
+      if (rank < 400) pool.set(url, { name: prof.name, team: prof.team2026 });
+    }
 
     const round2 = (o: Record<string, number>) =>
       Object.fromEntries(Object.entries(o).map(([k, v]) => [k, Math.round(v * 1000) / 1000]));
@@ -46,8 +57,12 @@ describe.skipIf(!have)('build PCS features block', () => {
     const rows: Row[] = [];
     for (const [url, { name, team }] of pool) {
       const tl = (c.timeline.get(url) ?? []).filter((e) => e.date < AS_OF);
-      if (tl.length < MIN_RESULTS) continue;
       const prof = c.profile.get(url);
+      // Thin/no 2026 stage-level timeline is only disqualifying when there's
+      // also no established profile to fall back on — a profile-only rider
+      // (e.g. Kooij) still gets a real archetype/pcsRank from their specialty
+      // + season history below, just neutral form/breakaway/no terrain data.
+      if (tl.length < MIN_RESULTS && !prof) continue;
       const archetype = prof ? classifyArchetype(prof.speciality) : undefined;
       const pcsRank = prof ? baselinePcsRank(prof.seasonHistory, asOfYear) : 300;
       // computeForm returns recent finishing quality, which is compressed low for

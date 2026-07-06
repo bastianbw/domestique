@@ -99,9 +99,14 @@ const FRESH = () => ({
   teamType: 'guld' as TeamType,
   contractsRemaining: null as number | null,
   risk: 'balanced' as RiskPreset,
-  // Pre-wired to the GitHub Action's published feed; harmlessly 404s until the
-  // collector runs (during the Tour). Editable on Stages & Data → ①½.
-  autoFetchUrl: 'https://raw.githubusercontent.com/bastianbw/domestique/main/data/latest.json',
+  // Per-stage, not "latest" — latest.json only ever reflects the MOST
+  // RECENTLY collected stage (it's overwritten every run), so once stage N+1
+  // is collected, stage N becomes unfetchable through it. The collector now
+  // folds the same result+weather bundle into stage-{N}.json itself, so this
+  // URL (matched to whichever stage is selected in the StageBar) stays
+  // fetchable for ANY past stage, not just the newest. Harmlessly 404s until
+  // the collector runs for that stage. Editable on Stages & Data → ①½.
+  autoFetchUrl: 'https://raw.githubusercontent.com/bastianbw/domestique/main/data/stage-{stage}.json',
   config: defaultConfig(),
   calibrationLog: [] as CalibrationReport[],
   configHistory: [] as EngineConfig[],
@@ -364,11 +369,19 @@ export const useStore = create<AppState>()(
             ? { ...s, profileScore: fresh.profileScore, verticalMeters: fresh.verticalMeters }
             : s;
         });
+        // A persisted autoFetchUrl still pointing at the OLD stock default
+        // (latest.json — only ever reflects the newest collected stage, so
+        // older stages silently become unfetchable through it) upgrades to
+        // the new per-stage default. Only when it's still the untouched
+        // stock value — a URL the user deliberately customised is left alone.
+        const OLD_DEFAULT = 'https://raw.githubusercontent.com/bastianbw/domestique/main/data/latest.json';
+        const autoFetchUrl = p.autoFetchUrl === OLD_DEFAULT ? current.autoFetchUrl : undefined;
         return {
           ...current,
           ...p,
           ...(riders ? { riders } : {}),
           ...(stages ? { stages } : {}),
+          ...(autoFetchUrl ? { autoFetchUrl } : {}),
           config: mergeConfig(current.config, p.config),
           configHistory: (p.configHistory ?? []).map((c) => mergeConfig(current.config, c)),
         };

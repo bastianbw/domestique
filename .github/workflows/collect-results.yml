@@ -93,19 +93,19 @@ jobs:
             python scripts/collect_weather.py --stage "$TARGET" --out data
           fi
 
-      - name: Bundle latest.json (only blocks produced by THIS run)
+      - name: Bundle latest.json + stage-N.json (only blocks produced by THIS run)
         if: steps.stage.outputs.stage != ''
         run: |
           python - <<'PY'
           import json, os
           blocks = []
+          got_result = "${{ steps.results.outcome }}" == "success"
           # Result only when THIS run's collection succeeded — bundling an older
           # stage-N.json would re-serve a stale result (the app skips re-logging,
           # but there's no reason to ship it).
-          if "${{ steps.results.outcome }}" == "success":
-              rp = "data/stage-${{ steps.stage.outputs.stage }}.json"
-              if os.path.exists(rp):
-                  blocks.append(json.load(open(rp, encoding="utf-8")))
+          rp = "data/stage-${{ steps.stage.outputs.stage }}.json"
+          if got_result and os.path.exists(rp):
+              blocks.append(json.load(open(rp, encoding="utf-8")))
           wt = "${{ steps.weather.outputs.target }}"
           if wt:
               wp = f"data/weather-stage-{wt}.json"
@@ -114,6 +114,13 @@ jobs:
           if blocks:
               json.dump(blocks, open("data/latest.json", "w", encoding="utf-8"), ensure_ascii=False, indent=2)
               print(f"bundled {len(blocks)} block(s) into latest.json")
+              # Also fold into stage-N.json itself (not just the "latest" pointer)
+              # so a per-stage URL — the durable one, unlike latest.json which
+              # only ever reflects the newest run — stays fetchable forever with
+              # the same result+weather richness, not just the bare result.
+              if got_result and len(blocks) > 1:
+                  json.dump(blocks, open(rp, "w", encoding="utf-8"), ensure_ascii=False, indent=2)
+                  print(f"also bundled into {rp}")
           else:
               print("nothing new this run — latest.json left untouched")
           PY

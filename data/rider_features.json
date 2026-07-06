@@ -158,7 +158,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Baudin Alex",
@@ -174,7 +174,7 @@
     "ttt": 1.146,
     "hilly_itt": 1.146
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Izagirre Ion",
@@ -503,7 +503,7 @@
     "summit": 0.782,
     "high_mtn": 0.782
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Pacher Quentin",
@@ -534,6 +534,14 @@
    "teamStrength": 81
   },
   {
+   "rider": "Loockx Lander",
+   "archetype": "puncheur",
+   "pcsRank": 159,
+   "form": 49,
+   "breakawayTendency": 0,
+   "teamStrength": 81
+  },
+  {
    "rider": "Lanhove Milan",
    "archetype": "rouleur",
    "pcsRank": 569,
@@ -543,7 +551,7 @@
     "flat": 0.672,
     "hilly": 1.211
    },
-   "teamStrength": 51
+   "teamStrength": 54
   },
   {
    "rider": "Busatto Francesco",
@@ -626,6 +634,14 @@
    "teamStrength": 86
   },
   {
+   "rider": "Thonnon Senne",
+   "archetype": "domestique",
+   "pcsRank": 511,
+   "form": 48,
+   "breakawayTendency": 0,
+   "teamStrength": 54
+  },
+  {
    "rider": "L'Hote Antoine",
    "archetype": "puncheur",
    "pcsRank": 142,
@@ -684,7 +700,7 @@
     "ttt": 1.299,
     "hilly_itt": 1.299
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Delettre Alexandre",
@@ -936,7 +952,7 @@
     "ttt": 0.871,
     "hilly_itt": 0.871
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Foldager Anders",
@@ -968,7 +984,7 @@
     "ttt": 0.55,
     "hilly_itt": 0.55
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Hermans Quinten",
@@ -996,7 +1012,7 @@
     "flat": 0.805,
     "hilly": 1.092
    },
-   "teamStrength": 51
+   "teamStrength": 54
   },
   {
    "rider": "Dversnes Lavik Fredrik",
@@ -1056,7 +1072,7 @@
     "flat": 0.745,
     "hilly": 1.16
    },
-   "teamStrength": 51
+   "teamStrength": 54
   },
   {
    "rider": "Le Berre Mathis",
@@ -1263,7 +1279,7 @@
     "ttt": 1.404,
     "hilly_itt": 1.404
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Labrosse Jordan",
@@ -1405,7 +1421,7 @@
     "ttt": 0.878,
     "hilly_itt": 0.878
    },
-   "teamStrength": 51
+   "teamStrength": 54
   },
   {
    "rider": "Koerdt Bjorn",
@@ -1421,7 +1437,7 @@
     "ttt": 0.878,
     "hilly_itt": 0.878
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Dinham Matthew",
@@ -1437,7 +1453,7 @@
     "ttt": 1.53,
     "hilly_itt": 1.53
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Biesterbos Frits",
@@ -1449,7 +1465,7 @@
     "flat": 1.4,
     "hilly": 0.68
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Houle Hugo",
@@ -1498,6 +1514,14 @@
     "hilly_itt": 1.7
    },
    "teamStrength": 81
+  },
+  {
+   "rider": "Van Tricht Floris",
+   "archetype": "sprinter",
+   "pcsRank": 291,
+   "form": 45,
+   "breakawayTendency": 0,
+   "teamStrength": 80
   },
   {
    "rider": "Zingle Axel",
@@ -1575,7 +1599,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Maas Jan",
@@ -1742,6 +1766,14 @@
    "teamStrength": 81
   },
   {
+   "rider": "Christophersen Cedrik Bakke",
+   "archetype": "puncheur",
+   "pcsRank": 506,
+   "form": 45,
+   "breakawayTendency": 0,
+   "teamStrength": 81
+  },
+  {
    "rider": "Denz Nico",
    "archetype": "puncheur",
    "pcsRank": 266,
@@ -1863,7 +1895,7 @@
     "flat": 0.838,
     "hilly": 1.121
    },
-   "teamStrength": 51
+   "teamStrength": 54
   },
   {
    "rider": "Novak Pavel",
@@ -1927,7 +1959,7 @@
     "ttt": 1.341,
     "hilly_itt": 1.341
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Skaarseth Anders",
@@ -2387,7 +2419,7 @@
     "ttt": 0.878,
     "hilly_itt": 0.878
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Barguil Warren",
@@ -2403,7 +2435,7 @@
     "ttt": 0.654,
     "hilly_itt": 0.654
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "van Poppel Danny",
@@ -2447,7 +2479,7 @@
     "flat": 1.172,
     "hilly": 0.897
    },
-   "teamStrength": 51
+   "teamStrength": 54
   },
   {
    "rider": "Moro Manlio",
@@ -2479,7 +2511,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Cote Pier-Andre",
@@ -2495,7 +2527,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Van Mechelen Vlad",
@@ -2527,7 +2559,7 @@
     "ttt": 1.448,
     "hilly_itt": 1.448
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Leonard Michael",
@@ -2543,7 +2575,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Honore Mikkel Frølich",
@@ -2559,7 +2591,7 @@
     "ttt": 0.674,
     "hilly_itt": 0.674
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Suter Joel",
@@ -2671,7 +2703,7 @@
     "ttt": 1.406,
     "hilly_itt": 1.406
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Groenewegen Dylan",
@@ -2767,7 +2799,7 @@
     "ttt": 0.55,
     "hilly_itt": 0.55
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Garcia Cortina Ivan",
@@ -2815,7 +2847,7 @@
     "ttt": 0.916,
     "hilly_itt": 0.916
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "De Schuyteneer Steffen",
@@ -2922,7 +2954,7 @@
     "ttt": 0.907,
     "hilly_itt": 0.907
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Bol Cees",
@@ -3117,6 +3149,14 @@
    "teamStrength": 84
   },
   {
+   "rider": "Mouris Wessel",
+   "archetype": "rouleur",
+   "pcsRank": 632,
+   "form": 70,
+   "breakawayTendency": 100,
+   "teamStrength": 81
+  },
+  {
    "rider": "Thijssen Gerben",
    "archetype": "sprinter",
    "pcsRank": 184,
@@ -3131,6 +3171,14 @@
     "hilly_itt": 0.622
    },
    "teamStrength": 87
+  },
+  {
+   "rider": "Feldmann Karsten Larsen",
+   "archetype": "puncheur",
+   "pcsRank": 900,
+   "form": 45,
+   "breakawayTendency": 0,
+   "teamStrength": 81
   },
   {
    "rider": "Consonni Simone",
@@ -3194,7 +3242,7 @@
     "ttt": 0.55,
     "hilly_itt": 0.55
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Theuns Edward",
@@ -3306,7 +3354,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Renard-Haquin Henri-Francois",
@@ -3322,7 +3370,7 @@
     "ttt": 1.132,
     "hilly_itt": 1.132
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "van den Berg Julius",
@@ -3338,7 +3386,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Watson Samuel",
@@ -3368,7 +3416,7 @@
     "ttt": 0.857,
     "hilly_itt": 0.857
    },
-   "teamStrength": 51
+   "teamStrength": 54
   },
   {
    "rider": "Oliveira Rui",
@@ -3419,6 +3467,14 @@
    "teamStrength": 87
   },
   {
+   "rider": "Muller Tobias",
+   "archetype": "sprinter",
+   "pcsRank": 285,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 81
+  },
+  {
    "rider": "Markl Niklas",
    "archetype": "sprinter",
    "pcsRank": 644,
@@ -3432,7 +3488,7 @@
     "ttt": 1.171,
     "hilly_itt": 1.171
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Blikra Erlend",
@@ -3495,7 +3551,15 @@
     "ttt": 1.194,
     "hilly_itt": 1.194
    },
-   "teamStrength": 77
+   "teamStrength": 80
+  },
+  {
+   "rider": "Macias Cesar",
+   "archetype": "puncheur",
+   "pcsRank": 260,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 60
   },
   {
    "rider": "Barthe Cyril",
@@ -3527,7 +3591,7 @@
     "ttt": 0.759,
     "hilly_itt": 0.759
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Pollefliet Gianluca",
@@ -3559,7 +3623,15 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 63
+   "teamStrength": 66
+  },
+  {
+   "rider": "Pedersen Henrik",
+   "archetype": "sprinter",
+   "pcsRank": 900,
+   "form": 49,
+   "breakawayTendency": 0,
+   "teamStrength": 82
   },
   {
    "rider": "Thierry Pierre",
@@ -3607,7 +3679,7 @@
     "ttt": 0.865,
     "hilly_itt": 0.865
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Livyns Arjen",
@@ -3672,6 +3744,14 @@
     "hilly_itt": 0.576
    },
    "teamStrength": 92
+  },
+  {
+   "rider": "Vervenne Jonathan",
+   "archetype": "rouleur",
+   "pcsRank": 716,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 86
   },
   {
    "rider": "Senechal Florian",
@@ -3752,6 +3832,14 @@
     "hilly_itt": 1.7
    },
    "teamStrength": 87
+  },
+  {
+   "rider": "Van den Haute Milan",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 54
   },
   {
    "rider": "Canal Carlos",
@@ -3925,6 +4013,14 @@
    "teamStrength": 87
   },
   {
+   "rider": "Geeraerts Ferre",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 54
+  },
+  {
    "rider": "Vangheluwe Warre",
    "archetype": "sprinter",
    "pcsRank": 441,
@@ -3986,7 +4082,7 @@
     "ttt": 1.598,
     "hilly_itt": 1.598
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Aular Orluis",
@@ -4051,6 +4147,30 @@
    "teamStrength": 87
   },
   {
+   "rider": "Koyama Tomoya",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 60
+  },
+  {
+   "rider": "Alvarez Rodrigo",
+   "archetype": "sprinter",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 60
+  },
+  {
+   "rider": "Bouglas Georgios",
+   "archetype": "sprinter",
+   "pcsRank": 677,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 60
+  },
+  {
    "rider": "Cavia Daniel",
    "archetype": "puncheur",
    "pcsRank": 320,
@@ -4065,6 +4185,30 @@
     "hilly_itt": 1.293
    },
    "teamStrength": 60
+  },
+  {
+   "rider": "Kminek Vojtech",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 60
+  },
+  {
+   "rider": "Mayer Alexandre",
+   "archetype": "rouleur",
+   "pcsRank": 227,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 60
+  },
+  {
+   "rider": "Charret Camille",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 80
   },
   {
    "rider": "Kirsch Alex",
@@ -4097,6 +4241,22 @@
     "hilly_itt": 0.854
    },
    "teamStrength": 80
+  },
+  {
+   "rider": "Marcerou Nicola",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 45,
+   "breakawayTendency": 0,
+   "teamStrength": 67
+  },
+  {
+   "rider": "Tesson Jason",
+   "archetype": "sprinter",
+   "pcsRank": 189,
+   "form": 76,
+   "breakawayTendency": 0,
+   "teamStrength": 67
   },
   {
    "rider": "Manzin Lorrenzo",
@@ -4144,6 +4304,14 @@
     "ttt": 0.858,
     "hilly_itt": 0.858
    },
+   "teamStrength": 81
+  },
+  {
+   "rider": "Fontaine Titouan",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
    "teamStrength": 81
   },
   {
@@ -4268,7 +4436,7 @@
     "ttt": 0.624,
     "hilly_itt": 0.624
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Fredheim Stian",
@@ -4317,6 +4485,38 @@
     "hilly_itt": 1.7
    },
    "teamStrength": 87
+  },
+  {
+   "rider": "Crabbe Tom",
+   "archetype": "sprinter",
+   "pcsRank": 178,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 54
+  },
+  {
+   "rider": "Huysmans Nolan",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 54
+  },
+  {
+   "rider": "Torney Artuur",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 54
+  },
+  {
+   "rider": "Vandenbranden Noah",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 54
   },
   {
    "rider": "Milesi Lorenzo",
@@ -4379,7 +4579,15 @@
     "ttt": 0.671,
     "hilly_itt": 0.671
    },
-   "teamStrength": 77
+   "teamStrength": 80
+  },
+  {
+   "rider": "Tene Rotem",
+   "archetype": "sprinter",
+   "pcsRank": 712,
+   "form": 45,
+   "breakawayTendency": 0,
+   "teamStrength": 80
   },
   {
    "rider": "Bauhaus Phil",
@@ -4427,7 +4635,7 @@
     "ttt": 0.688,
     "hilly_itt": 0.688
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "van den Berg Marijn",
@@ -4443,7 +4651,7 @@
     "ttt": 1.227,
     "hilly_itt": 1.227
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Lienhard Fabian",
@@ -4523,7 +4731,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Andresen Tobias Lund",
@@ -4571,7 +4779,7 @@
     "ttt": 0.894,
     "hilly_itt": 0.894
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Moschetti Matteo",
@@ -4622,6 +4830,14 @@
    "teamStrength": 82
   },
   {
+   "rider": "Andersen Mads",
+   "archetype": "sprinter",
+   "pcsRank": 442,
+   "form": 52,
+   "breakawayTendency": 100,
+   "teamStrength": 55
+  },
+  {
    "rider": "Lonardi Giovanni",
    "archetype": "sprinter",
    "pcsRank": 179,
@@ -4668,6 +4884,22 @@
     "hilly_itt": 0.55
    },
    "teamStrength": 92
+  },
+  {
+   "rider": "Aagaard Hansen Tobias",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 48,
+   "breakawayTendency": 0,
+   "teamStrength": 55
+  },
+  {
+   "rider": "Belletta Dario Igor",
+   "archetype": "puncheur",
+   "pcsRank": 425,
+   "form": 47,
+   "breakawayTendency": 100,
+   "teamStrength": 61
   },
   {
    "rider": "Stannard Robert",
@@ -4731,7 +4963,7 @@
     "ttt": 1.143,
     "hilly_itt": 1.143
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "De Bondt Dries",
@@ -4812,6 +5044,38 @@
    "teamStrength": 81
   },
   {
+   "rider": "Grisel Matys",
+   "archetype": "sprinter",
+   "pcsRank": 112,
+   "form": 45,
+   "breakawayTendency": 0,
+   "teamStrength": 74
+  },
+  {
+   "rider": "Salby Alexander",
+   "archetype": "sprinter",
+   "pcsRank": 133,
+   "form": 45,
+   "breakawayTendency": 0,
+   "teamStrength": 55
+  },
+  {
+   "rider": "Wallin Rasmus Bøgh",
+   "archetype": "sprinter",
+   "pcsRank": 693,
+   "form": 45,
+   "breakawayTendency": 0,
+   "teamStrength": 55
+  },
+  {
+   "rider": "Bessega Tommaso",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 45,
+   "breakawayTendency": 0,
+   "teamStrength": 61
+  },
+  {
    "rider": "Ackermann Pascal",
    "archetype": "sprinter",
    "pcsRank": 116,
@@ -4841,7 +5105,15 @@
     "ttt": 0.932,
     "hilly_itt": 0.932
    },
-   "teamStrength": 77
+   "teamStrength": 80
+  },
+  {
+   "rider": "Pidcock Joseph",
+   "archetype": "puncheur",
+   "pcsRank": 900,
+   "form": 45,
+   "breakawayTendency": 0,
+   "teamStrength": 78
   },
   {
    "rider": "Frison Frederik",
@@ -4924,6 +5196,30 @@
    "teamStrength": 83
   },
   {
+   "rider": "Haugsted Conrad",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 45,
+   "breakawayTendency": 0,
+   "teamStrength": 55
+  },
+  {
+   "rider": "Rasenberg Martijn",
+   "archetype": "sprinter",
+   "pcsRank": 900,
+   "form": 45,
+   "breakawayTendency": 0,
+   "teamStrength": 81
+  },
+  {
+   "rider": "Raccagni Gabriele",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 45,
+   "breakawayTendency": 0,
+   "teamStrength": 61
+  },
+  {
    "rider": "Malucelli Matteo",
    "archetype": "sprinter",
    "pcsRank": 80,
@@ -4940,6 +5236,14 @@
    "teamStrength": 84
   },
   {
+   "rider": "Penalver Manuel",
+   "archetype": "sprinter",
+   "pcsRank": 287,
+   "form": 45,
+   "breakawayTendency": 0,
+   "teamStrength": 61
+  },
+  {
    "rider": "Degenkolb John",
    "archetype": "puncheur",
    "pcsRank": 415,
@@ -4953,7 +5257,7 @@
     "ttt": 1.188,
     "hilly_itt": 1.188
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Swift Ben",
@@ -5116,6 +5420,14 @@
    "teamStrength": 67
   },
   {
+   "rider": "Nielsen Sebastian",
+   "archetype": "sprinter",
+   "pcsRank": 520,
+   "form": 45,
+   "breakawayTendency": 0,
+   "teamStrength": 55
+  },
+  {
    "rider": "Moscon Gianni",
    "archetype": "rouleur",
    "pcsRank": 452,
@@ -5189,7 +5501,7 @@
     "summit": 1.226,
     "high_mtn": 1.226
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Merlier Tim",
@@ -5238,6 +5550,14 @@
     "hilly_itt": 1.39
    },
    "teamStrength": 78
+  },
+  {
+   "rider": "Rodenberg Frederik",
+   "archetype": "sprinter",
+   "pcsRank": 900,
+   "form": 45,
+   "breakawayTendency": 65,
+   "teamStrength": 55
   },
   {
    "rider": "Price-Pejtersen Johan",
@@ -5341,7 +5661,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Cattaneo Mattia",
@@ -5408,6 +5728,14 @@
    "teamStrength": 74
   },
   {
+   "rider": "Kretschy Moritz",
+   "archetype": "puncheur",
+   "pcsRank": 332,
+   "form": 45,
+   "breakawayTendency": 0,
+   "teamStrength": 80
+  },
+  {
    "rider": "Cepeda Jefferson Alexander",
    "archetype": "climber",
    "pcsRank": 257,
@@ -5421,7 +5749,7 @@
     "ttt": 0.55,
     "hilly_itt": 0.55
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Zijlaard Maikel",
@@ -5485,7 +5813,7 @@
     "ttt": 0.55,
     "hilly_itt": 0.55
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Pithie Laurence",
@@ -5645,7 +5973,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Hoole Daan",
@@ -5757,7 +6085,7 @@
     "ttt": 0.982,
     "hilly_itt": 0.982
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Louvel Matis",
@@ -5773,7 +6101,7 @@
     "ttt": 0.88,
     "hilly_itt": 0.88
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Boulahoite Rayan",
@@ -5786,6 +6114,14 @@
     "hilly": 1.251
    },
    "teamStrength": 67
+  },
+  {
+   "rider": "Zamperini Edoardo",
+   "archetype": "puncheur",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 97,
+   "teamStrength": 80
   },
   {
    "rider": "Tarling Joshua",
@@ -5817,7 +6153,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Sheehan Riley",
@@ -5833,7 +6169,7 @@
     "ttt": 1.135,
     "hilly_itt": 1.135
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Brennan Matthew",
@@ -5956,6 +6292,14 @@
    "teamStrength": 60
   },
   {
+   "rider": "Brunel Alexys",
+   "archetype": "rouleur",
+   "pcsRank": 541,
+   "form": 70,
+   "breakawayTendency": 100,
+   "teamStrength": 67
+  },
+  {
    "rider": "Turgis Anthony",
    "archetype": "puncheur",
    "pcsRank": 102,
@@ -6065,7 +6409,7 @@
     "ttt": 1.115,
     "hilly_itt": 1.115
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Thornley Callum",
@@ -6111,7 +6455,7 @@
     "ttt": 0.858,
     "hilly_itt": 0.858
    },
-   "teamStrength": 51
+   "teamStrength": 54
   },
   {
    "rider": "Vercouillie Victor",
@@ -6123,7 +6467,7 @@
     "flat": 0.642,
     "hilly": 1.326
    },
-   "teamStrength": 51
+   "teamStrength": 54
   },
   {
    "rider": "Boivin Guillaume",
@@ -6139,7 +6483,15 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 77
+   "teamStrength": 80
+  },
+  {
+   "rider": "Borgo Alessandro",
+   "archetype": "sprinter",
+   "pcsRank": 388,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 83
   },
   {
    "rider": "Kopecky Matyas",
@@ -6155,6 +6507,14 @@
     "ttt": 0.751,
     "hilly_itt": 0.751
    },
+   "teamStrength": 81
+  },
+  {
+   "rider": "Bloem Joren",
+   "archetype": "rouleur",
+   "pcsRank": 354,
+   "form": 70,
+   "breakawayTendency": 69,
    "teamStrength": 81
   },
   {
@@ -6430,6 +6790,30 @@
    "teamStrength": 87
   },
   {
+   "rider": "Vadic Baptiste",
+   "archetype": "rouleur",
+   "pcsRank": 572,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 67
+  },
+  {
+   "rider": "Geleijn Owen",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 45,
+   "breakawayTendency": 0,
+   "teamStrength": 81
+  },
+  {
+   "rider": "Auge Ronan",
+   "archetype": "sprinter",
+   "pcsRank": 574,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 81
+  },
+  {
    "rider": "Pidcock Tom",
    "archetype": "puncheur",
    "pcsRank": 11,
@@ -6538,7 +6922,7 @@
     "ttt": 0.55,
     "hilly_itt": 0.55
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Christen Fabio",
@@ -6834,7 +7218,7 @@
     "ttt": 0.55,
     "hilly_itt": 0.55
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Dalby Simon",
@@ -7027,6 +7411,14 @@
    "teamStrength": 83
   },
   {
+   "rider": "Agostinacchio Mattia",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 85
+  },
+  {
    "rider": "Wilksch Hannes",
    "archetype": "puncheur",
    "pcsRank": 678,
@@ -7052,7 +7444,7 @@
     "flat": 1.488,
     "hilly": 0.645
    },
-   "teamStrength": 51
+   "teamStrength": 54
   },
   {
    "rider": "Sainbayar Jambaljamts",
@@ -7081,7 +7473,7 @@
     "ttt": 1.233,
     "hilly_itt": 1.233
    },
-   "teamStrength": 51
+   "teamStrength": 54
   },
   {
    "rider": "Vernon Ethan",
@@ -7097,7 +7489,7 @@
     "ttt": 0.959,
     "hilly_itt": 0.959
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Soler Marc",
@@ -7177,7 +7569,7 @@
     "ttt": 0.65,
     "hilly_itt": 0.65
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Kulset Johannes",
@@ -7257,7 +7649,7 @@
     "ttt": 0.579,
     "hilly_itt": 0.579
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Bais Mattia",
@@ -7529,7 +7921,7 @@
     "ttt": 0.958,
     "hilly_itt": 0.958
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Garofoli Gianmarco",
@@ -7577,7 +7969,7 @@
     "ttt": 1.118,
     "hilly_itt": 1.118
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "O'Connor Ben",
@@ -7833,7 +8225,7 @@
     "ttt": 1.537,
     "hilly_itt": 1.537
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Lemmen Bart",
@@ -7881,7 +8273,7 @@
     "ttt": 0.792,
     "hilly_itt": 0.792
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Rojas Vicente",
@@ -8249,7 +8641,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Campenaerts Victor",
@@ -8281,7 +8673,7 @@
     "ttt": 1.124,
     "hilly_itt": 1.124
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Menten Milan",
@@ -8425,7 +8817,7 @@
     "ttt": 1.293,
     "hilly_itt": 1.293
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Groves Kaden",
@@ -8550,7 +8942,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Oomen Sam",
@@ -8582,7 +8974,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Martin Guillaume",
@@ -8630,7 +9022,7 @@
     "ttt": 0.794,
     "hilly_itt": 0.794
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Tuckwell Luke",
@@ -8702,7 +9094,7 @@
     "ttt": 0.55,
     "hilly_itt": 0.55
    },
-   "teamStrength": 77
+   "teamStrength": 80
   },
   {
    "rider": "Bleddyn Oliver",
@@ -8746,7 +9138,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Schrettl Marco",
@@ -8763,6 +9155,14 @@
     "hilly_itt": 0.75
    },
    "teamStrength": 84
+  },
+  {
+   "rider": "Stevenson Lucas",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 38,
+   "teamStrength": 53
   },
   {
    "rider": "Veistroffer Baptiste",
@@ -8852,6 +9252,14 @@
     "flat": 1.103,
     "hilly": 0.968
    },
+   "teamStrength": 53
+  },
+  {
+   "rider": "Baudry Julian",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
    "teamStrength": 53
   },
   {
@@ -9108,7 +9516,7 @@
     "ttt": 0.979,
     "hilly_itt": 0.979
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Ayuso Juan",
@@ -9236,7 +9644,7 @@
     "ttt": 0.983,
     "hilly_itt": 0.983
    },
-   "teamStrength": 55
+   "teamStrength": 60
   },
   {
    "rider": "Graat Tijmen",
@@ -9255,6 +9663,14 @@
    "teamStrength": 89
   },
   {
+   "rider": "Dockx Aaron",
+   "archetype": "puncheur",
+   "pcsRank": 727,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 87
+  },
+  {
    "rider": "Gaffuri Mattia",
    "archetype": "climber",
    "pcsRank": 446,
@@ -9268,7 +9684,7 @@
     "ttt": 0.647,
     "hilly_itt": 0.647
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Træen Torstein",
@@ -9315,7 +9731,7 @@
     "ttt": 0.896,
     "hilly_itt": 0.896
    },
-   "teamStrength": 55
+   "teamStrength": 60
   },
   {
    "rider": "Kruijswijk Steven",
@@ -9347,7 +9763,7 @@
     "ttt": 0.55,
     "hilly_itt": 0.55
    },
-   "teamStrength": 55
+   "teamStrength": 60
   },
   {
    "rider": "Iribar Unai",
@@ -9378,7 +9794,7 @@
     "ttt": 0.891,
     "hilly_itt": 0.891
    },
-   "teamStrength": 55
+   "teamStrength": 60
   },
   {
    "rider": "Fernandez Samuel",
@@ -9489,7 +9905,7 @@
     "ttt": 0.61,
     "hilly_itt": 0.61
    },
-   "teamStrength": 55
+   "teamStrength": 60
   },
   {
    "rider": "Diaz Jose Manuel",
@@ -9569,7 +9985,15 @@
     "ttt": 0.55,
     "hilly_itt": 0.55
    },
-   "teamStrength": 55
+   "teamStrength": 60
+  },
+  {
+   "rider": "Fajardo Adrian",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 60
   },
   {
    "rider": "Alustiza Nicolas",
@@ -9584,7 +10008,7 @@
     "ttt": 0.857,
     "hilly_itt": 0.857
    },
-   "teamStrength": 55
+   "teamStrength": 60
   },
   {
    "rider": "Belmans Lennert",
@@ -9683,6 +10107,14 @@
    "teamStrength": 64
   },
   {
+   "rider": "Gimeno Nil",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 64
+  },
+  {
    "rider": "Martinez Juan Guillermo",
    "archetype": "climber",
    "pcsRank": 381,
@@ -9696,7 +10128,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Okamika Ander",
@@ -9807,6 +10239,22 @@
     "hilly_itt": 1.149
    },
    "teamStrength": 83
+  },
+  {
+   "rider": "Maire Adrien",
+   "archetype": "climber",
+   "pcsRank": 286,
+   "form": 59,
+   "breakawayTendency": 0,
+   "teamStrength": 81
+  },
+  {
+   "rider": "Verschuren Killian",
+   "archetype": "puncheur",
+   "pcsRank": 701,
+   "form": 50,
+   "breakawayTendency": 0,
+   "teamStrength": 81
   },
   {
    "rider": "Lecerf Junior",
@@ -10123,6 +10571,14 @@
    "teamStrength": 80
   },
   {
+   "rider": "Rey Martin",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 60
+  },
+  {
    "rider": "De Plus Laurens",
    "archetype": "gc",
    "pcsRank": 130,
@@ -10137,6 +10593,14 @@
     "hilly_itt": 1.7
    },
    "teamStrength": 87
+  },
+  {
+   "rider": "Perez Cesar",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 64
   },
   {
    "rider": "Uriarte Diego",
@@ -10241,7 +10705,7 @@
     "ttt": 1.214,
     "hilly_itt": 1.214
    },
-   "teamStrength": 63
+   "teamStrength": 66
   },
   {
    "rider": "Ridolfo Filippo",
@@ -10322,6 +10786,22 @@
    "teamStrength": 84
   },
   {
+   "rider": "Manenti Marco",
+   "archetype": "puncheur",
+   "pcsRank": 488,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 55
+  },
+  {
+   "rider": "Polga Antonio",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 50
+  },
+  {
    "rider": "Brand Sam",
    "archetype": "domestique",
    "pcsRank": 900,
@@ -10333,6 +10813,14 @@
     "ttt": 0.861,
     "hilly_itt": 0.861
    },
+   "teamStrength": 50
+  },
+  {
+   "rider": "Armitt Hamish",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
    "teamStrength": 50
   },
   {
@@ -10439,7 +10927,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Onley Oscar",
@@ -10472,6 +10960,14 @@
     "hilly_itt": 1.019
    },
    "teamStrength": 78
+  },
+  {
+   "rider": "De Vylder Lindsay",
+   "archetype": "sprinter",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 87
   },
   {
    "rider": "Gaudu David",
@@ -10554,6 +11050,14 @@
    "teamStrength": 81
   },
   {
+   "rider": "Oliver Ben",
+   "archetype": "puncheur",
+   "pcsRank": 110,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 58
+  },
+  {
    "rider": "Kessler Cole",
    "archetype": "domestique",
    "pcsRank": 900,
@@ -10567,7 +11071,7 @@
     "ttt": 1.337,
     "hilly_itt": 1.337
    },
-   "teamStrength": 52
+   "teamStrength": 58
   },
   {
    "rider": "Stewart Mark",
@@ -10583,7 +11087,15 @@
     "ttt": 0.667,
     "hilly_itt": 0.667
    },
-   "teamStrength": 52
+   "teamStrength": 58
+  },
+  {
+   "rider": "Carpenter Robin",
+   "archetype": "sprinter",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 58
   },
   {
    "rider": "Caudell Ezra",
@@ -10599,7 +11111,7 @@
     "ttt": 0.86,
     "hilly_itt": 0.86
    },
-   "teamStrength": 52
+   "teamStrength": 58
   },
   {
    "rider": "Govekar Matevz",
@@ -10647,7 +11159,7 @@
     "ttt": 0.857,
     "hilly_itt": 0.857
    },
-   "teamStrength": 52
+   "teamStrength": 58
   },
   {
    "rider": "Pickrell Riley",
@@ -10663,7 +11175,7 @@
     "ttt": 0.857,
     "hilly_itt": 0.857
    },
-   "teamStrength": 52
+   "teamStrength": 58
   },
   {
    "rider": "Boichis Adrien",
@@ -10692,7 +11204,7 @@
     "ttt": 0.55,
     "hilly_itt": 0.55
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Vermaerke Kevin",
@@ -10740,7 +11252,7 @@
     "ttt": 0.606,
     "hilly_itt": 0.606
    },
-   "teamStrength": 52
+   "teamStrength": 62
   },
   {
    "rider": "Tolio Alex",
@@ -10788,6 +11300,22 @@
    "teamStrength": 61
   },
   {
+   "rider": "Giuliano Dario",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 61
+  },
+  {
+   "rider": "Benito Adrian",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 61
+  },
+  {
    "rider": "Martinelli Alessio",
    "archetype": "puncheur",
    "pcsRank": 900,
@@ -10802,6 +11330,14 @@
     "hilly_itt": 0.75
    },
    "teamStrength": 55
+  },
+  {
+   "rider": "Granger Ben",
+   "archetype": "puncheur",
+   "pcsRank": 524,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 62
   },
   {
    "rider": "Conca Filippo",
@@ -10835,6 +11371,14 @@
    "teamStrength": 78
   },
   {
+   "rider": "Cretti Luca",
+   "archetype": "puncheur",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 61
+  },
+  {
    "rider": "Fancellu Alessandro",
    "archetype": "puncheur",
    "pcsRank": 79,
@@ -10847,6 +11391,14 @@
     "ttt": 0.872,
     "hilly_itt": 0.872
    },
+   "teamStrength": 61
+  },
+  {
+   "rider": "Nespoli Lorenzo",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
    "teamStrength": 61
   },
   {
@@ -10880,6 +11432,38 @@
    "teamStrength": 55
   },
   {
+   "rider": "Bessega Gabriele",
+   "archetype": "puncheur",
+   "pcsRank": 567,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 61
+  },
+  {
+   "rider": "Buttigieg Aidan",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 61
+  },
+  {
+   "rider": "Archibold Franklin",
+   "archetype": "rouleur",
+   "pcsRank": 440,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 62
+  },
+  {
+   "rider": "Verrando Luca",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 62
+  },
+  {
    "rider": "Iacchi Alessandro",
    "archetype": "domestique",
    "pcsRank": 900,
@@ -10893,7 +11477,23 @@
     "ttt": 0.557,
     "hilly_itt": 0.557
    },
-   "teamStrength": 52
+   "teamStrength": 62
+  },
+  {
+   "rider": "Nencini Tommaso",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 62
+  },
+  {
+   "rider": "Piras Andrea",
+   "archetype": "domestique",
+   "pcsRank": 900,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 62
   },
   {
    "rider": "Bais Davide",
@@ -10957,7 +11557,7 @@
     "ttt": 0.762,
     "hilly_itt": 0.762
    },
-   "teamStrength": 52
+   "teamStrength": 62
   },
   {
    "rider": "Gonzalez Roberto Carlos",
@@ -10973,7 +11573,7 @@
     "ttt": 0.601,
     "hilly_itt": 0.601
    },
-   "teamStrength": 52
+   "teamStrength": 62
   },
   {
    "rider": "Bonneu Kamiel",
@@ -10989,7 +11589,7 @@
     "ttt": 1.435,
     "hilly_itt": 1.435
    },
-   "teamStrength": 52
+   "teamStrength": 62
   },
   {
    "rider": "Meo Felix James",
@@ -11003,7 +11603,7 @@
     "ttt": 0.857,
     "hilly_itt": 0.857
    },
-   "teamStrength": 52
+   "teamStrength": 62
   },
   {
    "rider": "Viviani Attilio",
@@ -11019,7 +11619,7 @@
     "ttt": 0.75,
     "hilly_itt": 0.75
    },
-   "teamStrength": 52
+   "teamStrength": 62
   },
   {
    "rider": "Berthet Clement",
@@ -11067,7 +11667,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 82
+   "teamStrength": 85
   },
   {
    "rider": "Parra Jose Felix",
@@ -11372,6 +11972,14 @@
    "teamStrength": 84
   },
   {
+   "rider": "Widar Jarno",
+   "archetype": "climber",
+   "pcsRank": 278,
+   "form": 56,
+   "breakawayTendency": 0,
+   "teamStrength": 74
+  },
+  {
    "rider": "Howson Damien",
    "archetype": "gc",
    "pcsRank": 309,
@@ -11417,7 +12025,7 @@
     "ttt": 1.031,
     "hilly_itt": 1.031
    },
-   "teamStrength": 52
+   "teamStrength": 58
   },
   {
    "rider": "de Bod Stefan",
@@ -11433,7 +12041,7 @@
     "ttt": 1.7,
     "hilly_itt": 1.7
    },
-   "teamStrength": 52
+   "teamStrength": 58
   },
   {
    "rider": "Berwick Sebastian",
@@ -11464,7 +12072,7 @@
     "ttt": 0.858,
     "hilly_itt": 0.858
    },
-   "teamStrength": 55
+   "teamStrength": 60
   },
   {
    "rider": "Balderstone Abel",
@@ -11589,7 +12197,7 @@
     "summit": 0.757,
     "high_mtn": 0.757
    },
-   "teamStrength": 55
+   "teamStrength": 60
   },
   {
    "rider": "Murguialday Jokin",
@@ -11602,7 +12210,7 @@
     "summit": 1.571,
     "high_mtn": 1.571
    },
-   "teamStrength": 55
+   "teamStrength": 60
   },
   {
    "rider": "Haug Kieran",
@@ -11615,7 +12223,7 @@
     "summit": 0.726,
     "high_mtn": 0.726
    },
-   "teamStrength": 52
+   "teamStrength": 58
   },
   {
    "rider": "Kudus Merhawi",
@@ -11657,7 +12265,7 @@
     "summit": 0.904,
     "high_mtn": 0.904
    },
-   "teamStrength": 55
+   "teamStrength": 60
   },
   {
    "rider": "Stites Tyler",
@@ -11672,7 +12280,7 @@
     "ttt": 0.936,
     "hilly_itt": 0.936
    },
-   "teamStrength": 52
+   "teamStrength": 58
   },
   {
    "rider": "Aznar Hugo",
@@ -11698,7 +12306,7 @@
     "summit": 0.837,
     "high_mtn": 0.837
    },
-   "teamStrength": 52
+   "teamStrength": 58
   },
   {
    "rider": "Aznar Unai",
@@ -11711,7 +12319,7 @@
     "summit": 0.787,
     "high_mtn": 0.787
    },
-   "teamStrength": 55
+   "teamStrength": 60
   },
   {
    "rider": "van der Tuuk Danny",
@@ -11724,7 +12332,606 @@
     "summit": 1.244,
     "high_mtn": 1.244
    },
-   "teamStrength": 55
+   "teamStrength": 60
+  },
+  {
+   "rider": "Alvaro Jose Hodeg",
+   "archetype": "sprinter",
+   "pcsRank": 396,
+   "form": 70,
+   "breakawayTendency": 0,
+   "terrainAffinity": {
+    "flat": 0.857,
+    "hilly": 1.091
+   },
+   "teamStrength": 52
+  },
+  {
+   "rider": "Archie Ryan",
+   "archetype": "climber",
+   "pcsRank": 159,
+   "form": 70,
+   "breakawayTendency": 12,
+   "terrainAffinity": {
+    "flat": 0.737,
+    "hilly": 1.01,
+    "summit": 1.168,
+    "high_mtn": 1.168,
+    "ttt": 1.001,
+    "hilly_itt": 1.001
+   },
+   "teamStrength": 85
+  },
+  {
+   "rider": "Axel Mariault",
+   "archetype": "puncheur",
+   "pcsRank": 193,
+   "form": 70,
+   "breakawayTendency": 6,
+   "terrainAffinity": {
+    "flat": 0.851,
+    "hilly": 1.345,
+    "summit": 0.609,
+    "high_mtn": 0.609,
+    "ttt": 0.75,
+    "hilly_itt": 0.75
+   },
+   "teamStrength": 59
+  },
+  {
+   "rider": "Cameron Scott",
+   "archetype": "sprinter",
+   "pcsRank": 362,
+   "form": 70,
+   "breakawayTendency": 0,
+   "terrainAffinity": {
+    "flat": 0.55,
+    "hilly": 1.474,
+    "summit": 0.604,
+    "high_mtn": 0.604,
+    "ttt": 0.75,
+    "hilly_itt": 0.75
+   },
+   "teamStrength": 53
+  },
+  {
+   "rider": "Damien Touze",
+   "archetype": "puncheur",
+   "pcsRank": 380,
+   "form": 70,
+   "breakawayTendency": 4,
+   "terrainAffinity": {
+    "flat": 1.648,
+    "hilly": 0.963,
+    "summit": 0.55,
+    "high_mtn": 0.55,
+    "ttt": 1.303,
+    "hilly_itt": 1.303
+   },
+   "teamStrength": 80
+  },
+  {
+   "rider": "David Dekker",
+   "archetype": "sprinter",
+   "pcsRank": 299,
+   "form": 70,
+   "breakawayTendency": 2,
+   "terrainAffinity": {
+    "flat": 1.082,
+    "hilly": 1.261,
+    "summit": 0.55,
+    "high_mtn": 0.55,
+    "ttt": 0.778,
+    "hilly_itt": 0.778
+   },
+   "teamStrength": 54
+  },
+  {
+   "rider": "Domenico Pozzovivo",
+   "archetype": "gc",
+   "pcsRank": 139,
+   "form": 70,
+   "breakawayTendency": 7,
+   "terrainAffinity": {
+    "flat": 0.55,
+    "hilly": 0.55,
+    "summit": 1.7,
+    "high_mtn": 1.7,
+    "ttt": 0.604,
+    "hilly_itt": 0.604
+   },
+   "teamStrength": 62
+  },
+  {
+   "rider": "Dusan Rajovic",
+   "archetype": "sprinter",
+   "pcsRank": 115,
+   "form": 70,
+   "breakawayTendency": 9,
+   "terrainAffinity": {
+    "flat": 1.363,
+    "hilly": 0.914,
+    "summit": 0.55,
+    "high_mtn": 0.55,
+    "ttt": 1.028,
+    "hilly_itt": 1.028
+   },
+   "teamStrength": 62
+  },
+  {
+   "rider": "Eduardo Sepulveda",
+   "archetype": "gc",
+   "pcsRank": 329,
+   "form": 70,
+   "breakawayTendency": 9,
+   "terrainAffinity": {
+    "flat": 0.55,
+    "hilly": 0.55,
+    "summit": 1.543,
+    "high_mtn": 1.543,
+    "ttt": 1.7,
+    "hilly_itt": 1.7
+   },
+   "teamStrength": 53
+  },
+  {
+   "rider": "Fabien Doubey",
+   "archetype": "puncheur",
+   "pcsRank": 335,
+   "form": 70,
+   "breakawayTendency": 10,
+   "terrainAffinity": {
+    "flat": 0.825,
+    "hilly": 0.964,
+    "summit": 0.954,
+    "high_mtn": 0.954,
+    "ttt": 1.341,
+    "hilly_itt": 1.341
+   },
+   "teamStrength": 67
+  },
+  {
+   "rider": "Fergus Browning",
+   "archetype": "puncheur",
+   "pcsRank": 330,
+   "form": 70,
+   "breakawayTendency": 81,
+   "terrainAffinity": {
+    "flat": 0.913,
+    "hilly": 1.055
+   },
+   "teamStrength": 53
+  },
+  {
+   "rider": "Iuri Leitao",
+   "archetype": "sprinter",
+   "pcsRank": 294,
+   "form": 70,
+   "breakawayTendency": 0,
+   "terrainAffinity": {
+    "flat": 0.98,
+    "hilly": 1.373,
+    "summit": 0.751,
+    "high_mtn": 0.751,
+    "ttt": 0.901,
+    "hilly_itt": 0.901
+   },
+   "teamStrength": 64
+  },
+  {
+   "rider": "Jesus David Pena",
+   "archetype": "climber",
+   "pcsRank": 299,
+   "form": 70,
+   "breakawayTendency": 0,
+   "terrainAffinity": {
+    "flat": 0.625,
+    "hilly": 1.414,
+    "summit": 0.909,
+    "high_mtn": 0.909,
+    "ttt": 0.754,
+    "hilly_itt": 0.754
+   },
+   "teamStrength": 54
+  },
+  {
+   "rider": "Joseph Blackmore",
+   "archetype": "puncheur",
+   "pcsRank": 82,
+   "form": 70,
+   "breakawayTendency": 9,
+   "terrainAffinity": {
+    "flat": 0.634,
+    "hilly": 1.144,
+    "summit": 1.061,
+    "high_mtn": 1.061,
+    "ttt": 0.907,
+    "hilly_itt": 0.907
+   },
+   "teamStrength": 80
+  },
+  {
+   "rider": "Marc Brustenga",
+   "archetype": "sprinter",
+   "pcsRank": 317,
+   "form": 70,
+   "breakawayTendency": 3,
+   "terrainAffinity": {
+    "flat": 0.605,
+    "hilly": 0.861,
+    "summit": 0.55,
+    "high_mtn": 0.55,
+    "ttt": 1.7,
+    "hilly_itt": 1.7
+   },
+   "teamStrength": 64
+  },
+  {
+   "rider": "Matteo Fabbro",
+   "archetype": "climber",
+   "pcsRank": 266,
+   "form": 70,
+   "breakawayTendency": 5,
+   "terrainAffinity": {
+    "flat": 0.55,
+    "hilly": 1.177,
+    "summit": 1.325,
+    "high_mtn": 1.325,
+    "ttt": 0.559,
+    "hilly_itt": 0.559
+   },
+   "teamStrength": 62
+  },
+  {
+   "rider": "Matteo Scalco",
+   "archetype": "climber",
+   "pcsRank": 382,
+   "form": 70,
+   "breakawayTendency": 0,
+   "terrainAffinity": {
+    "hilly": 0.981,
+    "summit": 1.175,
+    "high_mtn": 1.175,
+    "ttt": 0.857,
+    "hilly_itt": 0.857
+   },
+   "teamStrength": 52
+  },
+  {
+   "rider": "Max Poole",
+   "archetype": "climber",
+   "pcsRank": 85,
+   "form": 70,
+   "breakawayTendency": 13,
+   "terrainAffinity": {
+    "flat": 0.55,
+    "hilly": 0.881,
+    "summit": 1.404,
+    "high_mtn": 1.404,
+    "ttt": 1.286,
+    "hilly_itt": 1.286
+   },
+   "teamStrength": 66
+  },
+  {
+   "rider": "Neilson Powless",
+   "archetype": "gc",
+   "pcsRank": 39,
+   "form": 70,
+   "breakawayTendency": 16,
+   "terrainAffinity": {
+    "flat": 0.55,
+    "hilly": 1.307,
+    "summit": 0.716,
+    "high_mtn": 0.716,
+    "ttt": 1.63,
+    "hilly_itt": 1.63
+   },
+   "teamStrength": 85
+  },
+  {
+   "rider": "Niklas Behrens",
+   "archetype": "sprinter",
+   "pcsRank": 393,
+   "form": 70,
+   "breakawayTendency": 0,
+   "terrainAffinity": {
+    "flat": 0.995,
+    "hilly": 1.124,
+    "summit": 0.857,
+    "high_mtn": 0.857,
+    "ttt": 0.887,
+    "hilly_itt": 0.887
+   },
+   "teamStrength": 89
+  },
+  {
+   "rider": "Nils Eekhoff",
+   "archetype": "sprinter",
+   "pcsRank": 220,
+   "form": 70,
+   "breakawayTendency": 0,
+   "terrainAffinity": {
+    "flat": 0.752,
+    "hilly": 1.436,
+    "summit": 0.55,
+    "high_mtn": 0.55,
+    "ttt": 1.7,
+    "hilly_itt": 1.7
+   },
+   "teamStrength": 66
+  },
+  {
+   "rider": "Olav Kooij",
+   "archetype": "sprinter",
+   "pcsRank": 24,
+   "form": 70,
+   "breakawayTendency": 1,
+   "terrainAffinity": {
+    "flat": 1.7,
+    "hilly": 0.966,
+    "summit": 0.55,
+    "high_mtn": 0.55,
+    "ttt": 0.672,
+    "hilly_itt": 0.672
+   },
+   "teamStrength": 92
+  },
+  {
+   "rider": "Oliver Knight",
+   "archetype": "rouleur",
+   "pcsRank": 372,
+   "form": 70,
+   "breakawayTendency": 0,
+   "terrainAffinity": {
+    "flat": 0.601,
+    "hilly": 0.6,
+    "summit": 0.55,
+    "high_mtn": 0.55,
+    "ttt": 1.7,
+    "hilly_itt": 1.7
+   },
+   "teamStrength": 80
+  },
+  {
+   "rider": "Pierre Barbier",
+   "archetype": "sprinter",
+   "pcsRank": 334,
+   "form": 70,
+   "breakawayTendency": 0,
+   "teamStrength": 53
+  },
+  {
+   "rider": "Rein Taaramae",
+   "archetype": "gc",
+   "pcsRank": 318,
+   "form": 70,
+   "breakawayTendency": 1,
+   "terrainAffinity": {
+    "flat": 0.55,
+    "hilly": 0.55,
+    "summit": 1.509,
+    "high_mtn": 1.509,
+    "ttt": 1.7,
+    "hilly_itt": 1.7
+   },
+   "teamStrength": 53
+  },
+  {
+   "rider": "Rory Townsend",
+   "archetype": "sprinter",
+   "pcsRank": 169,
+   "form": 70,
+   "breakawayTendency": 100,
+   "terrainAffinity": {
+    "flat": 0.658,
+    "hilly": 1.379
+   },
+   "teamStrength": 81
+  },
+  {
+   "rider": "Santiago Umba",
+   "archetype": "puncheur",
+   "pcsRank": 303,
+   "form": 70,
+   "breakawayTendency": 0,
+   "terrainAffinity": {
+    "flat": 0.859,
+    "hilly": 0.854,
+    "summit": 1.307,
+    "high_mtn": 1.307,
+    "ttt": 0.667,
+    "hilly_itt": 0.667
+   },
+   "teamStrength": 62
+  },
+  {
+   "rider": "Simon Pellaud",
+   "archetype": "puncheur",
+   "pcsRank": 332,
+   "form": 70,
+   "breakawayTendency": 0,
+   "terrainAffinity": {
+    "flat": 1.347,
+    "hilly": 0.984,
+    "summit": 0.857,
+    "high_mtn": 0.857,
+    "ttt": 0.76,
+    "hilly_itt": 0.76
+   },
+   "teamStrength": 53
+  },
+  {
+   "rider": "Simon Yates",
+   "archetype": "gc",
+   "pcsRank": 38,
+   "form": 70,
+   "breakawayTendency": 7,
+   "terrainAffinity": {
+    "flat": 0.55,
+    "hilly": 0.925,
+    "summit": 1.617,
+    "high_mtn": 1.617,
+    "ttt": 1.094,
+    "hilly_itt": 1.094
+   },
+   "teamStrength": 89
+  },
+  {
+   "rider": "Stan Van Tricht",
+   "archetype": "puncheur",
+   "pcsRank": 363,
+   "form": 70,
+   "breakawayTendency": 0,
+   "terrainAffinity": {
+    "flat": 0.687,
+    "hilly": 1.243,
+    "summit": 0.76,
+    "high_mtn": 0.76,
+    "ttt": 0.574,
+    "hilly_itt": 0.574
+   },
+   "teamStrength": 52
+  },
+  {
+   "rider": "Stephen Williams",
+   "archetype": "puncheur",
+   "pcsRank": 35,
+   "form": 70,
+   "breakawayTendency": 9,
+   "terrainAffinity": {
+    "flat": 0.605,
+    "hilly": 1.7,
+    "summit": 0.55,
+    "high_mtn": 0.55,
+    "ttt": 0.655,
+    "hilly_itt": 0.655
+   },
+   "teamStrength": 80
+  },
+  {
+   "rider": "Sylvain Moniquet",
+   "archetype": "climber",
+   "pcsRank": 267,
+   "form": 70,
+   "breakawayTendency": 16,
+   "terrainAffinity": {
+    "flat": 0.55,
+    "hilly": 1.149,
+    "summit": 1.054,
+    "high_mtn": 1.054,
+    "ttt": 1.25,
+    "hilly_itt": 1.25
+   },
+   "teamStrength": 80
+  },
+  {
+   "rider": "Thomas Gloag",
+   "archetype": "climber",
+   "pcsRank": 295,
+   "form": 70,
+   "breakawayTendency": 6,
+   "terrainAffinity": {
+    "flat": 0.809,
+    "hilly": 0.896,
+    "summit": 1.282,
+    "high_mtn": 1.282,
+    "ttt": 1.09,
+    "hilly_itt": 1.09
+   },
+   "teamStrength": 78
+  },
+  {
+   "rider": "Vadim Pronskiy",
+   "archetype": "climber",
+   "pcsRank": 305,
+   "form": 70,
+   "breakawayTendency": 12,
+   "terrainAffinity": {
+    "flat": 0.55,
+    "hilly": 0.55,
+    "summit": 1.387,
+    "high_mtn": 1.387,
+    "ttt": 1.7,
+    "hilly_itt": 1.7
+   },
+   "teamStrength": 53
+  },
+  {
+   "rider": "Valerio Conti",
+   "archetype": "puncheur",
+   "pcsRank": 377,
+   "form": 70,
+   "breakawayTendency": 45,
+   "terrainAffinity": {
+    "flat": 1.092,
+    "hilly": 1.034,
+    "summit": 0.85,
+    "high_mtn": 0.85,
+    "ttt": 1.01,
+    "hilly_itt": 1.01
+   },
+   "teamStrength": 62
+  },
+  {
+   "rider": "Victor Lafay",
+   "archetype": "puncheur",
+   "pcsRank": 237,
+   "form": 70,
+   "breakawayTendency": 1,
+   "terrainAffinity": {
+    "flat": 0.628,
+    "hilly": 1.622,
+    "summit": 0.55,
+    "high_mtn": 0.55,
+    "ttt": 0.562,
+    "hilly_itt": 0.562
+   },
+   "teamStrength": 81
+  },
+  {
+   "rider": "Xabier Berasategi",
+   "archetype": "puncheur",
+   "pcsRank": 114,
+   "form": 70,
+   "breakawayTendency": 0,
+   "terrainAffinity": {
+    "flat": 1.539,
+    "hilly": 1.079,
+    "summit": 0.825,
+    "high_mtn": 0.825,
+    "ttt": 0.667,
+    "hilly_itt": 0.667
+   },
+   "teamStrength": 60
+  },
+  {
+   "rider": "Xianjing Lyu",
+   "archetype": "puncheur",
+   "pcsRank": 376,
+   "form": 70,
+   "breakawayTendency": 0,
+   "terrainAffinity": {
+    "flat": 0.961,
+    "hilly": 1.025
+   },
+   "teamStrength": 52
+  },
+  {
+   "rider": "Yukiya Arashiro",
+   "archetype": "gc",
+   "pcsRank": 379,
+   "form": 70,
+   "breakawayTendency": 0,
+   "terrainAffinity": {
+    "flat": 0.76,
+    "hilly": 1.438,
+    "summit": 0.55,
+    "high_mtn": 0.55,
+    "ttt": 0.898,
+    "hilly_itt": 0.898
+   },
+   "teamStrength": 62
   }
  ]
 }

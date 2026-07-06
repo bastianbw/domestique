@@ -101,15 +101,15 @@ function AutoFetchSection() {
   return (
     <Section title="①½ AUTO-FETCH RESULTS  (optional — from the GitHub collector)">
       <p className="mb-2 text-xs text-chalk-500">
-        Paste the raw URL your collector publishes to (e.g.{' '}
-        <code className="mono">https://raw.githubusercontent.com/USER/domestique-data/main/latest.json</code>,
-        or a per-stage URL containing <code className="mono">{'{stage}'}</code>). Then press Fetch — it imports
-        exactly like a pasted block. The nightly collector now publishes an <span className="text-sky-300">array</span>{' '}
-        bundling today’s result + tomorrow’s <span className="text-sky-300">weather</span> forecast (Open-Meteo), and both
-        are applied in one fetch. Leave blank to use manual paste only.
+        Default is a <span className="text-sky-300">per-stage</span> URL containing{' '}
+        <code className="mono">{'{stage}'}</code> — fetches whichever stage is selected in the bar above, and stays
+        fetchable FOREVER (unlike a plain <code className="mono">latest.json</code>, which only ever reflects the
+        most-recently-collected stage — pick an older stage and Fetch still works). Each stage bundles that day’s{' '}
+        <span className="text-sky-300">result</span> + the next day’s <span className="text-sky-300">weather</span>{' '}
+        forecast in one array; both are applied in one fetch. Leave blank to use manual paste only.
       </p>
       <div className="flex flex-wrap gap-2">
-        <input className="input min-w-[260px] flex-1" placeholder="https://raw.githubusercontent.com/…/latest.json"
+        <input className="input min-w-[260px] flex-1" placeholder="https://raw.githubusercontent.com/…/stage-{stage}.json"
           value={url} onChange={(e) => setUrl(e.target.value)} />
         <button className="btn-accent" disabled={busy || !url} onClick={pull}>
           {busy ? 'Fetching…' : `Fetch${url.includes('{stage}') ? ` stage ${stage}` : ' latest'}`}

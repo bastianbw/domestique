@@ -352,7 +352,9 @@ export default function OptimalPage() {
         <div className="card p-4">
           <h2 className="text-base font-semibold text-chalk-100">Why these riders</h2>
           <p className="mt-0.5 text-[12px] text-chalk-500">
-            Chosen for value over the rest of this block (through stage {lastStage}), not just today.
+            Chosen for value over the rest of this block (through stage {lastStage}), not just today — a rider can be
+            picked mainly for a LATER stage in this block (e.g. a climber recommended on a flat day because a summit
+            finish is coming up before the next transfer window), not necessarily today&apos;s stage.
           </p>
           <div className="mt-3 space-y-2.5">
             {recommended.riderIds
@@ -360,12 +362,19 @@ export default function OptimalPage() {
               .sort((a, b) => (b.hv?.value ?? 0) - (a.hv?.value ?? 0))
               .map(({ r, hv }) => {
                 const v = hv?.value ?? 0;
+                const keyStages = hv?.keyStages ?? [];
+                const peaksElsewhere = keyStages.length > 0 && !keyStages.includes(stage.stage);
                 return (
                   <div key={r.id} className="flex items-center gap-3">
                     <RoleIcon role={r.archetype} size={15} />
                     <span className="w-32 shrink-0 truncate text-[13px] font-medium text-chalk-200">{r.name}</span>
                     <BarMeter value={Math.max(0, v)} max={Math.max(1, ...recommended.riderIds.map((id) => forward.hv[id]?.value ?? 0))} className="flex-1" />
                     <span className="mono tnum w-14 shrink-0 text-right text-[12px] j-green">{growth(v)}</span>
+                    {peaksElsewhere && (
+                      <span className="shrink-0 text-[11px] text-chalk-500" title="The stage(s) in this block where this rider's value is highest">
+                        ↳ peaks stage {keyStages.join(', ')}
+                      </span>
+                    )}
                   </div>
                 );
               })}

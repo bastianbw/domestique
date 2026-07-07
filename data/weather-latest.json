@@ -2,9 +2,9 @@
   "type": "weather",
   "stage": 4,
   "windKph": 12,
-  "windDir": "N",
+  "windDir": "NW",
   "gustRisk": "low",
   "rainProb": 0,
-  "tempC": 39,
+  "tempC": 38,
   "_source": "open-meteo:Foix, France:2026-07-07"
 }

@@ -419,8 +419,15 @@ export function projectField(
           : cfg.stackModel
             ? buildStackedField(riders, stage, cfg, cfg.stackModel, DEFAULT_SIM)
             : buildEnsembleField(riders, stage, cfg, undefined, DEFAULT_SIM);
-  // Post-hoc probability calibration (γ=1 → identity).
-  const cal = dists.map((d) => calibrateDistribution(d, cfg.calibrationGamma));
+  // Post-hoc probability calibration (γ=1 → identity) — fitted on the NO-ODDS
+  // structural/ensemble corpus. A market-anchored field is already calibrated
+  // (de-vigged odds ARE probabilities), so re-flattening it here systematically
+  // crushed pasted favourites (a de-vigged 30% win read ~18% after γ=0.85 —
+  // the "xG is really low / sprinters not prioritised on a sprint stage"
+  // symptom). buildField gamma-calibrates its own structural component
+  // internally, so the odds-anchored path skips the blanket pass.
+  const oddsAnchored = !opts?.simulate && !opts?.ensemble && fieldHasOdds(riders, stage.stage);
+  const cal = oddsAnchored ? dists : dists.map((d) => calibrateDistribution(d, cfg.calibrationGamma));
   const byId = new Map(cal.map((d) => [d.riderId, d]));
   // TTT: pasted team WIN odds (fanned onto every rider on that team) anchor
   // expectedTTT the same way individual-rider odds anchor other stages.

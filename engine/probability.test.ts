@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildField, devigMarket, calibrateDistribution } from './probability';
+import { buildField, devigMarket, devigShin, calibrateDistribution } from './probability';
 import type { Rider, RiderOdds } from './types';
 import { getStage } from './stages';
 
@@ -54,6 +54,75 @@ describe('odds-ladder distribution', () => {
     const pTop15 = fav.probs.slice(0, 15).reduce((a, b) => a + b, 0);
     expect(pTop5).toBeGreaterThanOrEqual(pWin);
     expect(pTop15).toBeGreaterThanOrEqual(pTop5);
+  });
+});
+
+describe('win-only paste — place probabilities implied by the market, not made up', () => {
+  const flat = getStage(7)!;
+  const topK = (probs: number[], k: number) => probs.slice(0, k).reduce((a, b) => a + b, 0);
+
+  // A realistic win-only sheet: one clear favourite + 29 longshots, fully
+  // covering the field (no unpriced riders → wOdds = 1, pure odds path).
+  const field = [
+    rider('fav', { win: 4.0 }),
+    ...Array.from({ length: 29 }, (_, i) => rider(`long${i}`, { win: 40 })),
+  ];
+
+  it('a ~25% win favourite reads as a genuine top-5/top-15 contender, not a flat geometric tail', () => {
+    // Old behaviour: only k=1 anchored; the rest spread with a near-flat decay
+    // (the headStrength passed in is a tiny field share), giving the favourite
+    // top-5 ≈ 0.38 — absurd for a rider the market rates 1-in-4 to WIN.
+    const dists = buildField(field, flat);
+    const fav = dists.find((d) => d.riderId === 'fav')!;
+    expect(fav.probs[0]).toBeGreaterThan(0.2); // de-vigged win intact
+    expect(topK(fav.probs, 5)).toBeGreaterThan(0.55); // Plackett–Luce implied
+    // (≥, not >: in this small 30-rider field the favourite is already
+    // near-certain top-10, so top-15 saturates at the same finishing mass)
+    expect(topK(fav.probs, 15)).toBeGreaterThanOrEqual(topK(fav.probs, 10));
+    expect(topK(fav.probs, 10)).toBeGreaterThan(topK(fav.probs, 5));
+  });
+
+  it('the implied place ladder still separates favourite from longshot', () => {
+    const dists = buildField(field, flat);
+    const fav = dists.find((d) => d.riderId === 'fav')!;
+    const long = dists.find((d) => d.riderId === 'long0')!;
+    expect(topK(fav.probs, 5)).toBeGreaterThan(topK(long.probs, 5) + 0.3);
+  });
+
+  it('a pasted place market always beats the Plackett–Luce fill where both exist', () => {
+    // Same favourite but with an explicit (unusually pessimistic) top10 price.
+    // The pasted number must anchor k=10 — PL is only for the missing markets.
+    const withTop10 = [
+      rider('fav', { win: 4.0, top10: 2.5 }), // implied 40% top-10, way below PL
+      ...Array.from({ length: 29 }, (_, i) => rider(`long${i}`, { win: 40, top10: 8 })),
+    ];
+    const dists = buildField(withTop10, flat);
+    const fav = dists.find((d) => d.riderId === 'fav')!;
+    // devigMarket for k=10: S = 0.4 + 29×0.125 ≈ 4.02 < 10 → margin divisor 1.25.
+    const expectedTop10 = 0.4 / 1.25;
+    expect(topK(fav.probs, 10)).toBeLessThan(expectedTop10 + 0.01);
+  });
+});
+
+describe('unpriced riders — absence from the paste is information', () => {
+  const flat = getStage(7)!;
+
+  it('an unpriced rider cannot out-rank the weakest priced rider at a pasted market', () => {
+    // 20 priced (one favourite, 19 longshots) + 4 unpriced, one of them the
+    // structurally STRONGEST rider in the field. Before the fix he kept his
+    // full structural head mass and beat mid-market priced riders on xG.
+    const priced = [
+      rider('fav', { win: 3.0 }),
+      ...Array.from({ length: 19 }, (_, i) => rider(`p${i}`, { win: 50 })),
+    ];
+    const star: Rider = { ...rider('star'), pcsRank: 1, form: 95 }; // unpriced!
+    const others = ['u1', 'u2', 'u3'].map((id) => rider(id));
+    const dists = buildField([...priced, star, ...others], flat);
+
+    const winCol = [3.0, ...new Array(19).fill(50)];
+    const minPricedWin = Math.min(...devigShin(winCol).filter((p) => p > 0));
+    const starDist = dists.find((d) => d.riderId === 'star')!;
+    expect(starDist.probs[0]).toBeLessThanOrEqual(minPricedWin + 1e-6);
   });
 });
 

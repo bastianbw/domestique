@@ -155,6 +155,7 @@ export function buildDistributionFromAnchors(
   pDNF: number,
   headStrength: number,
   N: number,
+  shape?: number[],
 ): RiderDistribution {
   const finishMass = 1 - pDNF;
   const probs = new Array<number>(N).fill(0);
@@ -175,17 +176,80 @@ export function buildDistributionFromAnchors(
   let lastK = 0;
   let lastQ = 0;
   for (const { k, q } of clamped) {
-    distributeFrontHeavy(probs, lastK, k - 1, q - lastQ);
+    if (!distributeShaped(probs, lastK, k - 1, q - lastQ, shape)) {
+      distributeFrontHeavy(probs, lastK, k - 1, q - lastQ);
+    }
     lastK = k;
     lastQ = q;
   }
-  // Remaining mass beyond the last anchor decays geometrically to the back.
+  // Mass beyond the last anchor follows the structural shape when supplied
+  // (the model's own view of where this rider finishes when out of the money);
+  // otherwise it decays geometrically to the back.
   const remaining = finishMass - lastQ;
   if (remaining > 1e-9 && lastK < N) {
-    distributeGeometric(probs, lastK, N - 1, remaining, r);
+    if (!distributeShaped(probs, lastK, N - 1, remaining, shape)) {
+      distributeGeometric(probs, lastK, N - 1, remaining, r);
+    }
   }
 
   return { riderId, probs, pDNF };
+}
+
+/**
+ * Spread `mass` over [i0..i1] proportional to a shape prior (a structural
+ * finishing distribution). Returns false when no usable shape mass exists in
+ * the range, so the caller can fall back to its parametric spread.
+ */
+function distributeShaped(
+  probs: number[],
+  i0: number,
+  i1: number,
+  mass: number,
+  shape?: number[],
+): boolean {
+  if (!shape) return false;
+  if (mass <= 0 || i1 < i0) return true;
+  let wSum = 0;
+  const end = Math.min(i1, shape.length - 1);
+  for (let i = i0; i <= end; i++) wSum += Math.max(0, shape[i]);
+  if (wSum <= 1e-12) return false;
+  for (let i = i0; i <= end; i++) probs[i] += mass * (Math.max(0, shape[i]) / wSum);
+  return true;
+}
+
+/**
+ * Deterministic Plackett–Luce top-k probabilities from win strengths — the
+ * standard way a WIN market implies PLACE probabilities when the paste carries
+ * no place odds. Sequential mean-field: fill finishing slots front-to-back; at
+ * each slot a rider takes it with probability ∝ strength × P(not already
+ * placed). Exact at k=1, a close and MC-noise-free approximation beyond, so a
+ * 22%-win sprint favourite reads ~75% top-5 instead of the flat made-up
+ * geometric tail (~38%) the anchor build alone produced.
+ *
+ * Returns id → cumulative P(top-k) for k = 1..maxK (index k−1).
+ */
+export function plackettLuceTopK(
+  ids: string[],
+  strengths: number[],
+  maxK: number,
+): Map<string, number[]> {
+  const n = ids.length;
+  const avail = strengths.map((s) => (s > 0 ? 1 : 0));
+  const cum = new Array<number>(n).fill(0);
+  const rows: number[][] = ids.map(() => []);
+  for (let pos = 0; pos < maxK; pos++) {
+    let denom = 0;
+    for (let i = 0; i < n; i++) denom += strengths[i] * avail[i];
+    for (let i = 0; i < n; i++) {
+      if (denom > 1e-12) {
+        const p = Math.min(avail[i], (strengths[i] * avail[i]) / denom);
+        cum[i] += p;
+        avail[i] -= p;
+      }
+      rows[i].push(Math.min(1, cum[i]));
+    }
+  }
+  return new Map(ids.map((id, i) => [id, rows[i]]));
 }
 
 /** Spread `mass` over inclusive index range [i0..i1] with a front-heavy taper. */
@@ -508,7 +572,11 @@ export function buildField(
   //    field looks undifferentiated.
   // The weight on the market saturates at `oddsCoverageRef`, so a normally-priced
   // start list (≥ that fraction) is unchanged — odds stay the dominant signal.
-  const structural = buildCoherentField(riders, stage, cfg);
+  // Gamma-calibrated here (the same post-hoc calibration the no-odds path gets
+  // in projectField) since the odds path skips the blanket pass — the market
+  // side is already calibrated by the bookmaker and must NOT be re-flattened.
+  const structural = buildCoherentField(riders, stage, cfg)
+    .map((d) => calibrateDistribution(d, cfg.calibrationGamma));
   const structById = new Map(structural.map((d) => [d.riderId, d]));
   const priced = starters.filter((r) =>
     markets.some((m) => typeof devigByMarket[m.k]?.[r.id] === 'number'),
@@ -516,6 +584,47 @@ export function buildField(
   const coverage = starters.length > 0 ? priced / starters.length : 0;
   const wOdds = clamp01(coverage / Math.max(1e-6, cfg.oddsCoverageRef));
 
+  // Plackett–Luce win→place fill: strengths = de-vigged win prob for priced
+  // riders (place-only riders: smallest market / its slot count as pseudo-win);
+  // unpriced riders enter at their structural win prob CAPPED at the weakest
+  // priced strength — absence from a paste is information (the bookmaker
+  // priced everyone they consider a plausible contender).
+  const cumAt = (d: RiderDistribution, k: number) => {
+    let s = 0;
+    for (let i = 0; i < k && i < d.probs.length; i++) s += d.probs[i];
+    return s;
+  };
+  const strengthOf = (id: string): number | undefined => {
+    const w = devigByMarket[1]?.[id];
+    if (typeof w === 'number' && w > 0) return w;
+    for (const m of markets) {
+      const q = devigByMarket[m.k]?.[id];
+      if (typeof q === 'number' && q > 0) return q / m.k;
+    }
+    return undefined;
+  };
+  const pricedStrengths = starters
+    .map((r) => strengthOf(r.id))
+    .filter((v): v is number => typeof v === 'number' && v > 0);
+  const minPriced = pricedStrengths.length ? Math.min(...pricedStrengths) : 0;
+  const plIds: string[] = [];
+  const plStrengths: number[] = [];
+  for (const r of starters) {
+    const s = strengthOf(r.id);
+    plIds.push(r.id);
+    plStrengths.push(s !== undefined ? s : Math.min(structById.get(r.id)?.probs[0] ?? 0, minPriced));
+  }
+  const plCum = plackettLuceTopK(plIds, plStrengths, 15);
+
+  // Per-market cap for unpriced riders = the WEAKEST priced rider's de-vigged
+  // number at that market ("no odds for him" ⇒ worse than everyone pasted).
+  const capByMarket: Record<number, number> = {};
+  for (const m of markets) {
+    const vals = Object.values(devigByMarket[m.k] ?? {});
+    if (vals.length) capByMarket[m.k] = Math.min(...vals);
+  }
+
+  const FILL_KS = [1, 3, 5, 10, 15];
   return riders.map((r) => {
     if (r.injury === 'out') {
       return { riderId: r.id, probs: new Array(N).fill(0), pDNF: 0 };
@@ -526,14 +635,58 @@ export function buildField(
       const q = devigByMarket[m.k]?.[r.id];
       if (typeof q === 'number' && q > 0) anchors.push({ k: m.k, q });
     }
+
     // No odds for this rider → the structural model (coherent + differentiated),
-    // not a flat geometric guess. Priced peers still own the front slots.
-    if (anchors.length === 0) return struct;
+    // with its head CAPPED at each pasted market by the weakest priced rider —
+    // an unpriced rider must never out-rank someone the bookmaker did price.
+    if (anchors.length === 0) {
+      const capped: Anchor[] = [];
+      let binds = false;
+      let prevQ = 0;
+      for (const m of markets) {
+        const cap = capByMarket[m.k];
+        if (cap === undefined) continue;
+        const sc = cumAt(struct, m.k);
+        const q = Math.min(sc, Math.max(cap, prevQ));
+        if (q < sc - 1e-9) binds = true;
+        capped.push({ k: m.k, q });
+        prevQ = q;
+      }
+      if (!binds) return struct;
+      const rebuilt = buildDistributionFromAnchors(r.id, capped, struct.pDNF, 0, N, struct.probs);
+      return wOdds >= 0.999 ? rebuilt : blendDistributions(rebuilt, struct, wOdds);
+    }
+
+    // Priced rider: the market anchors every k it actually covers; Plackett–
+    // Luce (from win strengths) fills the ks the paste doesn't carry. The fill
+    // follows the PL curve RESCALED through the pasted points (interpolated
+    // between market anchors, ratio-extended beyond the last one), so pasted
+    // numbers always win and a win-only paste no longer "makes up"
+    // top-5/top-10 from a flat geometric tail.
+    const pl = plCum.get(r.id);
+    if (pl) {
+      const plq = (k: number) => pl[Math.min(k, pl.length) - 1] ?? 0;
+      const marketAnchors = [...anchors].sort((a, b) => a.k - b.k);
+      for (const k of FILL_KS) {
+        if (marketAnchors.some((a) => a.k === k)) continue;
+        const lo = [...marketAnchors].reverse().find((a) => a.k < k) ?? { k: 0, q: 0 };
+        const hi = marketAnchors.find((a) => a.k > k);
+        const plLo = lo.k === 0 ? 0 : plq(lo.k);
+        let q: number;
+        if (hi) {
+          const span = plq(hi.k) - plLo;
+          q = span > 1e-9 ? lo.q + (hi.q - lo.q) * ((plq(k) - plLo) / span) : lo.q;
+        } else {
+          q = plLo > 1e-9 ? lo.q * (plq(k) / plLo) : Math.max(lo.q, plq(k));
+        }
+        anchors.push({ k, q: clamp(q, lo.q, hi ? hi.q : 1) });
+      }
+    }
 
     const raw = contentionStrength(r, stage, cfg);
     const rel = fieldStrength > 0 ? raw / fieldStrength : 0;
     const pDNF = riderDnfRisk(r, stage, cfg);
-    const oddsDist = buildDistributionFromAnchors(r.id, anchors, pDNF, rel, N);
+    const oddsDist = buildDistributionFromAnchors(r.id, anchors, pDNF, rel, N, struct.probs);
     // Full-coverage fast path: identical to the pure odds-anchored distribution.
     return wOdds >= 0.999 ? oddsDist : blendDistributions(oddsDist, struct, wOdds);
   });

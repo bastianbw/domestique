@@ -68,6 +68,23 @@ describe('odds-aware default', () => {
   });
 });
 
+describe('odds are not re-flattened by the no-odds calibration', () => {
+  it('projectField keeps a fully-priced pWin at the de-vigged market number', () => {
+    // γ=0.85 is fitted on the NO-ODDS corpus; applying it to a market-anchored
+    // field crushed pasted favourites (~30% → ~18%) — the "xG is really low"
+    // symptom. A clean uniform book (12 riders at win 12.0, zero overround)
+    // must project pWin = exactly the implied 1/12.
+    const flat = getStage(7)!;
+    const priced = Array.from({ length: 12 }, (_, i) =>
+      rider({ id: `r${i}`, archetype: 'sprinter', oddsByStage: { 7: { win: 12.0 } } }),
+    );
+    const proj = projectField(priced, flat);
+    for (const p of proj) {
+      expect(Math.abs(p.pWin - 1 / 12)).toBeLessThan(0.005);
+    }
+  });
+});
+
 describe('captain EV', () => {
   it('doubles positive expected growth', () => {
     const proj = projectField(field, getStage(7)!);

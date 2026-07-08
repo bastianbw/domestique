@@ -1,10 +1,10 @@
 {
   "type": "weather",
   "stage": 5,
-  "windKph": 11,
+  "windKph": 9,
   "windDir": "NW",
   "gustRisk": "low",
-  "rainProb": 3,
-  "tempC": 35,
+  "rainProb": 0,
+  "tempC": 34,
   "_source": "open-meteo:Pau, France:2026-07-08"
 }

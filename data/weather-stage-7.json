@@ -1,10 +1,10 @@
 {
   "type": "weather",
   "stage": 7,
-  "windKph": 9,
-  "windDir": "N",
+  "windKph": 13,
+  "windDir": "W",
   "gustRisk": "low",
   "rainProb": 0,
-  "tempC": 38,
+  "tempC": 37,
   "_source": "open-meteo:Bordeaux, France:2026-07-10"
 }

@@ -1,10 +1,10 @@
 {
   "type": "weather",
   "stage": 8,
-  "windKph": 13,
+  "windKph": 17,
   "windDir": "E",
-  "gustRisk": "low",
-  "rainProb": 8,
-  "tempC": 36,
+  "gustRisk": "med",
+  "rainProb": 13,
+  "tempC": 37,
   "_source": "open-meteo:Bergerac, France:2026-07-11"
 }

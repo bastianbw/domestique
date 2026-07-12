@@ -1,10 +1,10 @@
 {
   "type": "weather",
   "stage": 9,
-  "windKph": 13,
+  "windKph": 12,
   "windDir": "E",
   "gustRisk": "low",
   "rainProb": 0,
-  "tempC": 36,
+  "tempC": 35,
   "_source": "open-meteo:Ussel, France:2026-07-12"
 }

@@ -1,10 +1,10 @@
 {
   "type": "weather",
   "stage": 10,
-  "windKph": 18,
+  "windKph": 15,
   "windDir": "W",
-  "gustRisk": "med",
-  "rainProb": 5,
-  "tempC": 30,
+  "gustRisk": "low",
+  "rainProb": 3,
+  "tempC": 29,
   "_source": "open-meteo:Le Lioran, France:2026-07-14"
 }

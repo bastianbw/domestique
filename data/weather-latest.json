@@ -1,10 +1,10 @@
 {
   "type": "weather",
   "stage": 16,
-  "windKph": 20,
+  "windKph": 17,
   "windDir": "NE",
   "gustRisk": "low",
-  "rainProb": 0,
+  "rainProb": 3,
   "tempC": 27,
   "_source": "open-meteo:Thonon-les-Bains, France:2026-07-21"
 }

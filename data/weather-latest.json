@@ -1,7 +1,7 @@
 {
   "type": "weather",
   "stage": 19,
-  "windKph": 10,
+  "windKph": 11,
   "windDir": "NW",
   "gustRisk": "low",
   "rainProb": 0,

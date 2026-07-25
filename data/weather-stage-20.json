@@ -4,7 +4,7 @@
   "windKph": 22,
   "windDir": "S",
   "gustRisk": "med",
-  "rainProb": 90,
+  "rainProb": 83,
   "tempC": 20,
   "_source": "open-meteo:Alpe d'Huez, France:2026-07-25"
 }

@@ -1,12 +1,853 @@
 [
   {
-    "type": "weather",
+    "type": "stageResult",
     "stage": 21,
-    "windKph": 19,
-    "windDir": "W",
-    "gustRisk": "med",
-    "rainProb": 18,
-    "tempC": 26,
-    "_source": "open-meteo:Paris, France:2026-07-26"
+    "results": [
+      {
+        "rider": "Tadej Pogacar",
+        "pos": 1,
+        "gcPos": 1
+      },
+      {
+        "rider": "Remco Evenepoel",
+        "pos": 2,
+        "gap": 386,
+        "gcPos": 2
+      },
+      {
+        "rider": "Isaac Del Toro Romero",
+        "pos": 3,
+        "gap": 582,
+        "gcPos": 3
+      },
+      {
+        "rider": "Paul Seixas",
+        "pos": 4,
+        "gap": 716,
+        "gcPos": 4
+      },
+      {
+        "rider": "Lenny Martinez",
+        "pos": 5,
+        "gap": 782,
+        "gcPos": 5
+      },
+      {
+        "rider": "Mattias Skjelmose",
+        "pos": 6,
+        "gap": 899,
+        "sprintPts": 14,
+        "gcPos": 6
+      },
+      {
+        "rider": "Juan Ayuso Pesquera",
+        "pos": 7,
+        "gap": 1068,
+        "sprintPts": 6,
+        "gcPos": 7
+      },
+      {
+        "rider": "Richard Carapaz",
+        "pos": 8,
+        "gap": 1200,
+        "gcPos": 8
+      },
+      {
+        "rider": "Tom Pidcock",
+        "pos": 9,
+        "gap": 1768,
+        "gcPos": 9
+      },
+      {
+        "rider": "Jordan Jegat",
+        "pos": 10,
+        "gap": 2001,
+        "gcPos": 10
+      },
+      {
+        "rider": "Yannis Voisard",
+        "pos": 11,
+        "gap": 2282,
+        "gcPos": 11
+      },
+      {
+        "rider": "Tobias Halland Johannessen",
+        "pos": 12,
+        "gap": 3397,
+        "gcPos": 12
+      },
+      {
+        "rider": "Sepp Kuss",
+        "pos": 13,
+        "gap": 3743,
+        "gcPos": 13
+      },
+      {
+        "rider": "Davide Piganzoli",
+        "pos": 14,
+        "gap": 3823,
+        "gcPos": 14
+      },
+      {
+        "rider": "Jai Hindley",
+        "pos": 15,
+        "gap": 5008,
+        "gcPos": 15
+      },
+      {
+        "rider": "Nicolas Prodhomme",
+        "pos": 16,
+        "gap": 5101
+      },
+      {
+        "rider": "Tiesj Benoot",
+        "pos": 17,
+        "gap": 5576
+      },
+      {
+        "rider": "Quinn Simmons",
+        "pos": 18,
+        "gap": 5728
+      },
+      {
+        "rider": "Sean Quinn",
+        "pos": 19,
+        "gap": 6425
+      },
+      {
+        "rider": "Egan Bernal Gomez",
+        "pos": 20,
+        "gap": 6478,
+        "sprintPts": 2
+      },
+      {
+        "rider": "Adam Yates",
+        "pos": 21,
+        "gap": 6719
+      },
+      {
+        "rider": "Thymen Arensman",
+        "pos": 22,
+        "gap": 7362
+      },
+      {
+        "rider": "Carlos Verona Quintanilla",
+        "pos": 23,
+        "gap": 7522
+      },
+      {
+        "rider": "Matthew Riccitello",
+        "pos": 24,
+        "gap": 7869
+      },
+      {
+        "rider": "Derek James Gee",
+        "pos": 25,
+        "gap": 7979
+      },
+      {
+        "rider": "Harold Tejada Canacue",
+        "pos": 26,
+        "gap": 8387
+      },
+      {
+        "rider": "Maxim Van Gils",
+        "pos": 27,
+        "gap": 8649
+      },
+      {
+        "rider": "Ben Alexander O Connor",
+        "pos": 28,
+        "gap": 9098
+      },
+      {
+        "rider": "Pablo Castrillo Zapater",
+        "pos": 29,
+        "gap": 9103
+      },
+      {
+        "rider": "Matteo Jorgenson",
+        "pos": 30,
+        "gap": 9209
+      },
+      {
+        "rider": "Guillaume Martin Guyonnet",
+        "pos": 31,
+        "gap": 9255
+      },
+      {
+        "rider": "Felix Grossschartner",
+        "pos": 32,
+        "gap": 9802
+      },
+      {
+        "rider": "Mattia Cattaneo",
+        "pos": 33,
+        "gap": 10279
+      },
+      {
+        "rider": "Raul Garcia Pierna",
+        "pos": 34,
+        "gap": 10352
+      },
+      {
+        "rider": "Mauro Schmid",
+        "pos": 35,
+        "gap": 10409
+      },
+      {
+        "rider": "Kevin Vauquelin",
+        "pos": 36,
+        "gap": 10877
+      },
+      {
+        "rider": "Antonio Tiberi",
+        "pos": 37,
+        "gap": 11032
+      },
+      {
+        "rider": "Sergio Andres Higuita Garcia",
+        "pos": 38,
+        "gap": 11075
+      },
+      {
+        "rider": "Quinten Hermans",
+        "pos": 39,
+        "gap": 11123
+      },
+      {
+        "rider": "Clement Braz Afonso",
+        "pos": 40,
+        "gap": 11183
+      },
+      {
+        "rider": "Lennert Van Eetvelt",
+        "pos": 41,
+        "gap": 11302
+      },
+      {
+        "rider": "Aurelien Paret Peintre",
+        "pos": 42,
+        "gap": 11308
+      },
+      {
+        "rider": "Tobias Svendsen Foss",
+        "pos": 43,
+        "gap": 11309
+      },
+      {
+        "rider": "Valentin Paret Peintre",
+        "pos": 44,
+        "gap": 11361
+      },
+      {
+        "rider": "Ion Izagirre Insausti",
+        "pos": 45,
+        "gap": 11413
+      },
+      {
+        "rider": "Alex Baudin",
+        "pos": 46,
+        "gap": 11501
+      },
+      {
+        "rider": "Abel Balderstone Roumens",
+        "pos": 47,
+        "gap": 12266
+      },
+      {
+        "rider": "Marc Hirschi",
+        "pos": 48,
+        "gap": 12599
+      },
+      {
+        "rider": "Mathias Vacek",
+        "pos": 49,
+        "gap": 12876
+      },
+      {
+        "rider": "Nicolas Breuillard",
+        "pos": 50,
+        "gap": 12876
+      },
+      {
+        "rider": "Joris Delbove",
+        "pos": 51,
+        "gap": 13026
+      },
+      {
+        "rider": "Michael Matthews",
+        "pos": 52,
+        "gap": 13055,
+        "sprintPts": 4
+      },
+      {
+        "rider": "Michael Valgren",
+        "pos": 53,
+        "gap": 13149
+      },
+      {
+        "rider": "Javier Romo Oliver",
+        "pos": 54,
+        "gap": 13309
+      },
+      {
+        "rider": "Damiano Caruso",
+        "pos": 55,
+        "gap": 13603
+      },
+      {
+        "rider": "Xandro Meurisse",
+        "pos": 56,
+        "gap": 13753
+      },
+      {
+        "rider": "Romain Gregoire",
+        "pos": 57,
+        "gap": 13800
+      },
+      {
+        "rider": "Quentin Pacher",
+        "pos": 58,
+        "gap": 13829
+      },
+      {
+        "rider": "Ben Healy",
+        "pos": 59,
+        "gap": 13863
+      },
+      {
+        "rider": "Anders Skaarseth",
+        "pos": 60,
+        "gap": 14587
+      },
+      {
+        "rider": "Alexandre Delettre",
+        "pos": 61,
+        "gap": 14596
+      },
+      {
+        "rider": "Bruno Armirail",
+        "pos": 62,
+        "gap": 14606
+      },
+      {
+        "rider": "Michael Storer",
+        "pos": 63,
+        "gap": 15097
+      },
+      {
+        "rider": "Anders Halland Johannessen",
+        "pos": 64,
+        "gap": 15282
+      },
+      {
+        "rider": "Nelson Oliveira",
+        "pos": 65,
+        "gap": 15476,
+        "sprintPts": 5
+      },
+      {
+        "rider": "Vlad Van Mechelen",
+        "pos": 66,
+        "gap": 15487
+      },
+      {
+        "rider": "Louis Vervaeke",
+        "pos": 67,
+        "gap": 15518
+      },
+      {
+        "rider": "George Bennett",
+        "pos": 68,
+        "gap": 15522
+      },
+      {
+        "rider": "Clement Russo",
+        "pos": 69,
+        "gap": 15625,
+        "sprintPts": 7
+      },
+      {
+        "rider": "Felix Engelhardt",
+        "pos": 70,
+        "gap": 15751
+      },
+      {
+        "rider": "Jasper Stuyven",
+        "pos": 71,
+        "gap": 15769,
+        "sprintPts": 5
+      },
+      {
+        "rider": "Nils Politt",
+        "pos": 72,
+        "gap": 15810
+      },
+      {
+        "rider": "Rick Pluimers",
+        "pos": 73,
+        "gap": 15871,
+        "sprintPts": 12
+      },
+      {
+        "rider": "Tim Wellens",
+        "pos": 74,
+        "gap": 15928
+      },
+      {
+        "rider": "Mathieu Van Der Poel",
+        "pos": 75,
+        "gap": 15988,
+        "sprintPts": 50
+      },
+      {
+        "rider": "Mathis Le Berre",
+        "pos": 76,
+        "gap": 16009
+      },
+      {
+        "rider": "Jonas Abrahamsen",
+        "pos": 77,
+        "gap": 16223
+      },
+      {
+        "rider": "Marco Frigo",
+        "pos": 78,
+        "gap": 16324,
+        "sprintPts": 4
+      },
+      {
+        "rider": "Ewen Costiou",
+        "pos": 79,
+        "gap": 16343
+      },
+      {
+        "rider": "Mads Pedersen",
+        "pos": 80,
+        "gap": 16385,
+        "sprintPts": 20
+      },
+      {
+        "rider": "Brent Van Moer",
+        "pos": 81,
+        "gap": 16394
+      },
+      {
+        "rider": "Victor Campenaerts",
+        "pos": 82,
+        "gap": 16457
+      },
+      {
+        "rider": "Jan Tratnik",
+        "pos": 83,
+        "gap": 16464
+      },
+      {
+        "rider": "Kasper Asgreen",
+        "pos": 84,
+        "gap": 16537
+      },
+      {
+        "rider": "Alex Aranburu Deva",
+        "pos": 85,
+        "gap": 16675
+      },
+      {
+        "rider": "Matteo Vercher",
+        "pos": 86,
+        "gap": 16724
+      },
+      {
+        "rider": "Warren Barguil",
+        "pos": 87,
+        "gap": 16803,
+        "sprintPts": 16
+      },
+      {
+        "rider": "Damien Craig Howson",
+        "pos": 88,
+        "gap": 16898
+      },
+      {
+        "rider": "Sebastian Berwick",
+        "pos": 89,
+        "gap": 17044
+      },
+      {
+        "rider": "Georg Zimmermann",
+        "pos": 90,
+        "gap": 17061
+      },
+      {
+        "rider": "Lucas Plapp",
+        "pos": 91,
+        "gap": 17070,
+        "sprintPts": 9
+      },
+      {
+        "rider": "Matej Mohoric",
+        "pos": 92,
+        "gap": 17070,
+        "sprintPts": 14
+      },
+      {
+        "rider": "Lorenzo Germani",
+        "pos": 93,
+        "gap": 17298
+      },
+      {
+        "rider": "Toms Skujins",
+        "pos": 94,
+        "gap": 17379
+      },
+      {
+        "rider": "Nico Denz",
+        "pos": 95,
+        "gap": 17536,
+        "sprintPts": 3
+      },
+      {
+        "rider": "Emiel Verstrynge",
+        "pos": 96,
+        "gap": 17831
+      },
+      {
+        "rider": "Magnus Cort Nielsen",
+        "pos": 97,
+        "gap": 17877
+      },
+      {
+        "rider": "Nicolya Vinokurov",
+        "pos": 98,
+        "gap": 18072
+      },
+      {
+        "rider": "Xabier Azparren Irurzun",
+        "pos": 99,
+        "gap": 18174,
+        "sprintPts": 20
+      },
+      {
+        "rider": "Simone Velasco",
+        "pos": 100,
+        "gap": 18255
+      },
+      {
+        "rider": "Jefferson Cepeda",
+        "pos": 101,
+        "gap": 18282
+      },
+      {
+        "rider": "Frank Van Den Broek",
+        "pos": 102,
+        "gap": 18456
+      },
+      {
+        "rider": "Per Strand Hagenes",
+        "pos": 103,
+        "gap": 18465
+      },
+      {
+        "rider": "Michel Hessmann",
+        "pos": 104,
+        "gap": 18688
+      },
+      {
+        "rider": "Robert Stannard",
+        "pos": 105,
+        "gap": 18792
+      },
+      {
+        "rider": "Max Walker",
+        "pos": 106,
+        "gap": 18799
+      },
+      {
+        "rider": "Luke Durbridge",
+        "pos": 107,
+        "gap": 18806
+      },
+      {
+        "rider": "Anthony Turgis",
+        "pos": 108,
+        "gap": 18895,
+        "sprintPts": 10
+      },
+      {
+        "rider": "Thibault Guernalec",
+        "pos": 109,
+        "gap": 18927
+      },
+      {
+        "rider": "Michal Kwiatkowski",
+        "pos": 110,
+        "gap": 18939
+      },
+      {
+        "rider": "Tim Van Dijke",
+        "pos": 111,
+        "gap": 19003
+      },
+      {
+        "rider": "Jakub Otruba",
+        "pos": 112,
+        "gap": 19043
+      },
+      {
+        "rider": "Georg Steinhauser",
+        "pos": 113,
+        "gap": 19179
+      },
+      {
+        "rider": "Edward Planckaert",
+        "pos": 114,
+        "gap": 19458
+      },
+      {
+        "rider": "Jonas Rickaert",
+        "pos": 115,
+        "gap": 19479
+      },
+      {
+        "rider": "Florian Vermeersch",
+        "pos": 116,
+        "gap": 19609
+      },
+      {
+        "rider": "Benjamin Thomas",
+        "pos": 117,
+        "gap": 19625
+      },
+      {
+        "rider": "Robbe Dhondt",
+        "pos": 118,
+        "gap": 19636
+      },
+      {
+        "rider": "Hugo Page",
+        "pos": 119,
+        "gap": 19676
+      },
+      {
+        "rider": "Joshua Michael Tarling",
+        "pos": 120,
+        "gap": 19708
+      },
+      {
+        "rider": "Aaron Murray Gate",
+        "pos": 121,
+        "gap": 19736
+      },
+      {
+        "rider": "Alex Kirsch",
+        "pos": 122,
+        "gap": 19805
+      },
+      {
+        "rider": "Filippo Ganna",
+        "pos": 123,
+        "gap": 19860,
+        "sprintPts": 3
+      },
+      {
+        "rider": "Mike Teunissen",
+        "pos": 124,
+        "gap": 19918
+      },
+      {
+        "rider": "Julian Alaphilippe",
+        "pos": 125,
+        "gap": 19987
+      },
+      {
+        "rider": "Stefano Oldani",
+        "pos": 126,
+        "gap": 20014
+      },
+      {
+        "rider": "Alfred Brockwell Wright",
+        "pos": 127,
+        "gap": 20181
+      },
+      {
+        "rider": "Liam Slock",
+        "pos": 128,
+        "gap": 20200
+      },
+      {
+        "rider": "Joel Nicolau Beltran",
+        "pos": 129,
+        "gap": 20227
+      },
+      {
+        "rider": "Daan Hoole",
+        "pos": 130,
+        "gap": 20284
+      },
+      {
+        "rider": "Dylan Van Baarle",
+        "pos": 131,
+        "gap": 20333
+      },
+      {
+        "rider": "Huub Artz",
+        "pos": 132,
+        "gap": 20554,
+        "sprintPts": 2
+      },
+      {
+        "rider": "Tim Marsman",
+        "pos": 133,
+        "gap": 20591
+      },
+      {
+        "rider": "Krists Neilands",
+        "pos": 134,
+        "gap": 20638,
+        "sprintPts": 10
+      },
+      {
+        "rider": "Jasper Philipsen",
+        "pos": 135,
+        "gap": 20675,
+        "sprintPts": 30
+      },
+      {
+        "rider": "Dorian Godon",
+        "pos": 136,
+        "gap": 20814
+      },
+      {
+        "rider": "Silvan Dillier",
+        "pos": 137,
+        "gap": 20916
+      },
+      {
+        "rider": "Soeren Waerenskjold",
+        "pos": 138,
+        "gap": 20918
+      },
+      {
+        "rider": "Niklas Maerkl",
+        "pos": 139,
+        "gap": 21091
+      },
+      {
+        "rider": "Pavel Bittner",
+        "pos": 140,
+        "gap": 21111,
+        "sprintPts": 8
+      },
+      {
+        "rider": "Biniam Girmay",
+        "pos": 141,
+        "gap": 21260,
+        "sprintPts": 6
+      },
+      {
+        "rider": "Max Kanter",
+        "pos": 142,
+        "gap": 21329,
+        "sprintPts": 18
+      },
+      {
+        "rider": "Pascal Eenkhoorn",
+        "pos": 143,
+        "gap": 21438
+      },
+      {
+        "rider": "Jenthe Biermans",
+        "pos": 144,
+        "gap": 21704,
+        "sprintPts": 7
+      },
+      {
+        "rider": "John Degenkolb",
+        "pos": 145,
+        "gap": 21704
+      },
+      {
+        "rider": "Baptiste Veistroffer",
+        "pos": 146,
+        "gap": 21734,
+        "sprintPts": 25
+      },
+      {
+        "rider": "Marco Haller",
+        "pos": 147,
+        "gap": 21740
+      },
+      {
+        "rider": "Milan Fretin",
+        "pos": 148,
+        "gap": 21970,
+        "sprintPts": 8
+      },
+      {
+        "rider": "Olav Kooij",
+        "pos": 149,
+        "gap": 22158,
+        "sprintPts": 16
+      },
+      {
+        "rider": "Thomas Jake Stewart",
+        "pos": 150,
+        "gap": 22247
+      },
+      {
+        "rider": "Lewis Askey",
+        "pos": 151,
+        "gap": 22248
+      },
+      {
+        "rider": "Davide Ballerini",
+        "pos": 152,
+        "gap": 22282
+      },
+      {
+        "rider": "Piet Allegaert",
+        "pos": 153,
+        "gap": 22342
+      },
+      {
+        "rider": "Phil Bauhaus",
+        "pos": 154,
+        "gap": 22429
+      },
+      {
+        "rider": "Kamil Gradek",
+        "pos": 155,
+        "gap": 22572
+      },
+      {
+        "rider": "Julius Van Den Berg",
+        "pos": 156,
+        "gap": 22646
+      },
+      {
+        "rider": "Matis Louvel",
+        "pos": 157,
+        "gap": 22656
+      },
+      {
+        "rider": "Cees Bol",
+        "pos": 158,
+        "gap": 22928
+      }
+    ],
+    "jerseys": {
+      "yellow": "Tadej Pogacar",
+      "green": "Mads Pedersen",
+      "polka": "Richard Carapaz",
+      "white": "Isaac Del Toro Romero"
+    },
+    "_source": "letour.fr:rankings/stage-21",
+    "_note": "dnf/dns not available from this source — add by hand if any riders abandoned.",
+    "teamResultTop3": [
+      "UAE TEAM EMIRATES XRG",
+      "RED BULL - BORA - HANSGROHE",
+      "DECATHLON CMA CGM TEAM"
+    ]
   }
 ]

@@ -1,10 +1,10 @@
 {
   "type": "weather",
   "stage": 21,
-  "windKph": 16,
+  "windKph": 19,
   "windDir": "W",
   "gustRisk": "med",
-  "rainProb": 10,
+  "rainProb": 18,
   "tempC": 26,
   "_source": "open-meteo:Paris, France:2026-07-26"
 }
